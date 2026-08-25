@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dentura-postgres
+    restart: always
+    ports:
+      - "${DENTURA_DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DENTURA_DB_NAME:-dentura}
+      POSTGRES_USER: ${DENTURA_DB_USER:-dentura}
+      POSTGRES_PASSWORD: ${DENTURA_DB_PASSWORD:-dentura}
+    volumes:
+      - dentura_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dentura -d dentura"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  dentura_pg_data:

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dentura ERP</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f4f7f8;
+        color: #1a2b2f;
+      }
+      main {
+        max-width: 28rem;
+        padding: 2rem;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.75rem;
+      }
+      p {
+        margin: 0.35rem 0;
+        color: #4a5c61;
+        line-height: 1.45;
+      }
+      code {
+        font-size: 0.9em;
+        background: #e4ecee;
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      a {
+        color: #0b6e6e;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Dentura ERP</h1>
+      <p>API local en ejecución.</p>
+      <p>
+        Health:
+        <a href="/api/health"><code>/api/health</code></a>
+      </p>
+      <p>
+        Cuando el front React se embeba en el JAR, esta será la app. Mientras
+        tanto usa Vite (<code>front/</code>) con
+        <code>npm run start:ui-dev</code> en <code>desktop/</code>.
+      </p>
+    </main>
+  </body>
+</html>

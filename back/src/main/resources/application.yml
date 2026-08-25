@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: dentura-api
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+dentura:
+  cors:
+    allowed-origin-patterns: ${DENTURA_CORS_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  jwt:
+    secret: ${DENTURA_JWT_SECRET:change-me-in-production-use-a-long-random-secret-key-at-least-256-bits}
+    expiration-ms: ${DENTURA_JWT_EXPIRATION_MS:86400000}
+  seed:
+    admin-username: ${DENTURA_SEED_ADMIN_USER:admin}
+    admin-password: ${DENTURA_SEED_ADMIN_PASSWORD:123Qwe}
+    admin-email: ${DENTURA_SEED_ADMIN_EMAIL:admin@dentura.local}

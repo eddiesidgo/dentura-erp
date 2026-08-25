@@ -1,0 +1,7 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Documents — omit image evidence folder
+documents/img/

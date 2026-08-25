@@ -1,0 +1,15 @@
+{
+  "name": "dentura-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dentura ERP — shell Electron que levanta el JAR de Spring Boot",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:rebuild": "DENTURA_REBUILD_JAR=1 electron .",
+    "start:ui-dev": "DENTURA_UI_URL=http://localhost:5173 electron ."
+  },
+  "devDependencies": {
+    "electron": "^37.2.6"
+  }
+}
