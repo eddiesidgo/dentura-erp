@@ -2,13 +2,21 @@ package com.dentura.api.domain;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.dentura.api.role.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -42,6 +50,13 @@ public class User {
 
 	@Column(name = "clinic_id")
 	private Long clinicId;
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(
+			name = "user_roles",
+			joinColumns = @JoinColumn(name = "user_id"),
+			inverseJoinColumns = @JoinColumn(name = "role_id"))
+	private Set<Role> roles = new HashSet<>();
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -126,6 +141,14 @@ public class User {
 
 	public void setClinicId(Long clinicId) {
 		this.clinicId = clinicId;
+	}
+
+	public Set<Role> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(Set<Role> roles) {
+		this.roles = roles;
 	}
 
 	public boolean isSuperAdmin() {

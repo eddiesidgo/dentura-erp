@@ -6,6 +6,7 @@ import {
     PAGE_CONTAINER_GUTTER_Y,
 } from '@/constants/theme.constant'
 import Footer from '@/components/template/Footer'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 import type { CommonProps } from '@/@types/common'
 import type { Meta } from '@/@types/routes'
 import type { ElementType, ComponentPropsWithRef } from 'react'
@@ -34,6 +35,7 @@ const PageContainer = (props: PageContainerProps) => {
         extraHeader,
         footer = true,
     } = props
+    const { pageTitleTheme } = useThemeClass()
 
     return (
         <div className="h-full flex flex-auto flex-col justify-between">
@@ -56,7 +58,7 @@ const PageContainer = (props: PageContainerProps) => {
                         >
                             <div>
                                 {header && typeof header === 'string' && (
-                                    <h3>{header}</h3>
+                                    <h3 className={pageTitleTheme}>{header}</h3>
                                 )}
                                 <Suspense fallback={<div></div>}>
                                     {header && typeof header !== 'string' && (

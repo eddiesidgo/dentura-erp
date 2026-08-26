@@ -3,6 +3,7 @@ import Drawer from '@/components/ui/Drawer'
 import { HiOutlineCog } from 'react-icons/hi'
 import SidePanelContent, { SidePanelContentProps } from './SidePanelContent'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 import { setPanelExpand, useAppSelector, useAppDispatch } from '@/store'
 import type { CommonProps } from '@/@types/common'
 
@@ -16,6 +17,7 @@ const SidePanelInner = (props: SidePanelProps) => {
     const panelExpand = useAppSelector((state) => state.theme.panelExpand)
 
     const direction = useAppSelector((state) => state.theme.direction)
+    const { pageTitleTheme } = useThemeClass()
 
     const openPanel = () => {
         dispatch(setPanelExpand(true))
@@ -39,7 +41,9 @@ const SidePanelInner = (props: SidePanelProps) => {
                 <HiOutlineCog />
             </div>
             <Drawer
-                title="Configuración"
+                title={
+                    <h4 className={pageTitleTheme}>Configuración</h4>
+                }
                 isOpen={panelExpand}
                 placement={direction === 'rtl' ? 'left' : 'right'}
                 width={375}

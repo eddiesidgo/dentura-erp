@@ -1,3 +1,7 @@
 export const ADMIN = 'admin'
 export const USER = 'user'
 export const SUPER_ADMIN = 'super_admin'
+export const ROLES_MANAGE = 'roles.manage'
+export const PATIENTS_READ = 'patients.read'
+export const PATIENTS_WRITE = 'patients.write'
+export const PATIENTS_DELETE = 'patients.delete'

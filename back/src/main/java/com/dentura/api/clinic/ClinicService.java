@@ -14,6 +14,8 @@ import com.dentura.api.clinic.dto.ClinicIdentityResponse;
 import com.dentura.api.clinic.dto.CreateClinicRequest;
 import com.dentura.api.clinic.dto.UpdateClinicRequest;
 import com.dentura.api.domain.User;
+import com.dentura.api.role.PermissionService;
+import com.dentura.api.role.RoleCatalog;
 
 @Service
 public class ClinicService {
@@ -23,11 +25,20 @@ public class ClinicService {
 	private final ClinicRepository clinicRepository;
 	private final ClinicAccess clinicAccess;
 	private final JwtService jwtService;
+	private final RoleCatalog roleCatalog;
+	private final PermissionService permissionService;
 
-	public ClinicService(ClinicRepository clinicRepository, ClinicAccess clinicAccess, JwtService jwtService) {
+	public ClinicService(
+			ClinicRepository clinicRepository,
+			ClinicAccess clinicAccess,
+			JwtService jwtService,
+			RoleCatalog roleCatalog,
+			PermissionService permissionService) {
 		this.clinicRepository = clinicRepository;
 		this.clinicAccess = clinicAccess;
 		this.jwtService = jwtService;
+		this.roleCatalog = roleCatalog;
+		this.permissionService = permissionService;
 	}
 
 	@Transactional(readOnly = true)
@@ -58,7 +69,9 @@ public class ClinicService {
 		Clinic clinic = new Clinic();
 		clinic.setCode(code);
 		clinic.setName(request.name().trim());
-		return ClinicIdentityResponse.from(clinicRepository.save(clinic));
+		Clinic saved = clinicRepository.save(clinic);
+		roleCatalog.ensureClinicRoles(saved.getId());
+		return ClinicIdentityResponse.from(saved);
 	}
 
 	@Transactional
@@ -104,7 +117,7 @@ public class ClinicService {
 		User user = clinicAccess.currentUser().getUser();
 		return new AuthResponse(
 				jwtService.generateToken(user, clinic.getId()),
-				UserDto.from(user, clinic.getId()),
+				UserDto.from(user, clinic.getId(), permissionService.codesFor(user, clinic.getId())),
 				ClinicIdentityResponse.from(clinic));
 	}
 

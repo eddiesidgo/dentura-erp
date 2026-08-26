@@ -13,6 +13,7 @@ import AuthorityCheck from '@/components/shared/AuthorityCheck'
 import navigationConfig from '@/configs/navigation.config'
 import navigationIcon from '@/configs/navigation-icon.config'
 import useMenuActive from '@/utils/hooks/useMenuActive'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 import isEmpty from 'lodash/isEmpty'
 import { Link } from 'react-router-dom'
 import type { NavigationTree } from '@/@types/navigation'
@@ -52,6 +53,7 @@ const StackedSideNavMini = (props: StackedSideNavMiniProps) => {
     } = props
 
     const { includedRouteTree } = useMenuActive(navigationConfig, routeKey)
+    const { navTitleTheme } = useThemeClass()
 
     const logoMode = () => {
         if (navMode === NAV_MODE_THEMED) {
@@ -100,6 +102,7 @@ const StackedSideNavMini = (props: StackedSideNavMiniProps) => {
             <Logo
                 mode={logoMode()}
                 type="streamline"
+                titleClassName={navTitleTheme}
                 className={SIDE_NAV_CONTENT_GUTTER}
             />
             <ScrollBar autoHide direction={direction}>

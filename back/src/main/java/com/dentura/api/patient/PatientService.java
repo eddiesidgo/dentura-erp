@@ -17,6 +17,8 @@ import com.dentura.api.clinic.ClinicAccess;
 import com.dentura.api.patient.dto.PatientPageResponse;
 import com.dentura.api.patient.dto.PatientRequest;
 import com.dentura.api.patient.dto.PatientResponse;
+import com.dentura.api.role.Permission;
+import com.dentura.api.role.PermissionService;
 
 @Service
 public class PatientService {
@@ -26,14 +28,20 @@ public class PatientService {
 
 	private final PatientRepository patientRepository;
 	private final ClinicAccess clinicAccess;
+	private final PermissionService permissionService;
 
-	public PatientService(PatientRepository patientRepository, ClinicAccess clinicAccess) {
+	public PatientService(
+			PatientRepository patientRepository,
+			ClinicAccess clinicAccess,
+			PermissionService permissionService) {
 		this.patientRepository = patientRepository;
 		this.clinicAccess = clinicAccess;
+		this.permissionService = permissionService;
 	}
 
 	@Transactional(readOnly = true)
 	public PatientPageResponse list(String query, Boolean active, int page, int size, String sort) {
+		permissionService.require(Permission.PATIENTS_READ);
 		int pageIndex = Math.max(page, 1);
 		int pageSize = size < 1 ? 10 : Math.min(size, 100);
 		Pageable pageable = PageRequest.of(pageIndex - 1, pageSize, parseSort(sort));
@@ -49,11 +57,13 @@ public class PatientService {
 
 	@Transactional(readOnly = true)
 	public PatientResponse get(Long id) {
+		permissionService.require(Permission.PATIENTS_READ);
 		return PatientResponse.from(findOrThrow(id));
 	}
 
 	@Transactional
 	public PatientResponse create(PatientRequest request) {
+		permissionService.require(Permission.PATIENTS_WRITE);
 		assertUniqueDui(request.dui(), null);
 		assertUniqueRecordNumber(request.recordNumber(), null);
 
@@ -74,6 +84,7 @@ public class PatientService {
 
 	@Transactional
 	public PatientResponse update(Long id, PatientRequest request) {
+		permissionService.require(Permission.PATIENTS_WRITE);
 		Patient patient = findOrThrow(id);
 		assertUniqueDui(request.dui(), id);
 		assertUniqueRecordNumber(request.recordNumber(), id);
@@ -86,6 +97,7 @@ public class PatientService {
 
 	@Transactional
 	public void delete(Long id) {
+		permissionService.require(Permission.PATIENTS_DELETE);
 		Patient patient = findOrThrow(id);
 		patientRepository.delete(patient);
 	}

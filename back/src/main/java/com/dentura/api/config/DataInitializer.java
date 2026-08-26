@@ -15,6 +15,7 @@ import com.dentura.api.clinic.ClinicRepository;
 import com.dentura.api.clinic.ClinicService;
 import com.dentura.api.domain.User;
 import com.dentura.api.repository.UserRepository;
+import com.dentura.api.role.RoleCatalog;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -24,6 +25,7 @@ public class DataInitializer implements CommandLineRunner {
 	private final UserRepository userRepository;
 	private final ClinicRepository clinicRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final RoleCatalog roleCatalog;
 
 	@Value("${dentura.seed.admin-username}")
 	private String adminUsername;
@@ -37,15 +39,19 @@ public class DataInitializer implements CommandLineRunner {
 	public DataInitializer(
 			UserRepository userRepository,
 			ClinicRepository clinicRepository,
-			PasswordEncoder passwordEncoder) {
+			PasswordEncoder passwordEncoder,
+			RoleCatalog roleCatalog) {
 		this.userRepository = userRepository;
 		this.clinicRepository = clinicRepository;
 		this.passwordEncoder = passwordEncoder;
+		this.roleCatalog = roleCatalog;
 	}
 
 	@Override
 	public void run(String... args) {
+		roleCatalog.ensureCatalog();
 		ensureDefaultClinic();
+		clinicRepository.findAll().forEach(clinic -> roleCatalog.ensureClinicRoles(clinic.getId()));
 
 		userRepository.findByUserName(adminUsername).ifPresentOrElse(this::ensureSeedSuperAdmin, this::createSeedAdmin);
 	}

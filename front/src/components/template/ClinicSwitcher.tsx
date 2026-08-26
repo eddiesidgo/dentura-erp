@@ -11,6 +11,7 @@ import {
     useAppSelector,
 } from '@/store'
 import { applyClinicTheme } from '@/utils/applyClinicTheme'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 import type { ClinicIdentity } from '@/@types/clinic'
 
 type ClinicOption = {
@@ -24,6 +25,7 @@ const ClinicSwitcher = () => {
     const current = useAppSelector((state) => state.clinic.current)
     const list = useAppSelector((state) => state.clinic.list)
     const [switching, setSwitching] = useState(false)
+    const { pageTitleTheme } = useThemeClass()
 
     const isSuperAdmin = authority.includes(SUPER_ADMIN)
 
@@ -42,7 +44,7 @@ const ClinicSwitcher = () => {
 
     if (!isSuperAdmin) {
         return current?.name ? (
-            <div className="hidden lg:block text-sm font-semibold px-2">
+            <div className={`hidden lg:block text-sm font-semibold px-2 ${pageTitleTheme}`}>
                 {current.name}
             </div>
         ) : null

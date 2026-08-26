@@ -12,6 +12,7 @@ import {
 } from '@/services/PatientService'
 import type { OnSortParam } from '@/components/shared/DataTable'
 import type { Patient } from '@/@types/patient'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 
 type TableState = {
     pageIndex: number
@@ -22,6 +23,7 @@ type TableState = {
 
 const PatientList = () => {
     const navigate = useNavigate()
+    const { pageTitleTheme } = useThemeClass()
     const [patients, setPatients] = useState<Patient[]>([])
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -98,7 +100,7 @@ const PatientList = () => {
             <AdaptableCard className="h-full" bodyClass="h-full">
                 <div className="lg:flex items-center justify-between mb-4">
                     <div>
-                        <h5>Padrón de pacientes</h5>
+                        <h5 className={pageTitleTheme}>Padrón de pacientes</h5>
                         <p className="text-sm">
                             Busca, crea y edita fichas con datos personales,
                             contacto y NIT/DUI.

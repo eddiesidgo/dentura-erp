@@ -13,6 +13,7 @@ import Logo from '@/components/template/Logo'
 import navigationConfig from '@/configs/navigation.config'
 import VerticalMenuContent from '@/components/template/VerticalMenuContent'
 import useResponsive from '@/utils/hooks/useResponsive'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 import { useAppSelector } from '@/store'
 
 const sideNavStyle = {
@@ -42,6 +43,7 @@ const SideNav = () => {
     const userAuthority = useAppSelector((state) => state.auth.user.authority)
 
     const { larger } = useResponsive()
+    const { navTitleTheme } = useThemeClass()
 
     const sideNavColor = () => {
         if (navMode === NAV_MODE_THEMED) {
@@ -90,6 +92,7 @@ const SideNav = () => {
                         <Logo
                             mode={logoMode()}
                             type={sideNavCollapse ? 'streamline' : 'full'}
+                            titleClassName={navTitleTheme}
                             className={
                                 sideNavCollapse
                                     ? SIDE_NAV_CONTENT_GUTTER

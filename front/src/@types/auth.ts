@@ -13,6 +13,7 @@ export type SignInResponse = {
         avatar: string
         email: string
         clinicId: number | null
+        id?: number
     }
     clinic: ClinicIdentity
 }

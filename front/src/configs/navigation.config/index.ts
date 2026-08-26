@@ -1,6 +1,7 @@
 import {
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
+import { PATIENTS_READ, ROLES_MANAGE } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
 const navigationConfig: NavigationTree[] = [
@@ -21,7 +22,17 @@ const navigationConfig: NavigationTree[] = [
         translateKey: 'nav.patients',
         icon: 'patients',
         type: NAV_ITEM_TYPE_ITEM,
-        authority: [],
+        authority: [PATIENTS_READ],
+        subMenu: [],
+    },
+    {
+        key: 'roles',
+        path: '/roles',
+        title: 'Roles y permisos',
+        translateKey: 'nav.roles',
+        icon: 'roles',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ROLES_MANAGE],
         subMenu: [],
     },
 ]

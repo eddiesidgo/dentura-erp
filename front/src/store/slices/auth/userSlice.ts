@@ -7,6 +7,7 @@ export type UserState = {
     email?: string
     authority?: string[]
     clinicId?: number | null
+    id?: number
 }
 
 const initialState: UserState = {
@@ -27,6 +28,7 @@ const userSlice = createSlice({
             state.userName = action.payload?.userName
             state.authority = action.payload?.authority
             state.clinicId = action.payload?.clinicId ?? null
+            state.id = action.payload?.id
         },
     },
 })

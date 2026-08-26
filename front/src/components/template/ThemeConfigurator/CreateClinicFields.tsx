@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button'
 import { SUPER_ADMIN } from '@/constants/roles.constant'
 import { apiCreateClinic, apiGetClinics } from '@/services/ClinicService'
 import { setClinicList, useAppDispatch, useAppSelector } from '@/store'
+import useThemeClass from '@/utils/hooks/useThemeClass'
 
 const CreateClinicFields = () => {
     const dispatch = useAppDispatch()
@@ -11,6 +12,7 @@ const CreateClinicFields = () => {
     const [code, setCode] = useState('')
     const [name, setName] = useState('')
     const [creating, setCreating] = useState(false)
+    const { pageTitleTheme } = useThemeClass()
 
     if (!authority.includes(SUPER_ADMIN)) {
         return null
@@ -37,7 +39,7 @@ const CreateClinicFields = () => {
 
     return (
         <div className="flex flex-col gap-3">
-            <h6>Nueva clínica</h6>
+            <h6 className={pageTitleTheme}>Nueva clínica</h6>
             <Input
                 size="sm"
                 placeholder="código (ej. norte)"
