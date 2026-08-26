@@ -3,6 +3,7 @@ import auth, { AuthState } from './slices/auth'
 import base, { BaseState } from './slices/base'
 import locale, { LocaleState } from './slices/locale/localeSlice'
 import theme, { ThemeState } from './slices/theme/themeSlice'
+import clinic, { ClinicState } from './slices/clinic/clinicSlice'
 import RtkQueryService from '@/services/RtkQueryService'
 
 export type RootState = {
@@ -10,6 +11,7 @@ export type RootState = {
     base: BaseState
     locale: LocaleState
     theme: ThemeState
+    clinic: ClinicState
      
     [RtkQueryService.reducerPath]: any
 }
@@ -23,6 +25,7 @@ const staticReducers = {
     base,
     locale,
     theme,
+    clinic,
     [RtkQueryService.reducerPath]: RtkQueryService.reducer,
 }
 

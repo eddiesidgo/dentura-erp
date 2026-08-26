@@ -1,7 +1,7 @@
 import { cloneElement } from 'react'
-import Avatar from '@/components/ui/Avatar'
 import Logo from '@/components/template/Logo'
 import { APP_NAME } from '@/constants/app.constant'
+import { useAppSelector } from '@/store'
 import type { CommonProps } from '@/@types/common'
 
 interface SideProps extends CommonProps {
@@ -9,6 +9,8 @@ interface SideProps extends CommonProps {
 }
 
 const Side = ({ children, content, ...rest }: SideProps) => {
+    const clinicName = useAppSelector((state) => state.clinic.current?.name) || APP_NAME
+
     return (
         <div className="grid lg:grid-cols-3 h-full">
             <div
@@ -19,28 +21,14 @@ const Side = ({ children, content, ...rest }: SideProps) => {
             >
                 <Logo mode="dark" />
                 <div>
-                    <div className="mb-6 flex items-center gap-4">
-                        <Avatar
-                            className="border-2 border-white"
-                            shape="circle"
-                            src="/img/avatars/thumb-10.jpg"
-                        />
-                        <div className="text-white">
-                            <div className="font-semibold text-base">
-                                Brittany Hale
-                            </div>
-                            <span className="opacity-80">CTO, Onward</span>
-                        </div>
-                    </div>
                     <p className="text-lg text-white opacity-80">
-                        Elstar comes with a complete set of UI components
-                        crafted with Tailwind CSS, it fulfilled most of the use
-                        case to create modern and beautiful UI and application
+                        Gestión clínica dental para {clinicName}. Pacientes,
+                        agenda y tratamientos en un solo lugar.
                     </p>
                 </div>
                 <span className="text-white">
                     Copyright &copy; {`${new Date().getFullYear()}`}{' '}
-                    <span className="font-semibold">{`${APP_NAME}`}</span>{' '}
+                    <span className="font-semibold">{clinicName}</span>{' '}
                 </span>
             </div>
             <div className="col-span-2 flex flex-col justify-center items-center bg-white dark:bg-gray-800">

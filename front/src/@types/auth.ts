@@ -1,3 +1,5 @@
+import type { ClinicIdentity } from './clinic'
+
 export type SignInCredential = {
     userName: string
     password: string
@@ -10,7 +12,9 @@ export type SignInResponse = {
         authority: string[]
         avatar: string
         email: string
+        clinicId: number | null
     }
+    clinic: ClinicIdentity
 }
 
 export type SignUpResponse = SignInResponse

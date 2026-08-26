@@ -1,6 +1,5 @@
 import Header from '@/components/template/Header'
-import SidePanel from '@/components/template/SidePanel'
-import UserDropdown from '@/components/template/UserDropdown'
+import HeaderTools from '@/components/template/HeaderTools'
 import HeaderLogo from '@/components/template/HeaderLogo'
 import MobileNav from '@/components/template/MobileNav'
 import HorizontalNav from '@/components/template/HorizontalNav'
@@ -15,15 +14,6 @@ const HeaderActionsStart = () => {
     )
 }
 
-const HeaderActionsEnd = () => {
-    return (
-        <>
-            <SidePanel />
-            <UserDropdown hoverable={false} />
-        </>
-    )
-}
-
 const SimpleLayout = () => {
     return (
         <div className="app-layout-simple flex flex-auto flex-col min-h-screen">
@@ -34,7 +24,7 @@ const SimpleLayout = () => {
                         className="shadow-sm dark:shadow-2xl"
                         headerStart={<HeaderActionsStart />}
                         headerMiddle={<HorizontalNav />}
-                        headerEnd={<HeaderActionsEnd />}
+                        headerEnd={<HeaderTools />}
                     />
                     <View pageContainerType="contained" />
                 </div>

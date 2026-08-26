@@ -40,6 +40,9 @@ public class User {
 	@Column(name = "authority_csv", nullable = false, length = 255)
 	private String authorityCsv = "user";
 
+	@Column(name = "clinic_id")
+	private Long clinicId;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -115,6 +118,18 @@ public class User {
 
 	public void setAuthorities(List<String> authorities) {
 		this.authorityCsv = String.join(",", authorities);
+	}
+
+	public Long getClinicId() {
+		return clinicId;
+	}
+
+	public void setClinicId(Long clinicId) {
+		this.clinicId = clinicId;
+	}
+
+	public boolean isSuperAdmin() {
+		return getAuthorities().contains("super_admin");
 	}
 
 	public Instant getCreatedAt() {

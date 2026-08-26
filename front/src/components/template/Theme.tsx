@@ -1,4 +1,5 @@
 import ConfigProvider from '@/components/ui/ConfigProvider'
+import ClinicThemeBootstrap from '@/components/template/ClinicThemeBootstrap'
 import useDarkMode from '@/utils/hooks/useDarkmode'
 import type { CommonProps } from '@/@types/common'
 import { themeConfig } from '@/configs/theme.config'
@@ -16,7 +17,10 @@ const Theme = (props: CommonProps) => {
     }
 
     return (
-        <ConfigProvider value={currentTheme}>{props.children}</ConfigProvider>
+        <ConfigProvider value={currentTheme}>
+            <ClinicThemeBootstrap />
+            {props.children}
+        </ConfigProvider>
     )
 }
 

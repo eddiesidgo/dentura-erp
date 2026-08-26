@@ -10,19 +10,22 @@ import org.springframework.data.repository.query.Param;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
-	boolean existsByRecordNumber(String recordNumber);
+	boolean existsByClinicIdAndRecordNumber(Long clinicId, String recordNumber);
 
-	boolean existsByDui(String dui);
+	boolean existsByClinicIdAndDui(Long clinicId, String dui);
 
-	boolean existsByDuiAndIdNot(String dui, Long id);
+	boolean existsByClinicIdAndDuiAndIdNot(Long clinicId, String dui, Long id);
 
-	boolean existsByRecordNumberAndIdNot(String recordNumber, Long id);
+	boolean existsByClinicIdAndRecordNumberAndIdNot(Long clinicId, String recordNumber, Long id);
 
-	Optional<Patient> findByRecordNumber(String recordNumber);
+	Optional<Patient> findByIdAndClinicId(Long id, Long clinicId);
+
+	Optional<Patient> findByClinicIdAndRecordNumber(Long clinicId, String recordNumber);
 
 	@Query("""
 			SELECT p FROM Patient p
-			WHERE (:active IS NULL OR p.active = :active)
+			WHERE p.clinicId = :clinicId
+			AND (:active IS NULL OR p.active = :active)
 			AND (
 				:q IS NULL OR :q = ''
 				OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :q, '%'))
@@ -37,5 +40,9 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 				OR LOWER(COALESCE(p.email, '')) LIKE LOWER(CONCAT('%', :q, '%'))
 			)
 			""")
-	Page<Patient> search(@Param("q") String q, @Param("active") Boolean active, Pageable pageable);
+	Page<Patient> search(
+			@Param("clinicId") Long clinicId,
+			@Param("q") String q,
+			@Param("active") Boolean active,
+			Pageable pageable);
 }

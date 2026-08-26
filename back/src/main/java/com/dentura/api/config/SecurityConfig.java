@@ -57,6 +57,7 @@ public class SecurityConfig {
 								"/api/forgot-password",
 								"/api/reset-password",
 								"/api/health",
+								"/api/clinic-identity",
 								"/actuator/**",
 								"/",
 								"/index.html",

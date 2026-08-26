@@ -2,6 +2,7 @@ import Avatar from '@/components/ui/Avatar'
 import Dropdown from '@/components/ui/Dropdown'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import useAuth from '@/utils/hooks/useAuth'
+import { useAppSelector } from '@/store'
 import { Link } from 'react-router-dom'
 import classNames from 'classnames'
 import { HiOutlineLogout, HiOutlineUser } from 'react-icons/hi'
@@ -18,13 +19,17 @@ const dropdownItemList: DropdownList[] = []
 
 const UserDropdownInner = ({ className }: CommonProps) => {
     const { signOut } = useAuth()
+    const user = useAppSelector((state) => state.auth.user)
+    const clinicName = useAppSelector((state) => state.clinic.current?.name)
+    const displayName = user.userName || 'Usuario'
+    const roleLabel = user.authority?.[0] || ''
 
     const UserAvatar = (
         <div className={classNames(className, 'flex items-center gap-2')}>
-            <Avatar size={32} shape="circle" icon={<HiOutlineUser />} />
+            <Avatar size={32} shape="circle" src={user.avatar} icon={<HiOutlineUser />} />
             <div className="hidden md:block">
-                <div className="text-xs capitalize">admin</div>
-                <div className="font-bold">User01</div>
+                <div className="text-xs capitalize">{roleLabel}</div>
+                <div className="font-bold">{displayName}</div>
             </div>
         </div>
     )
@@ -38,12 +43,15 @@ const UserDropdownInner = ({ className }: CommonProps) => {
             >
                 <Dropdown.Item variant="header">
                     <div className="py-2 px-3 flex items-center gap-2">
-                        <Avatar shape="circle" icon={<HiOutlineUser />} />
+                        <Avatar shape="circle" src={user.avatar} icon={<HiOutlineUser />} />
                         <div>
                             <div className="font-bold text-gray-900 dark:text-gray-100">
-                                User01
+                                {displayName}
                             </div>
-                            <div className="text-xs">user01@mail.com</div>
+                            <div className="text-xs">{user.email}</div>
+                            {clinicName && (
+                                <div className="text-xs mt-1">{clinicName}</div>
+                            )}
                         </div>
                     </div>
                 </Dropdown.Item>
@@ -67,7 +75,6 @@ const UserDropdownInner = ({ className }: CommonProps) => {
                         </Link>
                     </Dropdown.Item>
                 ))}
-                {/* <Dropdown.Item variant="divider" /> */}
                 <Dropdown.Item
                     eventKey="Sign Out"
                     className="gap-2"

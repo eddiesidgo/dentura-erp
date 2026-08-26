@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.dentura.api.clinic.ClinicAccess;
 import com.dentura.api.patient.dto.PatientPageResponse;
 import com.dentura.api.patient.dto.PatientRequest;
 import com.dentura.api.patient.dto.PatientResponse;
@@ -24,9 +25,11 @@ public class PatientService {
 			"lastName", "firstName", "recordNumber", "createdAt", "updatedAt", "city");
 
 	private final PatientRepository patientRepository;
+	private final ClinicAccess clinicAccess;
 
-	public PatientService(PatientRepository patientRepository) {
+	public PatientService(PatientRepository patientRepository, ClinicAccess clinicAccess) {
 		this.patientRepository = patientRepository;
+		this.clinicAccess = clinicAccess;
 	}
 
 	@Transactional(readOnly = true)
@@ -35,7 +38,11 @@ public class PatientService {
 		int pageSize = size < 1 ? 10 : Math.min(size, 100);
 		Pageable pageable = PageRequest.of(pageIndex - 1, pageSize, parseSort(sort));
 		Boolean activeFilter = active == null ? Boolean.TRUE : active;
-		Page<Patient> result = patientRepository.search(query == null ? "" : query.trim(), activeFilter, pageable);
+		Page<Patient> result = patientRepository.search(
+				clinicAccess.requireClinicId(),
+				query == null ? "" : query.trim(),
+				activeFilter,
+				pageable);
 		List<PatientResponse> data = result.getContent().stream().map(PatientResponse::from).toList();
 		return new PatientPageResponse(data, result.getTotalElements(), pageIndex, pageSize);
 	}
@@ -51,6 +58,7 @@ public class PatientService {
 		assertUniqueRecordNumber(request.recordNumber(), null);
 
 		Patient patient = new Patient();
+		patient.setClinicId(clinicAccess.requireClinicId());
 		apply(patient, request);
 		boolean generateNumber = request.recordNumber() == null;
 		if (generateNumber) {
@@ -83,7 +91,7 @@ public class PatientService {
 	}
 
 	private Patient findOrThrow(Long id) {
-		return patientRepository.findById(id)
+		return patientRepository.findByIdAndClinicId(id, clinicAccess.requireClinicId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
 	}
 
@@ -116,9 +124,10 @@ public class PatientService {
 		if (dui == null) {
 			return;
 		}
+		Long clinicId = clinicAccess.requireClinicId();
 		boolean taken = currentId == null
-				? patientRepository.existsByDui(dui)
-				: patientRepository.existsByDuiAndIdNot(dui, currentId);
+				? patientRepository.existsByClinicIdAndDui(clinicId, dui)
+				: patientRepository.existsByClinicIdAndDuiAndIdNot(clinicId, dui, currentId);
 		if (taken) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un paciente con ese DUI");
 		}
@@ -128,9 +137,10 @@ public class PatientService {
 		if (recordNumber == null) {
 			return;
 		}
+		Long clinicId = clinicAccess.requireClinicId();
 		boolean taken = currentId == null
-				? patientRepository.existsByRecordNumber(recordNumber)
-				: patientRepository.existsByRecordNumberAndIdNot(recordNumber, currentId);
+				? patientRepository.existsByClinicIdAndRecordNumber(clinicId, recordNumber)
+				: patientRepository.existsByClinicIdAndRecordNumberAndIdNot(clinicId, recordNumber, currentId);
 		if (taken) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un paciente con ese expediente");
 		}

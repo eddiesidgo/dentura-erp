@@ -1,0 +1,43 @@
+CREATE TABLE clinics (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    logo_url VARCHAR(512),
+    phone VARCHAR(40),
+    email VARCHAR(255),
+    address VARCHAR(255),
+    city VARCHAR(120),
+    department VARCHAR(120),
+    nit VARCHAR(30),
+    theme_mode VARCHAR(16) NOT NULL DEFAULT 'light',
+    theme_color VARCHAR(32) NOT NULL DEFAULT 'indigo',
+    primary_color_level INTEGER NOT NULL DEFAULT 600,
+    nav_mode VARCHAR(32) NOT NULL DEFAULT 'transparent',
+    layout_type VARCHAR(32) NOT NULL DEFAULT 'modern',
+    direction VARCHAR(8) NOT NULL DEFAULT 'ltr',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT uk_clinics_code UNIQUE (code)
+);
+
+INSERT INTO clinics (
+    code, name, theme_mode, theme_color, primary_color_level, nav_mode, layout_type, direction, active, created_at, updated_at
+) VALUES (
+    'default', 'Dentura', 'light', 'indigo', 600, 'transparent', 'modern', 'ltr', TRUE, NOW(), NOW()
+);
+
+ALTER TABLE users ADD COLUMN clinic_id BIGINT;
+ALTER TABLE users ADD CONSTRAINT fk_users_clinic FOREIGN KEY (clinic_id) REFERENCES clinics (id);
+CREATE INDEX idx_users_clinic ON users (clinic_id);
+
+ALTER TABLE patients ADD COLUMN clinic_id BIGINT;
+UPDATE patients SET clinic_id = (SELECT id FROM clinics WHERE code = 'default');
+ALTER TABLE patients ALTER COLUMN clinic_id SET NOT NULL;
+ALTER TABLE patients ADD CONSTRAINT fk_patients_clinic FOREIGN KEY (clinic_id) REFERENCES clinics (id);
+
+ALTER TABLE patients DROP CONSTRAINT uk_patients_record_number;
+ALTER TABLE patients DROP CONSTRAINT uk_patients_dui;
+ALTER TABLE patients ADD CONSTRAINT uk_patients_clinic_record_number UNIQUE (clinic_id, record_number);
+ALTER TABLE patients ADD CONSTRAINT uk_patients_clinic_dui UNIQUE (clinic_id, dui);
+CREATE INDEX idx_patients_clinic ON patients (clinic_id);

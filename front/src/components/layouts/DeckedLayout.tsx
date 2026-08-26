@@ -1,6 +1,5 @@
 import Header from '@/components/template/Header'
-import SidePanel from '@/components/template/SidePanel'
-import UserDropdown from '@/components/template/UserDropdown'
+import HeaderTools from '@/components/template/HeaderTools'
 import HeaderLogo from '@/components/template/HeaderLogo'
 import SecondaryHeader from '@/components/template/SecondaryHeader'
 import MobileNav from '@/components/template/MobileNav'
@@ -15,15 +14,6 @@ const HeaderActionsStart = () => {
     )
 }
 
-const HeaderActionsEnd = () => {
-    return (
-        <>
-            <SidePanel />
-            <UserDropdown hoverable={false} />
-        </>
-    )
-}
-
 const DeckedLayout = () => {
     return (
         <div className="app-layout-simple flex flex-auto flex-col min-h-screen">
@@ -33,7 +23,7 @@ const DeckedLayout = () => {
                         container
                         className="shadow-sm dark:shadow-2xl"
                         headerStart={<HeaderActionsStart />}
-                        headerEnd={<HeaderActionsEnd />}
+                        headerEnd={<HeaderTools />}
                     />
                     <SecondaryHeader contained />
                     <View pageContainerType="contained" />

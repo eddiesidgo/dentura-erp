@@ -12,13 +12,23 @@ import com.dentura.api.domain.User;
 public class AppUserDetails implements UserDetails {
 
 	private final User user;
+	private final Long activeClinicId;
 
 	public AppUserDetails(User user) {
+		this(user, user.getClinicId());
+	}
+
+	public AppUserDetails(User user, Long activeClinicId) {
 		this.user = user;
+		this.activeClinicId = activeClinicId;
 	}
 
 	public User getUser() {
 		return user;
+	}
+
+	public Long getActiveClinicId() {
+		return activeClinicId;
 	}
 
 	@Override

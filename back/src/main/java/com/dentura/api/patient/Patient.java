@@ -11,16 +11,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "patients")
+@Table(name = "patients", uniqueConstraints = {
+		@UniqueConstraint(columnNames = { "clinic_id", "record_number" }),
+		@UniqueConstraint(columnNames = { "clinic_id", "dui" }),
+})
 public class Patient {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "record_number", nullable = false, unique = true, length = 20)
+	@Column(name = "clinic_id", nullable = false)
+	private Long clinicId;
+
+	@Column(name = "record_number", nullable = false, length = 20)
 	private String recordNumber;
 
 	@Column(name = "first_name", nullable = false, length = 120)
@@ -53,7 +60,7 @@ public class Patient {
 	@Column(length = 120)
 	private String department;
 
-	@Column(unique = true, length = 20)
+	@Column(length = 20)
 	private String dui;
 
 	@Column(length = 30)
@@ -98,6 +105,14 @@ public class Patient {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public Long getClinicId() {
+		return clinicId;
+	}
+
+	public void setClinicId(Long clinicId) {
+		this.clinicId = clinicId;
 	}
 
 	public String getRecordNumber() {

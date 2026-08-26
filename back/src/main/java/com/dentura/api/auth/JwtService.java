@@ -27,16 +27,27 @@ public class JwtService {
 		this.expirationMs = expirationMs;
 	}
 
-	public String generateToken(User user) {
+	public String generateToken(User user, Long clinicId) {
 		Date now = new Date();
 		Date expiry = new Date(now.getTime() + expirationMs);
-		return Jwts.builder()
+		var builder = Jwts.builder()
 				.subject(user.getUserName())
 				.claim("uid", user.getId())
 				.issuedAt(now)
 				.expiration(expiry)
-				.signWith(secretKey)
-				.compact();
+				.signWith(secretKey);
+		if (clinicId != null) {
+			builder.claim("cid", clinicId);
+		}
+		return builder.compact();
+	}
+
+	public Long extractClinicId(String token) {
+		Object cid = parseClaims(token).get("cid");
+		if (cid instanceof Number number) {
+			return number.longValue();
+		}
+		return null;
 	}
 
 	public String extractUsername(String token) {

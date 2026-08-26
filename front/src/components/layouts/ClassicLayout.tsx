@@ -1,8 +1,7 @@
 import Header from '@/components/template/Header'
+import HeaderTools from '@/components/template/HeaderTools'
 import SideNavToggle from '@/components/template/SideNavToggle'
-import SidePanel from '@/components/template/SidePanel'
 import MobileNav from '@/components/template/MobileNav'
-import UserDropdown from '@/components/template/UserDropdown'
 import SideNav from '@/components/template/SideNav'
 import View from '@/views'
 
@@ -11,15 +10,6 @@ const HeaderActionsStart = () => {
         <>
             <MobileNav />
             <SideNavToggle />
-        </>
-    )
-}
-
-const HeaderActionsEnd = () => {
-    return (
-        <>
-            <SidePanel />
-            <UserDropdown hoverable={false} />
         </>
     )
 }
@@ -33,7 +23,7 @@ const ClassicLayout = () => {
                     <Header
                         className="shadow-sm dark:shadow-2xl"
                         headerStart={<HeaderActionsStart />}
-                        headerEnd={<HeaderActionsEnd />}
+                        headerEnd={<HeaderTools />}
                     />
                     <div className="h-full flex flex-auto flex-col">
                         <View />

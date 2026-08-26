@@ -45,6 +45,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 				if (jwtService.isTokenValid(token, userDetails.getUsername())) {
+					if (userDetails instanceof AppUserDetails appUser) {
+						Long clinicId = jwtService.extractClinicId(token);
+						if (!appUser.getUser().isSuperAdmin()) {
+							clinicId = appUser.getUser().getClinicId();
+						}
+						userDetails = new AppUserDetails(appUser.getUser(), clinicId);
+					}
 					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
 							userDetails,
 							null,

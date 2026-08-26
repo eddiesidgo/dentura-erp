@@ -3,7 +3,9 @@ import LayoutSwitcher from './LayoutSwitcher'
 import ThemeSwitcher from './ThemeSwitcher'
 import DirectionSwitcher from './DirectionSwitcher'
 import NavModeSwitcher from './NavModeSwitcher'
-import CopyButton from './CopyButton'
+import IdentityFields from './IdentityFields'
+import CreateClinicFields from './CreateClinicFields'
+import SaveIdentityButton from './SaveIdentityButton'
 
 export type ThemeConfiguratorProps = {
     callBackClose?: () => void
@@ -13,6 +15,8 @@ const ThemeConfigurator = ({ callBackClose }: ThemeConfiguratorProps) => {
     return (
         <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col gap-y-10 mb-6">
+                <IdentityFields />
+                <CreateClinicFields />
                 <div className="flex items-center justify-between">
                     <div>
                         <h6>Dark Mode</h6>
@@ -40,7 +44,7 @@ const ThemeConfigurator = ({ callBackClose }: ThemeConfiguratorProps) => {
                     <LayoutSwitcher />
                 </div>
             </div>
-            <CopyButton />
+            <SaveIdentityButton />
         </div>
     )
 }

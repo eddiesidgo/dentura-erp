@@ -1,6 +1,5 @@
 import Header from '@/components/template/Header'
-import SidePanel from '@/components/template/SidePanel'
-import UserDropdown from '@/components/template/UserDropdown'
+import HeaderTools from '@/components/template/HeaderTools'
 import MobileNav from '@/components/template/MobileNav'
 import StackedSideNav from '@/components/template/StackedSideNav'
 import View from '@/views'
@@ -9,15 +8,6 @@ const HeaderActionsStart = () => {
     return (
         <>
             <MobileNav />
-        </>
-    )
-}
-
-const HeaderActionsEnd = () => {
-    return (
-        <>
-            <SidePanel />
-            <UserDropdown hoverable={false} />
         </>
     )
 }
@@ -31,7 +21,7 @@ const StackedSideLayout = () => {
                     <Header
                         className="shadow-sm dark:shadow-2xl"
                         headerStart={<HeaderActionsStart />}
-                        headerEnd={<HeaderActionsEnd />}
+                        headerEnd={<HeaderTools />}
                     />
                     <div className="h-full flex flex-auto flex-col">
                         <View />
