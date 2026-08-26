@@ -1,4 +1,4 @@
-import { HiOutlineHome, HiOutlineKey, HiOutlineUserGroup } from 'react-icons/hi'
+import { HiOutlineCalendar, HiOutlineHome, HiOutlineKey, HiOutlineUserGroup } from 'react-icons/hi'
 import type { JSX } from 'react'
 
 export type NavigationIcons = Record<string, JSX.Element>
@@ -6,6 +6,7 @@ export type NavigationIcons = Record<string, JSX.Element>
 const navigationIcon: NavigationIcons = {
     home: <HiOutlineHome />,
     patients: <HiOutlineUserGroup />,
+    agenda: <HiOutlineCalendar />,
     roles: <HiOutlineKey />,
 }
 

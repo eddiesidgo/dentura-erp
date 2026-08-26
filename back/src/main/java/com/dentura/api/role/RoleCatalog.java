@@ -1,7 +1,6 @@
 package com.dentura.api.role;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -25,31 +24,39 @@ public class RoleCatalog {
 		ensurePermission(Permission.PATIENTS_READ, "Ver pacientes", "Consulta el padrón de pacientes");
 		ensurePermission(Permission.PATIENTS_WRITE, "Editar pacientes", "Crea y actualiza fichas de pacientes");
 		ensurePermission(Permission.PATIENTS_DELETE, "Eliminar pacientes", "Elimina fichas de pacientes");
+		ensurePermission(Permission.AGENDA_READ, "Ver agenda", "Consulta el calendario de citas");
+		ensurePermission(Permission.AGENDA_WRITE, "Editar agenda", "Crea y actualiza citas");
+		ensurePermission(Permission.AGENDA_DELETE, "Eliminar citas", "Elimina citas del calendario");
 	}
 
 	@Transactional
 	public void ensureClinicRoles(Long clinicId) {
-		if (roleRepository.existsByClinicId(clinicId)) {
-			return;
-		}
-		Role admin = new Role();
-		admin.setClinicId(clinicId);
-		admin.setCode("administrador");
-		admin.setName("Administrador");
-		admin.setDescription("Gestión completa de la clínica, incluida la asignación de permisos");
-		admin.setSystemRole(true);
+		Role admin = roleRepository.findByClinicIdAndCode(clinicId, "administrador").orElseGet(() -> {
+			Role role = new Role();
+			role.setClinicId(clinicId);
+			role.setCode("administrador");
+			role.setName("Administrador");
+			role.setDescription("Gestión completa de la clínica, incluida la asignación de permisos");
+			role.setSystemRole(true);
+			return role;
+		});
 		admin.setPermissions(new HashSet<>(permissionRepository.findAll()));
 		roleRepository.save(admin);
 
-		Set<Permission> receptionPerms = new HashSet<>();
+		Role reception = roleRepository.findByClinicIdAndCode(clinicId, "recepcion").orElseGet(() -> {
+			Role role = new Role();
+			role.setClinicId(clinicId);
+			role.setCode("recepcion");
+			role.setName("Recepción");
+			role.setDescription("Alta de pacientes y gestión de la agenda");
+			role.setSystemRole(true);
+			return role;
+		});
+		Set<Permission> receptionPerms = new HashSet<>(reception.getPermissions());
 		permissionRepository.findByCode(Permission.PATIENTS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PATIENTS_WRITE).ifPresent(receptionPerms::add);
-		Role reception = new Role();
-		reception.setClinicId(clinicId);
-		reception.setCode("recepcion");
-		reception.setName("Recepción");
-		reception.setDescription("Alta y consulta de pacientes");
-		reception.setSystemRole(true);
+		permissionRepository.findByCode(Permission.AGENDA_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.AGENDA_WRITE).ifPresent(receptionPerms::add);
 		reception.setPermissions(receptionPerms);
 		roleRepository.save(reception);
 	}

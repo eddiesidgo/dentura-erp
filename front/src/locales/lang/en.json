@@ -1,6 +1,8 @@
 {
     "nav": {
         "home": "Inicio",
-        "patients": "Pacientes"
+        "patients": "Pacientes",
+        "agenda": "Agenda",
+        "roles": "Roles y permisos"
     }
 }

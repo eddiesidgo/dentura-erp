@@ -1,7 +1,7 @@
 import {
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import { PATIENTS_READ, ROLES_MANAGE } from '@/constants/roles.constant'
+import { AGENDA_READ, PATIENTS_READ, ROLES_MANAGE } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
 const navigationConfig: NavigationTree[] = [
@@ -23,6 +23,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'patients',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [PATIENTS_READ],
+        subMenu: [],
+    },
+    {
+        key: 'agenda',
+        path: '/agenda',
+        title: 'Agenda',
+        translateKey: 'nav.agenda',
+        icon: 'agenda',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [AGENDA_READ],
         subMenu: [],
     },
     {

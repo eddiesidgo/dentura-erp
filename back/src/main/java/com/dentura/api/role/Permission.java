@@ -15,6 +15,9 @@ public class Permission {
 	public static final String PATIENTS_READ = "patients.read";
 	public static final String PATIENTS_WRITE = "patients.write";
 	public static final String PATIENTS_DELETE = "patients.delete";
+	public static final String AGENDA_READ = "agenda.read";
+	public static final String AGENDA_WRITE = "agenda.write";
+	public static final String AGENDA_DELETE = "agenda.delete";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
