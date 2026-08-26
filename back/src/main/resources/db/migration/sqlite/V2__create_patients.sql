@@ -1,0 +1,30 @@
+CREATE TABLE patients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    record_number VARCHAR(20) NOT NULL,
+    first_name VARCHAR(120) NOT NULL,
+    last_name VARCHAR(120) NOT NULL,
+    sex VARCHAR(16),
+    date_of_birth DATE,
+    phone VARCHAR(40),
+    mobile VARCHAR(40),
+    email VARCHAR(255),
+    address VARCHAR(255),
+    city VARCHAR(120),
+    department VARCHAR(120),
+    dui VARCHAR(20),
+    nit VARCHAR(30),
+    occupation VARCHAR(120),
+    referred_by VARCHAR(160),
+    allergies TEXT,
+    notes TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT uk_patients_record_number UNIQUE (record_number),
+    CONSTRAINT uk_patients_dui UNIQUE (dui)
+);
+
+CREATE INDEX idx_patients_name ON patients (last_name, first_name);
+CREATE INDEX idx_patients_phone ON patients (phone);
+CREATE INDEX idx_patients_mobile ON patients (mobile);
+CREATE INDEX idx_patients_active ON patients (active);

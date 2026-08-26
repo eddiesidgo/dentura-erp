@@ -10,46 +10,37 @@ export const protectedRoutes = [
         path: '/home',
         component: lazy(() => import('@/views/Home')),
         authority: [],
-    },
-    /** Example purpose only, please remove */
-    {
-        key: 'singleMenuItem',
-        path: '/single-menu-view',
-        component: lazy(() => import('@/views/demo/SingleMenuView')),
-        authority: [],
+        meta: {
+            header: 'Inicio',
+        },
     },
     {
-        key: 'collapseMenu.item1',
-        path: '/collapse-menu-item-view-1',
-        component: lazy(() => import('@/views/demo/CollapseMenuItemView1')),
+        key: 'patients',
+        path: '/pacientes',
+        component: lazy(() => import('@/views/patients/PatientList')),
         authority: [],
+        meta: {
+            header: 'Pacientes',
+        },
     },
     {
-        key: 'collapseMenu.item2',
-        path: '/collapse-menu-item-view-2',
-        component: lazy(() => import('@/views/demo/CollapseMenuItemView2')),
+        key: 'patients.new',
+        path: '/pacientes/nuevo',
+        component: lazy(() => import('@/views/patients/PatientForm')),
         authority: [],
+        meta: {
+            header: 'Nuevo paciente',
+            footer: false,
+        },
     },
     {
-        key: 'groupMenu.single',
-        path: '/group-single-menu-item-view',
-        component: lazy(() => import('@/views/demo/GroupSingleMenuItemView')),
+        key: 'patients.edit',
+        path: '/pacientes/:patientId',
+        component: lazy(() => import('@/views/patients/PatientForm')),
         authority: [],
-    },
-    {
-        key: 'groupMenu.collapse.item1',
-        path: '/group-collapse-menu-item-view-1',
-        component: lazy(
-            () => import('@/views/demo/GroupCollapseMenuItemView1'),
-        ),
-        authority: [],
-    },
-    {
-        key: 'groupMenu.collapse.item2',
-        path: '/group-collapse-menu-item-view-2',
-        component: lazy(
-            () => import('@/views/demo/GroupCollapseMenuItemView2'),
-        ),
-        authority: [],
+        meta: {
+            header: 'Ficha de paciente',
+            footer: false,
+        },
     },
 ]
