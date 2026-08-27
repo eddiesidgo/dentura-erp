@@ -23,3 +23,16 @@ export const departmentOptions = [
 
 export const sexLabel = (sex?: string | null) =>
     sexOptions.find((option) => option.value === sex)?.label || '—'
+
+export const sexTagClass: Record<string, string> = {
+    FEMALE:
+        'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-100 border-0',
+    MALE: 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-100 border-0',
+    OTHER: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-100 border-0',
+}
+
+export const patientInitials = (firstName?: string, lastName?: string) => {
+    const a = (firstName || '').trim().charAt(0)
+    const b = (lastName || '').trim().charAt(0)
+    return `${a}${b}`.toUpperCase() || '?'
+}

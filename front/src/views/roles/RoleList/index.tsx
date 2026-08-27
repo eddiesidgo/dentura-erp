@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
     Checkbox,
@@ -24,7 +25,7 @@ import {
     type Permission,
     type Role,
 } from '@/services/RoleService'
-import { HiOutlinePencil, HiOutlineTrash, HiPlusCircle } from 'react-icons/hi'
+import { HiPlusCircle } from 'react-icons/hi'
 import { useAppSelector } from '@/store'
 
 type RoleOption = { label: string; value: number }
@@ -233,19 +234,17 @@ const RoleList = () => {
                                             .map(permissionName)
                                             .join(', ') || 'Sin permisos'}
                                     </td>
-                                    <td className="py-3 flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            icon={<HiOutlinePencil />}
-                                            onClick={() => openEdit(role)}
+                                    <td className="py-3">
+                                        <TableRowActions
+                                            editTitle="Editar"
+                                            deleteTitle="Eliminar"
+                                            onEdit={() => openEdit(role)}
+                                            onDelete={
+                                                role.systemRole
+                                                    ? undefined
+                                                    : () => setToDelete(role)
+                                            }
                                         />
-                                        {!role.systemRole && (
-                                            <Button
-                                                size="sm"
-                                                icon={<HiOutlineTrash />}
-                                                onClick={() => setToDelete(role)}
-                                            />
-                                        )}
                                     </td>
                                 </tr>
                             ))}

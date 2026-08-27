@@ -1,5 +1,6 @@
 package com.dentura.api.patient;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -45,4 +46,32 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 			@Param("q") String q,
 			@Param("active") Boolean active,
 			Pageable pageable);
+
+	long countByClinicId(Long clinicId);
+
+	@Query("""
+			SELECT COUNT(p) FROM Patient p
+			WHERE p.clinicId = :clinicId
+			AND p.createdAt >= :from
+			""")
+	long countCreatedSince(
+			@Param("clinicId") Long clinicId,
+			@Param("from") Instant from);
+
+	@Query("""
+			SELECT COUNT(p) FROM Patient p
+			WHERE p.clinicId = :clinicId
+			AND p.active = true
+			AND NOT EXISTS (
+				SELECT a.id FROM Appointment a
+				WHERE a.clinicId = :clinicId
+				AND a.patientId = p.id
+				AND a.startAt >= :cutoff
+				AND a.status <> :cancelledStatus
+			)
+			""")
+	long countInactivePatients(
+			@Param("clinicId") Long clinicId,
+			@Param("cutoff") Instant cutoff,
+			@Param("cancelledStatus") String cancelledStatus);
 }

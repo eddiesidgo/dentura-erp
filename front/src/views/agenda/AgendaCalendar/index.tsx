@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import esLocale from '@fullcalendar/core/locales/es'
 import type { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core'
@@ -6,9 +6,10 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import CalendarView from '@/components/shared/CalendarView'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-import { Button, Notification, toast } from '@/components/ui'
+import IconText from '@/components/shared/IconText'
+import { Button, Notification, Tag, toast } from '@/components/ui'
 import AuthorityCheck from '@/components/shared/AuthorityCheck'
-import { HiPlusCircle } from 'react-icons/hi'
+import { HiOutlineCalendar, HiPlusCircle } from 'react-icons/hi'
 import {
     apiCreateAppointment,
     apiDeleteAppointment,
@@ -26,8 +27,8 @@ import useThemeClass from '@/utils/hooks/useThemeClass'
 import AppointmentDialog, {
     type AppointmentForm,
 } from './AppointmentDialog'
-import { statusColor } from '../constants'
-import type { Appointment } from '@/@types/appointment'
+import { statusColor, statusOptions, statusTagClass } from '../constants'
+import type { Appointment, AppointmentStatus } from '@/@types/appointment'
 
 const emptyForm: AppointmentForm = {
     start: null,
@@ -209,18 +210,35 @@ const AgendaCalendar = () => {
         }
     }
 
+    const statusCounts = useMemo(() => {
+        const counts: Record<string, number> = {}
+        for (const option of statusOptions) {
+            counts[option.value] = 0
+        }
+        for (const event of events) {
+            const status = event.extendedProps.appointment.status
+            counts[status] = (counts[status] || 0) + 1
+        }
+        return counts
+    }, [events])
+
     return (
         <>
-            <AdaptableCard>
-                <div className="lg:flex items-center justify-between mb-4">
+            <AdaptableCard bodyClass="p-5">
+                <div className="lg:flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <h5 className={pageTitleTheme}>Agenda</h5>
-                        <p className="text-sm">
-                            Citas de la clínica. Selecciona un horario para
-                            crear o abre una cita para editarla.
+                        <IconText
+                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
+                            icon={<HiOutlineCalendar className="text-xl" />}
+                        >
+                            Agenda
+                        </IconText>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Selecciona un horario para crear o abre una cita
+                            para editarla. Arrastra para reprogramar.
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-3 lg:mt-0">
                         <Button
                             size="sm"
                             variant="plain"
@@ -242,6 +260,23 @@ const AgendaCalendar = () => {
                             </Button>
                         </AuthorityCheck>
                     </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-5">
+                    {statusOptions.map((option) => (
+                        <Tag
+                            key={option.value}
+                            className={
+                                statusTagClass[
+                                    option.value as AppointmentStatus
+                                ]
+                            }
+                        >
+                            {option.label}
+                            {statusCounts[option.value]
+                                ? ` · ${statusCounts[option.value]}`
+                                : ''}
+                        </Tag>
+                    ))}
                 </div>
                 <CalendarView
                     editable={canWrite}

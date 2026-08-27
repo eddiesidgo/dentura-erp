@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FormNumericInput from '@/components/shared/FormNumericInput'
+import IconText from '@/components/shared/IconText'
+import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
     Dialog,
@@ -11,7 +13,7 @@ import {
     Tag,
     toast,
 } from '@/components/ui'
-import { HiPlusCircle } from 'react-icons/hi'
+import { HiOutlineClipboardList, HiPlusCircle } from 'react-icons/hi'
 import {
     WORKS_DELETE,
     WORKS_WRITE,
@@ -242,13 +244,18 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
 
     return (
         <>
-            <AdaptableCard className="mb-4">
-                <div className="lg:flex items-center justify-between mb-4">
+            <AdaptableCard className="mb-4" bodyClass="p-5">
+                <div className="lg:flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <h5 className="mb-1">Plan de tratamientos</h5>
-                        <p className="text-sm">
+                        <IconText
+                            className="mb-1 text-base font-semibold"
+                            icon={<HiOutlineClipboardList className="text-lg" />}
+                        >
+                            Plan de tratamientos
+                        </IconText>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             Pendiente, terminado o no aceptado. Los totales
-                            sirven de cotización; aún no hay facturación.
+                            sirven de cotización (sin facturación).
                         </p>
                     </div>
                     {canWrite && (
@@ -262,18 +269,21 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
                         </Button>
                     )}
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
                     <SummaryCard
                         label="Pendiente"
                         value={formatMoney(totals.pending)}
+                        tone="amber"
                     />
                     <SummaryCard
                         label="Terminado"
                         value={formatMoney(totals.completed)}
+                        tone="emerald"
                     />
                     <SummaryCard
                         label="No aceptado"
                         value={formatMoney(totals.rejected)}
+                        tone="red"
                     />
                     <SummaryCard
                         emphasis
@@ -281,76 +291,93 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
                         value={formatMoney(totals.quote)}
                     />
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
                     <table className="min-w-full text-sm">
                         <thead>
-                            <tr className="text-left border-b border-gray-200 dark:border-gray-600">
-                                <th className="py-2 pr-4">Tratamiento</th>
-                                <th className="py-2 pr-4">Ubica.</th>
-                                <th className="py-2 pr-4">Cant.</th>
-                                <th className="py-2 pr-4">Precio</th>
-                                <th className="py-2 pr-4">Total</th>
-                                <th className="py-2 pr-4">Estado</th>
-                                <th className="py-2" />
+                            <tr className="text-left bg-gray-50 dark:bg-gray-700/40">
+                                <th className="py-3 px-4">Tratamiento</th>
+                                <th className="py-3 px-3">Ubica.</th>
+                                <th className="py-3 px-3">Cant.</th>
+                                <th className="py-3 px-3">Precio</th>
+                                <th className="py-3 px-3">Total</th>
+                                <th className="py-3 px-3">Estado</th>
+                                <th className="py-3 px-3" />
                             </tr>
                         </thead>
                         <tbody>
                             {works.map((work) => (
                                 <tr
                                     key={work.id}
-                                    className="border-b border-gray-100 dark:border-gray-700"
+                                    className="border-t border-gray-100 dark:border-gray-700"
                                 >
-                                    <td className="py-3 pr-4">
+                                    <td className="py-3 px-4">
                                         <div className="font-semibold">
                                             {work.treatmentCode}
                                         </div>
-                                        <div className="text-xs opacity-70">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
                                             {work.treatmentName}
                                         </div>
                                     </td>
-                                    <td className="py-3 pr-4">
+                                    <td className="py-3 px-3">
                                         {work.tooth || '—'}
                                     </td>
-                                    <td className="py-3 pr-4">{work.quantity}</td>
-                                    <td className="py-3 pr-4">
+                                    <td className="py-3 px-3">{work.quantity}</td>
+                                    <td className="py-3 px-3 tabular-nums">
                                         {formatMoney(work.unitPrice)}
                                     </td>
-                                    <td className="py-3 pr-4 font-semibold">
+                                    <td className="py-3 px-3 font-semibold tabular-nums">
                                         {formatMoney(work.total)}
                                     </td>
-                                    <td className="py-3 pr-4">
-                                        <Tag className={workStatusClass[work.status]}>
+                                    <td className="py-3 px-3">
+                                        <Tag
+                                            className={
+                                                workStatusClass[work.status]
+                                            }
+                                        >
                                             {workStatusLabel(work.status)}
                                         </Tag>
                                     </td>
-                                    <td className="py-3 text-right whitespace-nowrap">
-                                        {canWrite && (
-                                            <Button
-                                                size="sm"
-                                                className="mr-2"
-                                                onClick={() => openEdit(work)}
-                                            >
-                                                Editar
-                                            </Button>
-                                        )}
-                                        {canDelete && (
-                                            <Button
-                                                size="sm"
-                                                onClick={() => setToDelete(work)}
-                                            >
-                                                <span className="text-red-500">
-                                                    Eliminar
-                                                </span>
-                                            </Button>
-                                        )}
+                                    <td className="py-3 px-3 text-right">
+                                        <TableRowActions
+                                            editTitle="Editar"
+                                            deleteTitle="Eliminar"
+                                            onEdit={
+                                                canWrite
+                                                    ? () => openEdit(work)
+                                                    : undefined
+                                            }
+                                            onDelete={
+                                                canDelete
+                                                    ? () => setToDelete(work)
+                                                    : undefined
+                                            }
+                                        />
                                     </td>
                                 </tr>
                             ))}
                             {!loading && works.length === 0 && (
                                 <tr>
-                                    <td className="py-6 opacity-70" colSpan={7}>
-                                        Este paciente aún no tiene trabajos en el
-                                        plan.
+                                    <td
+                                        className="py-12 px-4 text-center"
+                                        colSpan={7}
+                                    >
+                                        <p className="font-semibold mb-1">
+                                            Sin trabajos en el plan
+                                        </p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                            Agrega tratamientos del catálogo
+                                            para armar la cotización.
+                                        </p>
+                                        {canWrite && (
+                                            <Button
+                                                size="sm"
+                                                variant="solid"
+                                                icon={<HiPlusCircle />}
+                                                onClick={openCreate}
+                                            >
+                                                Agregar trabajo
+                                            </Button>
+                                        )}
                                     </td>
                                 </tr>
                             )}
@@ -517,19 +544,33 @@ const SummaryCard = ({
     label,
     value,
     emphasis,
+    tone,
 }: {
     label: string
     value: string
     emphasis?: boolean
-}) => (
-    <div
-        className={`rounded-lg border border-gray-200 dark:border-gray-600 p-3 ${
-            emphasis ? 'bg-gray-50 dark:bg-gray-700' : ''
-        }`}
-    >
-        <div className="text-xs opacity-70">{label}</div>
-        <div className="text-base font-semibold">{value}</div>
-    </div>
-)
+    tone?: 'amber' | 'emerald' | 'red'
+}) => {
+    const toneClass =
+        tone === 'amber'
+            ? 'border-amber-200 dark:border-amber-700/50'
+            : tone === 'emerald'
+              ? 'border-emerald-200 dark:border-emerald-700/50'
+              : tone === 'red'
+                ? 'border-red-200 dark:border-red-700/50'
+                : 'border-gray-200 dark:border-gray-600'
+    return (
+        <div
+            className={`rounded-lg border p-3.5 ${toneClass} ${
+                emphasis ? 'bg-gray-50 dark:bg-gray-700/60' : ''
+            }`}
+        >
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                {label}
+            </div>
+            <div className="text-base font-semibold tabular-nums">{value}</div>
+        </div>
+    )
+}
 
 export default PatientWorks

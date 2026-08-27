@@ -50,6 +50,15 @@ export type PatientPage = {
     pageSize: number
 }
 
+export type PatientKpis = {
+    totalPatients: number
+    newPatientsThisMonth: number
+    patientsWithUpcomingAppointment: number
+    inactivePatients: number
+    upcomingDays: number
+    inactivityDays: number
+}
+
 export type PatientListParams = {
     q?: string
     page?: number

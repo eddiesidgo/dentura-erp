@@ -3,16 +3,23 @@ import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DataTable from '@/components/shared/DataTable'
 import FormNumericInput from '@/components/shared/FormNumericInput'
+import IconText from '@/components/shared/IconText'
+import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
     Dialog,
     Input,
     Notification,
+    Segment,
     Switcher,
     Tag,
     toast,
 } from '@/components/ui'
-import { HiOutlineSearch, HiPlusCircle } from 'react-icons/hi'
+import {
+    HiOutlineClipboardList,
+    HiOutlineSearch,
+    HiPlusCircle,
+} from 'react-icons/hi'
 import debounce from 'lodash/debounce'
 import {
     CATALOG_DELETE,
@@ -37,6 +44,7 @@ type TableState = {
     pageSize: number
     query: string
     sort: OnSortParam
+    activeFilter: 'all' | 'active' | 'inactive'
 }
 
 type TreatmentForm = {
@@ -55,7 +63,7 @@ const emptyForm: TreatmentForm = {
 }
 
 const TreatmentList = () => {
-    const { pageTitleTheme } = useThemeClass()
+    const { pageTitleTheme, textTheme } = useThemeClass()
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
@@ -70,6 +78,7 @@ const TreatmentList = () => {
         pageSize: 20,
         query: '',
         sort: { order: '', key: '' },
+        activeFilter: 'all',
     })
     const [form, setForm] = useState<TreatmentForm>(emptyForm)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -83,11 +92,16 @@ const TreatmentList = () => {
                 tableData.sort.order && tableData.sort.key
                     ? `${tableData.sort.key},${tableData.sort.order}`
                     : undefined
+            const active =
+                tableData.activeFilter === 'all'
+                    ? undefined
+                    : tableData.activeFilter === 'active'
             const response = await apiGetTreatments({
                 q: tableData.query,
                 page: tableData.pageIndex,
                 size: tableData.pageSize,
                 sort,
+                active,
             })
             setTreatments(response.data.data)
             setTotal(response.data.total)
@@ -190,22 +204,40 @@ const TreatmentList = () => {
     const columns: ColumnDef<Treatment>[] = useMemo(
         () => [
             {
-                header: 'Código',
-                accessorKey: 'code',
-                cell: (props) => (
-                    <span className="font-semibold">
-                        {props.row.original.code}
-                    </span>
-                ),
-            },
-            {
                 header: 'Tratamiento',
-                accessorKey: 'name',
+                accessorKey: 'code',
+                cell: (props) => {
+                    const treatment = props.row.original
+                    return (
+                        <div className="py-1">
+                            {canWrite ? (
+                                <button
+                                    type="button"
+                                    className={`font-semibold hover:underline ${textTheme}`}
+                                    onClick={() => openEdit(treatment)}
+                                >
+                                    {treatment.code}
+                                </button>
+                            ) : (
+                                <div className="font-semibold">
+                                    {treatment.code}
+                                </div>
+                            )}
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {treatment.name}
+                            </div>
+                        </div>
+                    )
+                },
             },
             {
                 header: 'Precio',
                 accessorKey: 'price',
-                cell: (props) => formatMoney(props.row.original.price),
+                cell: (props) => (
+                    <span className="tabular-nums font-medium">
+                        {formatMoney(props.row.original.price)}
+                    </span>
+                ),
             },
             {
                 header: 'Estado',
@@ -229,54 +261,75 @@ const TreatmentList = () => {
                 enableSorting: false,
                 cell: (props) => {
                     const treatment = props.row.original
-                    if (!canWrite && !canDelete) {
-                        return null
-                    }
                     return (
-                        <div className="flex justify-end gap-2">
-                            {canWrite && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => openEdit(treatment)}
-                                >
-                                    Editar
-                                </Button>
-                            )}
-                            {canDelete && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setToDelete(treatment)}
-                                >
-                                    <span className="text-red-500">Eliminar</span>
-                                </Button>
-                            )}
-                        </div>
+                        <TableRowActions
+                            editTitle="Editar"
+                            deleteTitle="Eliminar"
+                            onEdit={
+                                canWrite
+                                    ? () => openEdit(treatment)
+                                    : undefined
+                            }
+                            onDelete={
+                                canDelete
+                                    ? () => setToDelete(treatment)
+                                    : undefined
+                            }
+                        />
                     )
                 },
             },
         ],
-        [canWrite, canDelete],
+        [canWrite, canDelete, textTheme],
     )
 
     return (
         <>
-            <AdaptableCard className="h-full" bodyClass="h-full">
-                <div className="lg:flex items-center justify-between mb-4">
+            <AdaptableCard className="h-full" bodyClass="h-full p-5">
+                <div className="lg:flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <h5 className={pageTitleTheme}>
+                        <IconText
+                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
+                            icon={
+                                <HiOutlineClipboardList className="text-xl" />
+                            }
+                        >
                             Catálogo de tratamientos
-                        </h5>
-                        <p className="text-sm">
-                            Lista inicial tomada de GestOdon. Completa los
-                            precios de tu clínica; el plan del paciente usa este
-                            catálogo.
+                        </IconText>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Completa precios de tu clínica. El plan del paciente
+                            usa este catálogo.
                         </p>
+                        {total > 0 && (
+                            <Tag className="mt-3 border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                                {total} ítem{total === 1 ? '' : 's'}
+                            </Tag>
+                        )}
                     </div>
                     <div className="flex flex-col lg:flex-row lg:items-center gap-2 mt-3 lg:mt-0">
-                        <Input
-                            className="lg:w-72"
+                        <Segment
                             size="sm"
-                            placeholder="Buscar por código o nombre..."
+                            value={[tableData.activeFilter]}
+                            onChange={(value) =>
+                                setTableData((prev) => ({
+                                    ...prev,
+                                    activeFilter: (Array.isArray(value)
+                                        ? value[0]
+                                        : value) as TableState['activeFilter'],
+                                    pageIndex: 1,
+                                }))
+                            }
+                        >
+                            <Segment.Item value="all">Todos</Segment.Item>
+                            <Segment.Item value="active">Activos</Segment.Item>
+                            <Segment.Item value="inactive">
+                                Inactivos
+                            </Segment.Item>
+                        </Segment>
+                        <Input
+                            className="lg:w-64"
+                            size="sm"
+                            placeholder="Buscar código o nombre..."
                             prefix={<HiOutlineSearch className="text-lg" />}
                             onChange={(e) => debounceSearch(e.target.value)}
                         />
@@ -287,38 +340,60 @@ const TreatmentList = () => {
                                 icon={<HiPlusCircle />}
                                 onClick={openCreate}
                             >
-                                Nuevo tratamiento
+                                Nuevo
                             </Button>
                         )}
                     </div>
                 </div>
-                <DataTable
-                    columns={columns}
-                    data={treatments}
-                    loading={loading}
-                    pagingData={{
-                        total,
-                        pageIndex: tableData.pageIndex,
-                        pageSize: tableData.pageSize,
-                    }}
-                    onPaginationChange={(page) =>
-                        setTableData((prev) => ({ ...prev, pageIndex: page }))
-                    }
-                    onSelectChange={(size) =>
-                        setTableData((prev) => ({
-                            ...prev,
-                            pageSize: size,
-                            pageIndex: 1,
-                        }))
-                    }
-                    onSort={(sort) =>
-                        setTableData((prev) => ({
-                            ...prev,
-                            sort,
-                            pageIndex: 1,
-                        }))
-                    }
-                />
+                {!loading && treatments.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <p className="font-semibold mb-1">Sin tratamientos</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            No hay ítems para este filtro. Ajusta la búsqueda o
+                            crea uno nuevo.
+                        </p>
+                        {canWrite && (
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                onClick={openCreate}
+                            >
+                                Nuevo tratamiento
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <DataTable
+                        columns={columns}
+                        data={treatments}
+                        loading={loading}
+                        pagingData={{
+                            total,
+                            pageIndex: tableData.pageIndex,
+                            pageSize: tableData.pageSize,
+                        }}
+                        onPaginationChange={(page) =>
+                            setTableData((prev) => ({
+                                ...prev,
+                                pageIndex: page,
+                            }))
+                        }
+                        onSelectChange={(size) =>
+                            setTableData((prev) => ({
+                                ...prev,
+                                pageSize: size,
+                                pageIndex: 1,
+                            }))
+                        }
+                        onSort={(sort) =>
+                            setTableData((prev) => ({
+                                ...prev,
+                                sort,
+                                pageIndex: 1,
+                            }))
+                        }
+                    />
+                )}
             </AdaptableCard>
 
             <Dialog
@@ -326,12 +401,12 @@ const TreatmentList = () => {
                 onClose={() => setDialogOpen(false)}
                 onRequestClose={() => setDialogOpen(false)}
             >
-                <h5 className="mb-4">
+                <h5 className="mb-5">
                     {form.id ? 'Editar tratamiento' : 'Nuevo tratamiento'}
                 </h5>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                     <div>
-                        <div className="mb-1 font-semibold">Código</div>
+                        <div className="mb-1.5 text-sm font-semibold">Código</div>
                         <Input
                             placeholder="CONS"
                             value={form.code}
@@ -344,7 +419,7 @@ const TreatmentList = () => {
                         />
                     </div>
                     <div>
-                        <div className="mb-1 font-semibold">Nombre</div>
+                        <div className="mb-1.5 text-sm font-semibold">Nombre</div>
                         <Input
                             placeholder="Consulta"
                             value={form.name}
@@ -357,7 +432,7 @@ const TreatmentList = () => {
                         />
                     </div>
                     <div>
-                        <div className="mb-1 font-semibold">Precio</div>
+                        <div className="mb-1.5 text-sm font-semibold">Precio</div>
                         <FormNumericInput
                             value={form.price}
                             decimalScale={2}
@@ -372,7 +447,7 @@ const TreatmentList = () => {
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="font-semibold">Activo</span>
+                        <span className="text-sm font-semibold">Activo</span>
                         <Switcher
                             checked={form.active}
                             onChange={() =>
@@ -383,7 +458,7 @@ const TreatmentList = () => {
                             }
                         />
                     </div>
-                    <div className="text-right mt-2">
+                    <div className="text-right mt-1">
                         <Button
                             className="mr-2"
                             onClick={() => setDialogOpen(false)}

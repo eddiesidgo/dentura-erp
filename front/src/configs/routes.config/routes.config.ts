@@ -18,7 +18,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/Home')),
         authority: [],
         meta: {
-            header: 'Inicio',
+            header: '',
         },
     },
     {

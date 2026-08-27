@@ -3,6 +3,9 @@ package com.dentura.api.patient;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.appointment.Appointment;
+import com.dentura.api.appointment.AppointmentRepository;
+import com.dentura.api.patient.dto.PatientKpisResponse;
 import com.dentura.api.patient.dto.PatientPageResponse;
 import com.dentura.api.patient.dto.PatientRequest;
 import com.dentura.api.patient.dto.PatientResponse;
@@ -27,14 +33,17 @@ public class PatientService {
 			"lastName", "firstName", "recordNumber", "createdAt", "updatedAt", "city");
 
 	private final PatientRepository patientRepository;
+	private final AppointmentRepository appointmentRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
 
 	public PatientService(
 			PatientRepository patientRepository,
+			AppointmentRepository appointmentRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService) {
 		this.patientRepository = patientRepository;
+		this.appointmentRepository = appointmentRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
 	}
@@ -59,6 +68,43 @@ public class PatientService {
 	public PatientResponse get(Long id) {
 		permissionService.require(Permission.PATIENTS_READ);
 		return PatientResponse.from(findOrThrow(id));
+	}
+
+	@Transactional(readOnly = true)
+	public PatientKpisResponse kpis(int upcomingDays, int inactivityDays) {
+		permissionService.require(Permission.PATIENTS_READ);
+		Long clinicId = clinicAccess.requireClinicId();
+		int normalizedUpcomingDays = Math.max(1, Math.min(upcomingDays, 60));
+		int normalizedInactivityDays = Math.max(30, Math.min(inactivityDays, 365));
+
+		Instant now = Instant.now();
+		Instant monthStart = ZonedDateTime.now()
+				.withDayOfMonth(1)
+				.truncatedTo(ChronoUnit.DAYS)
+				.toInstant();
+		Instant upcomingLimit = now.plus(normalizedUpcomingDays, ChronoUnit.DAYS);
+		Instant inactivityCutoff = now.minus(normalizedInactivityDays, ChronoUnit.DAYS);
+
+		long totalPatients = patientRepository.countByClinicId(clinicId);
+		long newPatientsThisMonth = patientRepository.countCreatedSince(clinicId, monthStart);
+		long patientsWithUpcomingAppointment = appointmentRepository
+				.countDistinctPatientsByClinicIdAndDateRangeAndStatuses(
+						clinicId,
+						now,
+						upcomingLimit,
+						Set.of(Appointment.SCHEDULED, Appointment.CONFIRMED));
+		long inactivePatients = patientRepository.countInactivePatients(
+				clinicId,
+				inactivityCutoff,
+				Appointment.CANCELLED);
+
+		return new PatientKpisResponse(
+				totalPatients,
+				newPatientsThisMonth,
+				patientsWithUpcomingAppointment,
+				inactivePatients,
+				normalizedUpcomingDays,
+				normalizedInactivityDays);
 	}
 
 	@Transactional

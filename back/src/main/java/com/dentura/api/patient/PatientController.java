@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dentura.api.patient.dto.PatientPageResponse;
+import com.dentura.api.patient.dto.PatientKpisResponse;
 import com.dentura.api.patient.dto.PatientRequest;
 import com.dentura.api.patient.dto.PatientResponse;
 
@@ -41,6 +42,13 @@ public class PatientController {
 	@GetMapping("/{id}")
 	public PatientResponse get(@PathVariable Long id) {
 		return patientService.get(id);
+	}
+
+	@GetMapping("/kpis")
+	public PatientKpisResponse kpis(
+			@RequestParam(name = "upcomingDays", defaultValue = "7") int upcomingDays,
+			@RequestParam(name = "inactivityDays", defaultValue = "90") int inactivityDays) {
+		return patientService.kpis(upcomingDays, inactivityDays);
 	}
 
 	@PostMapping

@@ -140,6 +140,28 @@ class PatientControllerTest {
 				.andExpect(jsonPath("$.message").value("Ya existe un paciente con ese DUI"));
 	}
 
+	@Test
+	void kpisReturnsSummary() throws Exception {
+		String token = bearer();
+		mockMvc.perform(post("/api/patients")
+				.header("Authorization", token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"firstName":"Sara","lastName":"Arias"}
+						"""))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(get("/api/patients/kpis")
+				.header("Authorization", token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalPatients").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+				.andExpect(jsonPath("$.newPatientsThisMonth").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+				.andExpect(jsonPath("$.patientsWithUpcomingAppointment").value(org.hamcrest.Matchers.greaterThanOrEqualTo(0)))
+				.andExpect(jsonPath("$.inactivePatients").value(org.hamcrest.Matchers.greaterThanOrEqualTo(0)))
+				.andExpect(jsonPath("$.upcomingDays").value(7))
+				.andExpect(jsonPath("$.inactivityDays").value(90));
+	}
+
 	private String bearer() throws Exception {
 		MvcResult result = mockMvc.perform(post("/api/sign-in")
 				.contentType(MediaType.APPLICATION_JSON)

@@ -1,5 +1,6 @@
 import ApiService from './ApiService'
 import type {
+    PatientKpis,
     Patient,
     PatientListParams,
     PatientPage,
@@ -9,6 +10,16 @@ import type {
 export async function apiGetPatients(params: PatientListParams) {
     return ApiService.fetchData<PatientPage>({
         url: '/patients',
+        method: 'get',
+        params,
+    })
+}
+
+export async function apiGetPatientKpis(
+    params?: { upcomingDays?: number; inactivityDays?: number },
+) {
+    return ApiService.fetchData<PatientKpis>({
+        url: '/patients/kpis',
         method: 'get',
         params,
     })
