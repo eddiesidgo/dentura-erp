@@ -3,6 +3,7 @@
         "home": "Inicio",
         "patients": "Pacientes",
         "agenda": "Agenda",
+        "treatments": "Tratamientos",
         "roles": "Roles y permisos"
     }
 }

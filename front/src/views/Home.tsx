@@ -1,5 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { HiOutlineCalendar, HiOutlineUserGroup } from 'react-icons/hi'
+import {
+    HiOutlineCalendar,
+    HiOutlineClipboardList,
+    HiOutlineUserGroup,
+} from 'react-icons/hi'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import Button from '@/components/ui/Button'
 import useThemeClass from '@/utils/hooks/useThemeClass'
@@ -12,8 +16,8 @@ const Home = () => {
         <AdaptableCard>
             <h4 className={`mb-2 ${pageTitleTheme}`}>Dentura ERP</h4>
             <p className="mb-6">
-                Pacientes y agenda de la clínica, con roles y datos separados
-                por tenant.
+                Pacientes, agenda y catálogo de tratamientos, con roles y datos
+                separados por clínica.
             </p>
             <div className="flex flex-wrap gap-2">
                 <Button
@@ -29,6 +33,13 @@ const Home = () => {
                     onClick={() => navigate('/agenda')}
                 >
                     Agenda
+                </Button>
+                <Button
+                    variant="twoTone"
+                    icon={<HiOutlineClipboardList />}
+                    onClick={() => navigate('/tratamientos')}
+                >
+                    Tratamientos
                 </Button>
             </div>
         </AdaptableCard>

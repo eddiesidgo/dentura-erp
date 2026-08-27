@@ -2,6 +2,7 @@ import { lazy } from 'react'
 import authRoute from './authRoute'
 import {
     AGENDA_READ,
+    CATALOG_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
     ROLES_MANAGE,
@@ -56,6 +57,15 @@ export const protectedRoutes = [
         authority: [AGENDA_READ],
         meta: {
             header: 'Agenda',
+        },
+    },
+    {
+        key: 'treatments',
+        path: '/tratamientos',
+        component: lazy(() => import('@/views/treatments/TreatmentList')),
+        authority: [CATALOG_READ],
+        meta: {
+            header: 'Tratamientos',
         },
     },
     {

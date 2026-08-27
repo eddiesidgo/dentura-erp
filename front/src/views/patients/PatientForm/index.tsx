@@ -14,6 +14,7 @@ import {
     Input,
     Notification,
     Select,
+    Tabs,
     toast,
 } from '@/components/ui'
 import {
@@ -24,6 +25,10 @@ import {
 } from '@/services/PatientService'
 import { departmentOptions, sexOptions } from '../constants'
 import type { PatientPayload } from '@/@types/patient'
+import PatientWorks from './PatientWorks'
+import { WORKS_READ } from '@/constants/roles.constant'
+import { useAppSelector } from '@/store'
+import useAuthority from '@/utils/hooks/useAuthority'
 
 type FormModel = {
     recordNumber: string
@@ -95,6 +100,9 @@ const PatientForm = () => {
     const { patientId } = useParams()
     const navigate = useNavigate()
     const isEdit = Boolean(patientId)
+    const userAuthority =
+        useAppSelector((state) => state.auth.user.authority) || []
+    const canReadWorks = useAuthority(userAuthority, [WORKS_READ])
     const [loading, setLoading] = useState(isEdit)
     const [initialValues, setInitialValues] = useState<FormModel>(emptyValues)
 
@@ -150,11 +158,47 @@ const PatientForm = () => {
 
     return (
         <Loading loading={loading}>
-            <Formik
-                enableReinitialize
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                onSubmit={async (values, { setSubmitting }) => {
+            {isEdit && canReadWorks ? (
+                <Tabs defaultValue="datos">
+                    <Tabs.TabList>
+                        <Tabs.TabNav value="datos">Datos</Tabs.TabNav>
+                        <Tabs.TabNav value="trabajos">Trabajos</Tabs.TabNav>
+                    </Tabs.TabList>
+                    <div className="mt-4">
+                        <Tabs.TabContent value="datos">
+                            <PatientDataForm
+                                isEdit
+                                initialValues={initialValues}
+                            />
+                        </Tabs.TabContent>
+                        <Tabs.TabContent value="trabajos">
+                            <PatientWorks patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    </div>
+                </Tabs>
+            ) : (
+                <PatientDataForm isEdit={isEdit} initialValues={initialValues} />
+            )}
+        </Loading>
+    )
+}
+
+const PatientDataForm = ({
+    isEdit,
+    initialValues,
+}: {
+    isEdit: boolean
+    initialValues: FormModel
+}) => {
+    const navigate = useNavigate()
+    const { patientId } = useParams()
+
+    return (
+        <Formik
+            enableReinitialize
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={async (values, { setSubmitting }) => {
                     try {
                         const payload = toPayload(values)
                         if (isEdit && patientId) {
@@ -437,7 +481,6 @@ const PatientForm = () => {
                     </Form>
                 )}
             </Formik>
-        </Loading>
     )
 }
 

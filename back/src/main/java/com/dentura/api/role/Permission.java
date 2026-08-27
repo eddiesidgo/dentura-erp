@@ -18,6 +18,12 @@ public class Permission {
 	public static final String AGENDA_READ = "agenda.read";
 	public static final String AGENDA_WRITE = "agenda.write";
 	public static final String AGENDA_DELETE = "agenda.delete";
+	public static final String CATALOG_READ = "catalog.read";
+	public static final String CATALOG_WRITE = "catalog.write";
+	public static final String CATALOG_DELETE = "catalog.delete";
+	public static final String WORKS_READ = "works.read";
+	public static final String WORKS_WRITE = "works.write";
+	public static final String WORKS_DELETE = "works.delete";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

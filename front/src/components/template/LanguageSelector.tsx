@@ -50,14 +50,19 @@ const LanguageSelectorInner = ({ className }: CommonProps) => {
             setLoading(false)
         }
 
-        dateLocales[formattedLang]()
-            .then(() => {
-                dayjs.locale(formattedLang)
-                dispatchLang()
-            })
-            .catch(() => {
-                dispatchLang()
-            })
+        const loadLocale = dateLocales[formattedLang]
+        if (typeof loadLocale === 'function') {
+            loadLocale()
+                .then(() => {
+                    dayjs.locale(formattedLang)
+                    dispatchLang()
+                })
+                .catch(() => {
+                    dispatchLang()
+                })
+        } else {
+            dispatchLang()
+        }
     }
 
     return (

@@ -27,6 +27,12 @@ public class RoleCatalog {
 		ensurePermission(Permission.AGENDA_READ, "Ver agenda", "Consulta el calendario de citas");
 		ensurePermission(Permission.AGENDA_WRITE, "Editar agenda", "Crea y actualiza citas");
 		ensurePermission(Permission.AGENDA_DELETE, "Eliminar citas", "Elimina citas del calendario");
+		ensurePermission(Permission.CATALOG_READ, "Ver catálogo", "Consulta el catálogo de tratamientos");
+		ensurePermission(Permission.CATALOG_WRITE, "Editar catálogo", "Crea y actualiza tratamientos");
+		ensurePermission(Permission.CATALOG_DELETE, "Eliminar tratamientos", "Elimina tratamientos del catálogo");
+		ensurePermission(Permission.WORKS_READ, "Ver trabajos", "Consulta el plan de tratamientos del paciente");
+		ensurePermission(Permission.WORKS_WRITE, "Editar trabajos", "Crea y actualiza trabajos del paciente");
+		ensurePermission(Permission.WORKS_DELETE, "Eliminar trabajos", "Elimina trabajos del plan del paciente");
 	}
 
 	@Transactional
@@ -57,6 +63,9 @@ public class RoleCatalog {
 		permissionRepository.findByCode(Permission.PATIENTS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.AGENDA_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.AGENDA_WRITE).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.CATALOG_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.WORKS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.WORKS_WRITE).ifPresent(receptionPerms::add);
 		reception.setPermissions(receptionPerms);
 		roleRepository.save(reception);
 	}

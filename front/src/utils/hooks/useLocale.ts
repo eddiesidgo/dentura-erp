@@ -1,24 +1,40 @@
 import { useEffect } from 'react'
- 
 import i18n from 'i18next'
 import dayjs from 'dayjs'
 import { dateLocales } from '@/locales'
-import { useAppSelector } from '@/store'
+import { setLang, useAppDispatch, useAppSelector } from '@/store'
 
 function useLocale() {
-    const locale = useAppSelector((state) => state.locale.currentLang)
+    const locale = useAppSelector((state) => state.locale.currentLang) || 'en'
+    const dispatch = useAppDispatch()
 
     useEffect(() => {
-        const formattedLang = locale.replace(/-([a-z])/g, function (g) {
-            return g[1].toUpperCase()
-        })
-        if (locale !== i18n.language) {
-            i18n.changeLanguage(formattedLang)
+        const formattedLang = String(locale).replace(/-([a-z])/g, (g) =>
+            g[1].toUpperCase(),
+        )
+        const loadLocale =
+            dateLocales[formattedLang] ?? dateLocales[locale] ?? dateLocales.en
+        const resolvedLang = dateLocales[formattedLang]
+            ? formattedLang
+            : dateLocales[locale]
+              ? locale
+              : 'en'
+
+        if (resolvedLang !== locale) {
+            dispatch(setLang(resolvedLang))
+            return
         }
-        dateLocales[formattedLang]().then(() => {
-            dayjs.locale(formattedLang)
-        })
-    }, [locale])
+
+        if (resolvedLang !== i18n.language) {
+            i18n.changeLanguage(resolvedLang)
+        }
+
+        if (typeof loadLocale === 'function') {
+            loadLocale().then(() => {
+                dayjs.locale(resolvedLang)
+            })
+        }
+    }, [locale, dispatch])
 
     return locale
 }

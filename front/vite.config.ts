@@ -19,6 +19,9 @@ export default defineConfig({
       '@': path.join(__dirname, 'src'),
     },
   },
+  optimizeDeps: {
+    include: ['react-number-format'],
+  },
   server: {
     host: true,
     port: 5173,

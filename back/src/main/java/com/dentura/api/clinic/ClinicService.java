@@ -16,6 +16,7 @@ import com.dentura.api.clinic.dto.UpdateClinicRequest;
 import com.dentura.api.domain.User;
 import com.dentura.api.role.PermissionService;
 import com.dentura.api.role.RoleCatalog;
+import com.dentura.api.treatment.TreatmentSeeder;
 
 @Service
 public class ClinicService {
@@ -27,18 +28,21 @@ public class ClinicService {
 	private final JwtService jwtService;
 	private final RoleCatalog roleCatalog;
 	private final PermissionService permissionService;
+	private final TreatmentSeeder treatmentSeeder;
 
 	public ClinicService(
 			ClinicRepository clinicRepository,
 			ClinicAccess clinicAccess,
 			JwtService jwtService,
 			RoleCatalog roleCatalog,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			TreatmentSeeder treatmentSeeder) {
 		this.clinicRepository = clinicRepository;
 		this.clinicAccess = clinicAccess;
 		this.jwtService = jwtService;
 		this.roleCatalog = roleCatalog;
 		this.permissionService = permissionService;
+		this.treatmentSeeder = treatmentSeeder;
 	}
 
 	@Transactional(readOnly = true)
@@ -71,6 +75,7 @@ public class ClinicService {
 		clinic.setName(request.name().trim());
 		Clinic saved = clinicRepository.save(clinic);
 		roleCatalog.ensureClinicRoles(saved.getId());
+		treatmentSeeder.ensureClinicCatalog(saved.getId());
 		return ClinicIdentityResponse.from(saved);
 	}
 
