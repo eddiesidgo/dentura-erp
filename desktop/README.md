@@ -23,11 +23,11 @@ cd desktop
 npm install
 npm start                 # usa JAR existente (o lo compila si falta)
 npm run start:rebuild     # fuerza mvn package y luego Electron
-npm run start:ui-dev      # JAR + UI en Vite http://localhost:5173
+npm run start:ui-dev      # JAR + Vite (auto) + UI en http://localhost:5173
 ```
 
 Con el front todavía no embebido en el JAR, `npm start` abre `http://127.0.0.1:8080/` (API).  
-Para ver la plantilla React: levanta Vite en `front/` y usa `npm run start:ui-dev`.
+`start:ui-dev` levanta Vite en `front/` si aún no está corriendo (o reutiliza uno existente).
 
 ## Variables
 

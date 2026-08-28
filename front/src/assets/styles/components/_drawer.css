@@ -1,9 +1,13 @@
 @layer components {
+  .drawer {
+    @apply outline-none border-0 p-0 bg-transparent overflow-hidden;
+  }
+
   .drawer-content {
     @apply bg-white dark:bg-gray-800 shadow-xl absolute flex flex-col;
 
     &.vertical {
-      @apply h-full;
+      @apply h-full top-0;
     }
 
     &.horizontal {
@@ -30,8 +34,8 @@
   }
 
   .drawer-overlay {
-    transition: all 0.3s ease-in-out;
-    @apply bg-black/80 top-0 bottom-0 left-0 right-0 fixed z-30;
+    transition: opacity 0.3s ease-in-out;
+    @apply bg-black/80 inset-0 fixed z-30;
   }
 
   .drawer-overlay-after-open {

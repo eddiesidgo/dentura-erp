@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import FormDrawer from '@/components/shared/FormDrawer'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
     Checkbox,
-    Dialog,
     Input,
     Notification,
     Select,
+    Tag,
     toast,
 } from '@/components/ui'
 import useThemeClass from '@/utils/hooks/useThemeClass'
@@ -25,7 +26,7 @@ import {
     type Permission,
     type Role,
 } from '@/services/RoleService'
-import { HiPlusCircle } from 'react-icons/hi'
+import { HiOutlineKey, HiPlusCircle } from 'react-icons/hi'
 import { useAppSelector } from '@/store'
 
 type RoleOption = { label: string; value: number }
@@ -224,9 +225,13 @@ const RoleList = () => {
                                         <div className="font-semibold">
                                             {role.name}
                                         </div>
-                                        <div className="text-xs opacity-70">
-                                            {role.code}
-                                            {role.systemRole ? ' · sistema' : ''}
+                                        <div className="text-xs opacity-70 flex flex-wrap items-center gap-1.5 mt-0.5">
+                                            <span>{role.code}</span>
+                                            {role.systemRole ? (
+                                                <Tag className="border-0 bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-100 text-xs">
+                                                    sistema
+                                                </Tag>
+                                            ) : null}
                                         </div>
                                     </td>
                                     <td className="py-3 pr-4">
@@ -306,12 +311,15 @@ const RoleList = () => {
                 </div>
             </AdaptableCard>
 
-            <Dialog
+            <FormDrawer
                 isOpen={dialogOpen}
+                accent="violet"
+                icon={<HiOutlineKey />}
+                title={form.id ? 'Editar rol' : 'Nuevo rol'}
+                saving={saving}
                 onClose={() => setDialogOpen(false)}
-                onRequestClose={() => setDialogOpen(false)}
+                onSave={saveRole}
             >
-                <h5 className="mb-4">{form.id ? 'Editar rol' : 'Nuevo rol'}</h5>
                 <div className="flex flex-col gap-3">
                     <Input
                         placeholder="código (ej. caja)"
@@ -338,7 +346,7 @@ const RoleList = () => {
                             }))
                         }
                     />
-                    <div>
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
                         <div className="font-semibold mb-2">Permisos</div>
                         <Checkbox.Group
                             vertical
@@ -370,23 +378,8 @@ const RoleList = () => {
                             ))}
                         </Checkbox.Group>
                     </div>
-                    <div className="text-right mt-2">
-                        <Button
-                            className="mr-2"
-                            onClick={() => setDialogOpen(false)}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={saving}
-                            onClick={saveRole}
-                        >
-                            Guardar
-                        </Button>
-                    </div>
                 </div>
-            </Dialog>
+            </FormDrawer>
 
             <ConfirmDialog
                 isOpen={Boolean(toDelete)}

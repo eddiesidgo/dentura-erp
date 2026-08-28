@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import FormDrawer from '@/components/shared/FormDrawer'
 import {
     Button,
     DatePicker,
-    Dialog,
     Input,
     Select,
     Tag,
 } from '@/components/ui'
+import { HiOutlineCalendar } from 'react-icons/hi'
 import { apiGetPatients } from '@/services/PatientService'
 import { statusOptions, statusTagClass } from '../constants'
 import type { AppointmentStatus } from '@/@types/appointment'
@@ -25,7 +26,7 @@ export type AppointmentForm = {
     notes: string
 }
 
-type AppointmentDialogProps = {
+type AppointmentDrawerProps = {
     isOpen: boolean
     saving: boolean
     canDelete: boolean
@@ -41,7 +42,7 @@ const toOption = (patient: Patient): PatientOption => ({
     label: `${patient.lastName}, ${patient.firstName} (${patient.recordNumber})`,
 })
 
-const AppointmentDialog = ({
+const AppointmentDrawer = ({
     isOpen,
     saving,
     canDelete,
@@ -50,7 +51,7 @@ const AppointmentDialog = ({
     onClose,
     onSave,
     onDelete,
-}: AppointmentDialogProps) => {
+}: AppointmentDrawerProps) => {
     const navigate = useNavigate()
     const [patientOptions, setPatientOptions] = useState<PatientOption[]>([])
 
@@ -95,34 +96,49 @@ const AppointmentDialog = ({
         }
     }
 
+    const statusTag = (
+        <Tag className={statusTagClass[form.status]}>
+            {statusOptions.find((option) => option.value === form.status)
+                ?.label || form.status}
+        </Tag>
+    )
+
     return (
-        <Dialog
+        <FormDrawer
             isOpen={isOpen}
-            width={560}
-            onClose={onClose}
-            onRequestClose={onClose}
-        >
-            <div className="flex items-start justify-between gap-3 mb-5">
-                <div>
-                    <h5 className="mb-1">
-                        {form.id ? 'Editar cita' : 'Nueva cita'}
-                    </h5>
-                    <Tag className={statusTagClass[form.status]}>
-                        {statusOptions.find(
-                            (option) => option.value === form.status,
-                        )?.label || form.status}
-                    </Tag>
+            accent="sky"
+            icon={<HiOutlineCalendar />}
+            title={form.id ? 'Editar cita' : 'Nueva cita'}
+            subtitle={statusTag}
+            saving={saving}
+            saveDisabled={!form.patientId || !form.start || !form.end}
+            footerStart={
+                <div className="flex items-center gap-2">
+                    {form.id && canDelete ? (
+                        <Button
+                            variant="plain"
+                            className="text-red-500"
+                            onClick={onDelete}
+                        >
+                            Eliminar
+                        </Button>
+                    ) : null}
+                    {form.patientId ? (
+                        <Button
+                            size="sm"
+                            variant="plain"
+                            onClick={() =>
+                                navigate(`/pacientes/${form.patientId}`)
+                            }
+                        >
+                            Ver ficha
+                        </Button>
+                    ) : null}
                 </div>
-                {form.patientId ? (
-                    <Button
-                        size="sm"
-                        variant="plain"
-                        onClick={() => navigate(`/pacientes/${form.patientId}`)}
-                    >
-                        Ver ficha
-                    </Button>
-                ) : null}
-            </div>
+            }
+            onClose={onClose}
+            onSave={onSave}
+        >
             <div className="flex flex-col gap-4">
                 <div>
                     <div className="mb-1.5 text-sm font-semibold">Paciente</div>
@@ -205,37 +221,9 @@ const AppointmentDialog = ({
                         }
                     />
                 </div>
-                <div className="flex justify-between mt-1">
-                    {form.id && canDelete ? (
-                        <Button
-                            variant="plain"
-                            className="text-red-500"
-                            onClick={onDelete}
-                        >
-                            Eliminar
-                        </Button>
-                    ) : (
-                        <span />
-                    )}
-                    <div>
-                        <Button className="mr-2" onClick={onClose}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={saving}
-                            disabled={
-                                !form.patientId || !form.start || !form.end
-                            }
-                            onClick={onSave}
-                        >
-                            Guardar
-                        </Button>
-                    </div>
-                </div>
             </div>
-        </Dialog>
+        </FormDrawer>
     )
 }
 
-export default AppointmentDialog
+export default AppointmentDrawer

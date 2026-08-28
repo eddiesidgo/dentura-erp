@@ -30,6 +30,7 @@ type Shortcut = {
     path: string
     icon: React.ReactNode
     authority: string[]
+    accent: 'sky' | 'emerald' | 'amber' | 'violet'
 }
 
 type HomeKpiCardProps = {
@@ -37,6 +38,26 @@ type HomeKpiCardProps = {
     value: number
     helper: string
     loading: boolean
+    tone?: 'sky' | 'emerald' | 'amber' | 'indigo'
+}
+
+const shortcutAccent: Record<Shortcut['accent'], string> = {
+    sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+    emerald:
+        'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+    amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+    violet:
+        'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+}
+
+const kpiToneClass: Record<
+    NonNullable<HomeKpiCardProps['tone']>,
+    string
+> = {
+    sky: 'border-l-sky-500',
+    emerald: 'border-l-emerald-500',
+    amber: 'border-l-amber-500',
+    indigo: 'border-l-indigo-500',
 }
 
 const numberFormatter = new Intl.NumberFormat('es-SV')
@@ -48,6 +69,7 @@ const shortcuts: Shortcut[] = [
         path: '/pacientes',
         icon: <HiOutlineUserGroup className="text-2xl" />,
         authority: [PATIENTS_READ],
+        accent: 'sky',
     },
     {
         title: 'Agenda',
@@ -55,6 +77,7 @@ const shortcuts: Shortcut[] = [
         path: '/agenda',
         icon: <HiOutlineCalendar className="text-2xl" />,
         authority: [AGENDA_READ],
+        accent: 'emerald',
     },
     {
         title: 'Tratamientos',
@@ -62,6 +85,7 @@ const shortcuts: Shortcut[] = [
         path: '/tratamientos',
         icon: <HiOutlineClipboardList className="text-2xl" />,
         authority: [CATALOG_READ],
+        accent: 'amber',
     },
     {
         title: 'Roles',
@@ -69,6 +93,7 @@ const shortcuts: Shortcut[] = [
         path: '/roles',
         icon: <HiOutlineKey className="text-2xl" />,
         authority: [ROLES_MANAGE],
+        accent: 'violet',
     },
 ]
 
@@ -82,8 +107,17 @@ const canAccess = (userAuthority: string[], authority: string[]) => {
     return authority.some((code) => userAuthority.includes(code))
 }
 
-const HomeKpiCard = ({ title, value, helper, loading }: HomeKpiCardProps) => (
-    <Card bodyClass="p-4">
+const HomeKpiCard = ({
+    title,
+    value,
+    helper,
+    loading,
+    tone = 'indigo',
+}: HomeKpiCardProps) => (
+    <Card
+        bodyClass="p-4"
+        className={`border-l-4 ${kpiToneClass[tone]} border-gray-200 dark:border-gray-600`}
+    >
         <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {title}
         </div>
@@ -180,7 +214,7 @@ const Home = () => {
     return (
         <div>
             <div className="mb-6">
-                <div className="rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm">
+                <div className="rounded-2xl p-5 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/80 border border-gray-200 dark:border-gray-600 shadow-sm">
                     <div className="lg:flex items-start justify-between gap-4">
                         <div>
                             <IconText
@@ -216,12 +250,14 @@ const Home = () => {
                                 value={patientKpis?.totalPatients ?? 0}
                                 helper="Base de la clínica"
                                 loading={kpiLoading}
+                                tone="sky"
                             />
                             <HomeKpiCard
                                 title="Nuevos este mes"
                                 value={patientKpis?.newPatientsThisMonth ?? 0}
                                 helper="Altas del mes en curso"
                                 loading={kpiLoading}
+                                tone="indigo"
                             />
                         </>
                     )}
@@ -232,12 +268,14 @@ const Home = () => {
                                 value={todayAppointments}
                                 helper="Agenda del día"
                                 loading={kpiLoading}
+                                tone="emerald"
                             />
                             <HomeKpiCard
                                 title="Próximos 7 días"
                                 value={upcomingAppointments}
                                 helper="Citas programadas"
                                 loading={kpiLoading}
+                                tone="amber"
                             />
                         </>
                     )}
@@ -279,7 +317,7 @@ const Home = () => {
                         onClick={() => navigate(item.path)}
                     >
                         <div
-                            className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 ${textTheme}`}
+                            className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg ${shortcutAccent[item.accent]}`}
                         >
                             {item.icon}
                         </div>

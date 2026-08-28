@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import FormDrawer from '@/components/shared/FormDrawer'
 import FormNumericInput from '@/components/shared/FormNumericInput'
 import IconText from '@/components/shared/IconText'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
-    Dialog,
     Input,
     Notification,
     Select,
@@ -386,15 +386,21 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
                 </div>
             </AdaptableCard>
 
-            <Dialog
+            <FormDrawer
                 isOpen={dialogOpen}
-                width={560}
+                accent="emerald"
+                icon={<HiOutlineClipboardList />}
+                title={form.id ? 'Editar trabajo' : 'Agregar trabajo'}
+                subtitle={
+                    <Tag className={workStatusClass[form.status]}>
+                        {workStatusLabel(form.status)}
+                    </Tag>
+                }
+                saving={saving}
+                saveDisabled={!form.treatmentId}
                 onClose={() => setDialogOpen(false)}
-                onRequestClose={() => setDialogOpen(false)}
+                onSave={saveWork}
             >
-                <h5 className="mb-4">
-                    {form.id ? 'Editar trabajo' : 'Agregar trabajo'}
-                </h5>
                 <div className="flex flex-col gap-3">
                     <div>
                         <div className="mb-1 font-semibold">Tratamiento</div>
@@ -498,23 +504,8 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
                             }
                         />
                     </div>
-                    <div className="text-right mt-2">
-                        <Button
-                            className="mr-2"
-                            onClick={() => setDialogOpen(false)}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={saving}
-                            onClick={saveWork}
-                        >
-                            Guardar
-                        </Button>
-                    </div>
                 </div>
-            </Dialog>
+            </FormDrawer>
 
             <ConfirmDialog
                 isOpen={Boolean(toDelete)}
@@ -553,21 +544,27 @@ const SummaryCard = ({
 }) => {
     const toneClass =
         tone === 'amber'
-            ? 'border-amber-200 dark:border-amber-700/50'
+            ? 'border-amber-200 bg-amber-50/60 dark:border-amber-700/50 dark:bg-amber-500/10'
             : tone === 'emerald'
-              ? 'border-emerald-200 dark:border-emerald-700/50'
+              ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-700/50 dark:bg-emerald-500/10'
               : tone === 'red'
-                ? 'border-red-200 dark:border-red-700/50'
+                ? 'border-red-200 bg-red-50/60 dark:border-red-700/50 dark:bg-red-500/10'
                 : 'border-gray-200 dark:border-gray-600'
+    const labelClass =
+        tone === 'amber'
+            ? 'text-amber-700 dark:text-amber-200'
+            : tone === 'emerald'
+              ? 'text-emerald-700 dark:text-emerald-200'
+              : tone === 'red'
+                ? 'text-red-700 dark:text-red-200'
+                : 'text-gray-500 dark:text-gray-400'
     return (
         <div
             className={`rounded-lg border p-3.5 ${toneClass} ${
-                emphasis ? 'bg-gray-50 dark:bg-gray-700/60' : ''
+                emphasis ? 'ring-1 ring-gray-200 dark:ring-gray-600' : ''
             }`}
         >
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {label}
-            </div>
+            <div className={`text-xs mb-1 ${labelClass}`}>{label}</div>
             <div className="text-base font-semibold tabular-nums">{value}</div>
         </div>
     )

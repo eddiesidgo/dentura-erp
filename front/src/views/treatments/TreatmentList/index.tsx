@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DataTable from '@/components/shared/DataTable'
+import FormDrawer from '@/components/shared/FormDrawer'
 import FormNumericInput from '@/components/shared/FormNumericInput'
 import IconText from '@/components/shared/IconText'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
-    Dialog,
     Input,
     Notification,
     Segment,
@@ -396,14 +396,28 @@ const TreatmentList = () => {
                 )}
             </AdaptableCard>
 
-            <Dialog
+            <FormDrawer
                 isOpen={dialogOpen}
+                accent="amber"
+                icon={<HiOutlineClipboardList />}
+                title={
+                    form.id ? 'Editar tratamiento' : 'Nuevo tratamiento'
+                }
+                subtitle={
+                    <Tag
+                        className={
+                            form.active
+                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-100 border-0'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-100 border-0'
+                        }
+                    >
+                        {form.active ? 'Activo' : 'Inactivo'}
+                    </Tag>
+                }
+                saving={saving}
                 onClose={() => setDialogOpen(false)}
-                onRequestClose={() => setDialogOpen(false)}
+                onSave={saveTreatment}
             >
-                <h5 className="mb-5">
-                    {form.id ? 'Editar tratamiento' : 'Nuevo tratamiento'}
-                </h5>
                 <div className="flex flex-col gap-4">
                     <div>
                         <div className="mb-1.5 text-sm font-semibold">Código</div>
@@ -446,7 +460,7 @@ const TreatmentList = () => {
                             }
                         />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-600 px-4 py-3">
                         <span className="text-sm font-semibold">Activo</span>
                         <Switcher
                             checked={form.active}
@@ -458,23 +472,8 @@ const TreatmentList = () => {
                             }
                         />
                     </div>
-                    <div className="text-right mt-1">
-                        <Button
-                            className="mr-2"
-                            onClick={() => setDialogOpen(false)}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={saving}
-                            onClick={saveTreatment}
-                        >
-                            Guardar
-                        </Button>
-                    </div>
                 </div>
-            </Dialog>
+            </FormDrawer>
 
             <ConfirmDialog
                 isOpen={Boolean(toDelete)}

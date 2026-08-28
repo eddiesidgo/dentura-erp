@@ -91,6 +91,23 @@ const Drawer = (props: DrawerProps) => {
 
     const { dimensionClass, contentStyle, motionStyle } = getStyle()
 
+    const anchorStyle =
+        placement === 'right'
+            ? { top: 0, left: 'auto' as const }
+            : placement === 'left'
+              ? { top: 0, right: 'auto' as const }
+              : placement === 'top'
+                ? { left: 0, bottom: 'auto' as const }
+                : placement === 'bottom'
+                  ? { left: 0, top: 'auto' as const }
+                  : {}
+
+    const motionTransition = {
+        type: 'tween' as const,
+        duration: closeTimeoutMS / 1000,
+        ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
+    }
+
     return (
         <Modal
             className={{
@@ -113,6 +130,16 @@ const Drawer = (props: DrawerProps) => {
                 lockScroll && 'drawer-lock-scroll',
                 bodyOpenClassName,
             )}
+            style={{
+                content: {
+                    position: 'fixed',
+                    inset: 0,
+                    padding: 0,
+                    border: 'none',
+                    background: 'transparent',
+                    overflow: 'hidden',
+                },
+            }}
             ariaHideApp={false}
             isOpen={isOpen}
             closeTimeoutMS={closeTimeoutMS}
@@ -120,13 +147,14 @@ const Drawer = (props: DrawerProps) => {
         >
             <motion.div
                 className={classNames('drawer-content', dimensionClass)}
-                style={contentStyle}
+                style={{ ...contentStyle, ...anchorStyle }}
                 initial={motionStyle}
                 animate={{
                     [placement as 'top' | 'right' | 'bottom' | 'left']: isOpen
                         ? 0
                         : motionStyle[placement],
                 }}
+                transition={motionTransition}
             >
                 {title || closable ? (
                     <div className={classNames('drawer-header', headerClass)}>

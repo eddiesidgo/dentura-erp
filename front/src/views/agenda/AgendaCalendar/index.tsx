@@ -24,9 +24,9 @@ import {
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
 import useThemeClass from '@/utils/hooks/useThemeClass'
-import AppointmentDialog, {
+import AppointmentDrawer, {
     type AppointmentForm,
-} from './AppointmentDialog'
+} from './AppointmentDrawer'
 import { statusColor, statusOptions, statusTagClass } from '../constants'
 import type { Appointment, AppointmentStatus } from '@/@types/appointment'
 
@@ -298,7 +298,7 @@ const AgendaCalendar = () => {
                     eventResize={(info) => persistMove(info)}
                 />
             </AdaptableCard>
-            <AppointmentDialog
+            <AppointmentDrawer
                 isOpen={dialogOpen}
                 saving={saving}
                 canDelete={canDelete}

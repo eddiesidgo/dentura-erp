@@ -10,6 +10,7 @@ export { default as DataTable } from './DataTable'
 export { default as DoubleSidedImage } from './DoubleSidedImage'
 export { default as EllipsisButton } from './EllipsisButton'
 export { default as FormCustomFormatInput } from './FormCustomFormatInput'
+export { default as FormDrawer } from './FormDrawer'
 export { default as FormNumericInput } from './FormNumericInput'
 export { default as FormPatternInput } from './FormPatternInput'
 export { default as GrowShrinkTag } from './GrowShrinkTag'
@@ -31,6 +32,7 @@ export { default as TextBlockSkeleton } from './loaders/TextBlockSkeleton'
 export { default as TextEllipsis } from './TextEllipsis'
 export { default as UsersAvatarGroup } from './UsersAvatarGroup'
 
+export type { FormDrawerAccent } from './FormDrawer'
 export type {
     DataTableResetHandle,
     OnSortParam,
