@@ -10,6 +10,9 @@ public final class ReportFormat {
 
 	private static final ZoneId ZONE = ZoneId.of("America/El_Salvador");
 	private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.forLanguageTag("es-SV"));
+	private static final DateTimeFormatter LONG_DATE = DateTimeFormatter
+			.ofPattern("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es"));
+
 	private static final DateTimeFormatter DATETIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-SV"));
 
 	private ReportFormat() {
@@ -34,6 +37,13 @@ public final class ReportFormat {
 			return "—";
 		}
 		return DATETIME.format(instant.atZone(ZONE));
+	}
+
+	public static String longDate(Instant instant) {
+		if (instant == null) {
+			return "—";
+		}
+		return LONG_DATE.format(instant.atZone(ZONE));
 	}
 
 	public static String statusLabel(String status) {

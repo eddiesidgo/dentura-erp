@@ -19,6 +19,9 @@ import com.dentura.api.clinic.ClinicService;
 import com.dentura.api.patient.Patient;
 import com.dentura.api.patient.PatientRepository;
 import com.dentura.api.report.dto.ClinicLetterhead;
+import com.dentura.api.report.dto.PatientQuotationResponse;
+import com.dentura.api.report.dto.ReportClinicView;
+import com.dentura.api.report.dto.ReportDocumentResponse;
 import com.dentura.api.report.dto.StatusSummaryRow;
 import com.dentura.api.report.dto.WorkReportRow;
 import com.dentura.api.role.Permission;
@@ -115,7 +118,19 @@ public class ReportService {
 
 	@Transactional(readOnly = true)
 	public ClinicLetterhead letterhead() {
-		Clinic clinic = clinicService.requireById(clinicAccess.requireClinicId());
+		return toLetterhead(requireClinic());
+	}
+
+	@Transactional(readOnly = true)
+	public ReportClinicView clinicView() {
+		return toClinicView(requireClinic());
+	}
+
+	private Clinic requireClinic() {
+		return clinicService.requireById(clinicAccess.requireClinicId());
+	}
+
+	private ClinicLetterhead toLetterhead(Clinic clinic) {
 		String cityLine = joinNonBlank(clinic.getCity(), clinic.getDepartment());
 		return new ClinicLetterhead(
 				clinic.getName(),
@@ -124,6 +139,24 @@ public class ReportService {
 				cityLine,
 				clinic.getPhone(),
 				clinic.getEmail(),
+				resolveLogoDataUri(clinic));
+	}
+
+	private ReportClinicView toClinicView(Clinic clinic) {
+		String cityLine = joinNonBlank(clinic.getCity(), clinic.getDepartment());
+		String logoUrl = clinic.getLogoUrl();
+		if (logoUrl == null || logoUrl.isBlank()) {
+			logoUrl = "/api/clinics/" + clinic.getId() + "/logo";
+		}
+		return new ReportClinicView(
+				clinic.getId(),
+				clinic.getName(),
+				clinic.getNit(),
+				clinic.getAddress(),
+				cityLine,
+				clinic.getPhone(),
+				clinic.getEmail(),
+				logoUrl,
 				resolveLogoDataUri(clinic));
 	}
 

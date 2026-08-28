@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -45,11 +46,13 @@ class ReportControllerTest {
 	}
 
 	@Test
-	void listPdfWithTokenReturnsPdf() throws Exception {
-		mockMvc.perform(get("/api/reports/works/list.pdf")
+	void summaryJsonWithTokenReturnsDocument() throws Exception {
+		mockMvc.perform(get("/api/reports/works/summary.json")
 				.header("Authorization", bearer()))
 				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_PDF));
+				.andExpect(jsonPath("$.reportType").value("WORKS_SUMMARY"))
+				.andExpect(jsonPath("$.clinic.name").isString())
+				.andExpect(jsonPath("$.title").value("Resumen por estado"));
 	}
 
 	private String bearer() throws Exception {

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dentura.api.report.dto.ClinicLetterhead;
+import com.dentura.api.report.dto.PatientQuotationResponse;
+import com.dentura.api.report.dto.ReportClinicView;
+import com.dentura.api.report.dto.ReportDocumentResponse;
 import com.dentura.api.report.dto.StatusSummaryRow;
 import com.dentura.api.report.dto.WorkReportRow;
 
@@ -64,6 +67,75 @@ public class ReportPdfFacade {
 		return pdfReportService.render("reports/patient-quotation", model);
 	}
 
+	@Transactional(readOnly = true)
+	public ReportDocumentResponse worksListDocument(
+			Long patientId,
+			String status,
+			Long treatmentId,
+			Instant from,
+			Instant to,
+			String filterSummary) {
+		List<WorkReportRow> rows = reportService.worksList(patientId, status, treatmentId, from, to);
+		return baseDocument(
+				"WORKS_LIST",
+				"Listado de trabajos",
+				filterSummary,
+				"No hay trabajos para los filtros seleccionados.",
+				rows,
+				null,
+				null);
+	}
+
+	@Transactional(readOnly = true)
+	public ReportDocumentResponse worksSummaryDocument(Instant from, Instant to, String filterSummary) {
+		List<StatusSummaryRow> rows = reportService.worksSummary(from, to);
+		return baseDocument(
+				"WORKS_SUMMARY",
+				"Resumen por estado",
+				filterSummary,
+				"No hay trabajos en el período seleccionado.",
+				null,
+				rows,
+				null);
+	}
+
+	@Transactional(readOnly = true)
+	public ReportDocumentResponse patientQuotationDocument(Long patientId) {
+		ReportService.PatientQuotation quotation = reportService.quotation(patientId);
+		return baseDocument(
+				"PATIENT_QUOTATION",
+				"Cotización de tratamiento",
+				"Paciente " + quotation.patientName() + " · Exp. " + quotation.recordNumber(),
+				"Este paciente no tiene trabajos en el plan.",
+				quotation.rows(),
+				null,
+				PatientQuotationResponse.from(quotation));
+	}
+
+	private ReportDocumentResponse baseDocument(
+			String reportType,
+			String title,
+			String subtitle,
+			String emptyMessage,
+			List<WorkReportRow> rows,
+			List<StatusSummaryRow> summaryRows,
+			PatientQuotationResponse quotation) {
+		ReportClinicView clinic = reportService.clinicView();
+		Instant now = Instant.now();
+		return new ReportDocumentResponse(
+				reportType,
+				clinic,
+				title,
+				subtitle,
+				ReportFormat.dateTime(now),
+				ReportFormat.longDate(now),
+				String.valueOf(LocalDate.now(ZONE).getYear()),
+				emptyMessage,
+				rows,
+				summaryRows,
+				quotation);
+	}
+
 	private Map<String, Object> baseModel(String title, String subtitle) {
 		ClinicLetterhead clinic = reportService.letterhead();
 		Map<String, Object> model = new HashMap<>();
@@ -71,6 +143,7 @@ public class ReportPdfFacade {
 		model.put("title", title);
 		model.put("subtitle", subtitle);
 		model.put("generatedAt", ReportFormat.dateTime(Instant.now()));
+		model.put("documentDate", ReportFormat.longDate(Instant.now()));
 		model.put("year", String.valueOf(LocalDate.now(ZONE).getYear()));
 		return model;
 	}

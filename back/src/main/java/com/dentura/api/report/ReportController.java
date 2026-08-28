@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dentura.api.report.dto.ReportDocumentResponse;
+
 @RestController
 @RequestMapping("/api/reports")
 public class ReportController {
@@ -26,6 +28,34 @@ public class ReportController {
 
 	public ReportController(ReportPdfFacade reportPdfFacade) {
 		this.reportPdfFacade = reportPdfFacade;
+	}
+
+	@GetMapping(value = "/works/list.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse worksListJson(
+			@RequestParam(required = false) Long patientId,
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) Long treatmentId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		Instant fromInstant = startOfDay(from);
+		Instant toInstant = endExclusive(to);
+		String summary = buildWorksFilterSummary(status, from, to);
+		return reportPdfFacade.worksListDocument(patientId, status, treatmentId, fromInstant, toInstant, summary);
+	}
+
+	@GetMapping(value = "/works/summary.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse worksSummaryJson(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		Instant fromInstant = startOfDay(from);
+		Instant toInstant = endExclusive(to);
+		String summary = buildDateSummary(from, to);
+		return reportPdfFacade.worksSummaryDocument(fromInstant, toInstant, summary);
+	}
+
+	@GetMapping(value = "/patients/{patientId}/quotation.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse patientQuotationJson(@PathVariable Long patientId) {
+		return reportPdfFacade.patientQuotationDocument(patientId);
 	}
 
 	@GetMapping(value = "/works/list.pdf", produces = MediaType.APPLICATION_PDF_VALUE)

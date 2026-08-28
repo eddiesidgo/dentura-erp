@@ -6,6 +6,7 @@
     <th:block th:replace="~{reports/fragments :: styles}"></th:block>
 </head>
 <body>
+<th:block th:replace="~{reports/fragments :: watermark}"></th:block>
 <th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
 
 <div th:if="${#lists.isEmpty(rows)}" class="empty" th:text="${emptyMessage}">Sin datos</div>
@@ -26,16 +27,16 @@
     </thead>
     <tbody>
     <tr th:each="row : ${rows}">
-        <td th:text="${row.patientName}">Paciente</td>
+        <td class="strong" th:text="${row.patientName}">Paciente</td>
         <td class="muted" th:text="${row.recordNumber}">P-001</td>
         <td>
-            <strong th:text="${row.treatmentCode}">CONS</strong><br/>
+            <span class="strong" th:text="${row.treatmentCode}">CONS</span><br/>
             <span class="muted" th:text="${row.treatmentName}">Consulta</span>
         </td>
         <td class="text-center" th:text="${row.tooth}">—</td>
         <td class="text-center" th:text="${row.quantity}">1</td>
         <td class="text-right" th:text="${row.unitPrice}">$0.00</td>
-        <td class="text-right" th:text="${row.total}">$0.00</td>
+        <td class="text-right strong" th:text="${row.total}">$0.00</td>
         <td>
             <span class="badge"
                   th:classappend="${row.status == 'COMPLETED'} ? ' badge-completed' : (${row.status == 'REJECTED'} ? ' badge-rejected' : ' badge-pending')"
@@ -46,8 +47,6 @@
     </tbody>
 </table>
 
-<div class="footer">
-    Documento generado por Dentura ERP · <span th:text="${year}">2026</span>
-</div>
+<th:block th:replace="~{reports/fragments :: footer}"></th:block>
 </body>
 </html>

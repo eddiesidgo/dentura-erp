@@ -1,175 +1,378 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <body>
+
+<div th:fragment="watermark">
+    <div class="watermark">
+        <div class="watermark-initial" th:text="${#strings.substring(clinic.name,0,1)}">R</div>
+        <div class="watermark-name" th:text="${#strings.toUpperCase(clinic.name)}">CLÍNICA</div>
+    </div>
+</div>
+
 <div th:fragment="letterhead">
-    <div class="header">
-        <div class="header-left">
-            <img th:if="${clinic.logoDataUri != null}" th:src="${clinic.logoDataUri}" class="logo" alt="Logo"/>
-            <div th:if="${clinic.logoDataUri == null}" class="logo-placeholder" th:text="${#strings.substring(clinic.name,0,1)}">D</div>
-            <div class="clinic-meta">
-                <div class="clinic-name" th:text="${clinic.name}">Clínica</div>
-                <div class="clinic-line" th:if="${clinic.nit != null}" th:text="'NIT ' + ${clinic.nit}">NIT</div>
-                <div class="clinic-line" th:if="${clinic.addressLine != null}" th:text="${clinic.addressLine}">Dirección</div>
-                <div class="clinic-line" th:if="${clinic.cityLine != null}" th:text="${clinic.cityLine}">Ciudad</div>
-                <div class="clinic-line" th:if="${clinic.phone != null}" th:text="${clinic.phone}">Teléfono</div>
-                <div class="clinic-line" th:if="${clinic.email != null}" th:text="${clinic.email}">Email</div>
-            </div>
+    <div class="letterhead">
+        <div th:if="${clinic.logoDataUri != null}" class="logo-wrap">
+            <img th:src="${clinic.logoDataUri}" class="logo" alt="Logo"/>
         </div>
-        <div class="header-right">
-            <div class="doc-title" th:text="${title}">Título</div>
-            <div class="doc-subtitle" th:if="${subtitle != null}" th:text="${subtitle}">Subtítulo</div>
-            <div class="doc-meta">Generado: <span th:text="${generatedAt}">fecha</span></div>
+        <div class="clinic-title" th:text="${clinic.name}">Clínica dental</div>
+        <div class="clinic-tagline">Odontología · Plan de tratamiento</div>
+        <div class="letterhead-rule"></div>
+    </div>
+
+    <div class="doc-date">
+        <span th:if="${clinic.cityLine != null}" th:text="|${clinic.cityLine}, |">San Salvador, </span>
+        <span th:if="${clinic.cityLine == null}">San Salvador, </span>
+        <span th:text="${documentDate}">28 de agosto de 2026</span>
+    </div>
+
+    <div class="doc-heading">
+        <div class="doc-title" th:text="${title}">Título del reporte</div>
+        <div class="doc-subtitle" th:if="${subtitle != null and !#strings.isEmpty(subtitle)}" th:text="${subtitle}">Filtros aplicados</div>
+    </div>
+</div>
+
+<div th:fragment="footer">
+    <div class="report-footer">
+        <div class="footer-line" th:if="${clinic.addressLine != null}" th:text="${clinic.addressLine}">Dirección</div>
+        <div class="footer-line" th:if="${clinic.cityLine != null or clinic.phone != null or clinic.email != null}">
+            <span th:if="${clinic.cityLine != null}" th:text="${clinic.cityLine}">Ciudad</span>
+            <span th:if="${clinic.cityLine != null and clinic.phone != null}"> · </span>
+            <span th:if="${clinic.phone != null}" th:text="|Tel. ${clinic.phone}|">Tel.</span>
+            <span th:if="${(clinic.cityLine != null or clinic.phone != null) and clinic.email != null}"> · </span>
+            <span th:if="${clinic.email != null}" th:text="${clinic.email}">correo@clinica.com</span>
         </div>
+        <div class="footer-line footer-nit" th:if="${clinic.nit != null}" th:text="|NIT ${clinic.nit}|">NIT</div>
+        <div class="footer-meta">Generado <span th:text="${generatedAt}">fecha</span> · Dentura ERP · <span th:text="${year}">2026</span></div>
+    </div>
+</div>
+
+<div th:fragment="signature">
+    <div class="signature-block">
+        <div class="signature-label">Atentamente,</div>
+        <div class="signature-line"></div>
+        <div class="signature-name" th:text="${clinic.name}">Clínica</div>
     </div>
 </div>
 
 <div th:fragment="styles">
     <style>
-        @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            color: #1f2937;
-            font-size: 10.5px;
-            line-height: 1.45;
-            margin: 0;
+        @page {
+            size: A4;
+            margin: 14mm 16mm 18mm 16mm;
         }
-        .header {
-            display: table;
-            width: 100%;
-            border-bottom: 2px solid #0ea5e9;
-            padding-bottom: 14px;
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'DejaVu Serif', 'Times New Roman', serif;
+            color: #111827;
+            font-size: 10.5px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        /* Marca de agua — referencia membrete GestOdon / Dr. Rivera */
+        .watermark {
+            position: fixed;
+            top: 38%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: -1;
+            opacity: 0.07;
+        }
+        .watermark-initial {
+            font-family: 'DejaVu Serif', serif;
+            font-size: 140px;
+            font-weight: bold;
+            line-height: 0.85;
+            color: #1a5490;
+        }
+        .watermark-name {
+            font-family: 'DejaVu Serif', serif;
+            font-size: 18px;
+            letter-spacing: 0.22em;
+            color: #1a5490;
+            margin-top: 4px;
+        }
+
+        /* Membrete centrado */
+        .letterhead {
+            text-align: center;
             margin-bottom: 18px;
         }
-        .header-left, .header-right {
-            display: table-cell;
-            vertical-align: top;
+        .logo-wrap {
+            margin-bottom: 10px;
         }
-        .header-right { text-align: right; width: 38%; }
-        .header-left { width: 62%; }
         .logo {
-            height: 52px;
-            max-width: 110px;
+            max-height: 64px;
+            max-width: 180px;
             object-fit: contain;
-            float: left;
-            margin-right: 12px;
         }
-        .logo-placeholder {
-            float: left;
-            width: 52px;
-            height: 52px;
-            margin-right: 12px;
-            border-radius: 10px;
-            background: #e0f2fe;
-            color: #0369a1;
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            line-height: 52px;
+        .clinic-title {
+            font-family: 'DejaVu Serif', serif;
+            font-size: 24px;
+            font-style: italic;
+            font-weight: normal;
+            color: #1a5490;
+            letter-spacing: 0.02em;
+            margin: 0 0 4px;
         }
-        .clinic-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: #0f172a;
-            margin-bottom: 4px;
+        .clinic-tagline {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 10px;
+            color: #1a5490;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
         }
-        .clinic-line { color: #64748b; font-size: 9.5px; }
+        .letterhead-rule {
+            height: 1px;
+            background: #1a5490;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Fecha alineada a la derecha */
+        .doc-date {
+            text-align: right;
+            font-size: 10px;
+            color: #374151;
+            margin: 14px 0 16px;
+        }
+
+        /* Título del documento */
+        .doc-heading {
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-left: 3px solid #1a5490;
+        }
         .doc-title {
-            font-size: 15px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 13px;
             font-weight: bold;
-            color: #0c4a6e;
-            margin-bottom: 4px;
+            color: #1a5490;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 3px;
         }
-        .doc-subtitle { color: #475569; font-size: 9.5px; margin-bottom: 6px; }
-        .doc-meta { color: #94a3b8; font-size: 9px; }
+        .doc-subtitle {
+            font-size: 9.5px;
+            color: #4b5563;
+        }
+
+        /* Tablas */
         table.data {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
+            margin-top: 6px;
         }
         table.data th {
-            background: #f0f9ff;
-            color: #0c4a6e;
-            font-size: 9.5px;
+            background: #1a5490;
+            color: #ffffff;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 8.5px;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.03em;
-            padding: 8px 6px;
-            border-bottom: 1px solid #bae6fd;
+            letter-spacing: 0.05em;
+            padding: 9px 7px;
+            border: 1px solid #153e6b;
             text-align: left;
         }
         table.data td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 7px;
+            border: 1px solid #d1d5db;
             vertical-align: top;
+            font-size: 10px;
         }
-        table.data tr:nth-child(even) td { background: #f8fafc; }
+        table.data tbody tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+        table.data tbody tr:last-child td {
+            border-bottom: 2px solid #1a5490;
+        }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .muted { color: #64748b; }
+        .muted { color: #6b7280; font-size: 9px; }
+        .strong { font-weight: bold; color: #111827; }
+
+        /* Estados */
         .badge {
             display: inline-block;
             padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 9px;
-            font-weight: bold;
-        }
-        .badge-pending { background: #fef3c7; color: #b45309; }
-        .badge-completed { background: #d1fae5; color: #047857; }
-        .badge-rejected { background: #fee2e2; color: #b91c1c; }
-        .summary-grid {
-            display: table;
-            width: 100%;
-            margin-top: 10px;
-        }
-        .summary-card {
-            display: table-cell;
-            width: 33.33%;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        .summary-card + .summary-card { border-left: none; }
-        .summary-label { font-size: 9px; color: #64748b; text-transform: uppercase; }
-        .summary-value { font-size: 14px; font-weight: bold; color: #0f172a; margin-top: 4px; }
-        .footer {
-            margin-top: 24px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-            color: #94a3b8;
+            border-radius: 2px;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 8.5px;
-            text-align: center;
+            font-weight: bold;
+            border: 1px solid transparent;
         }
-        .empty {
-            padding: 28px;
-            text-align: center;
-            color: #64748b;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-        }
+        .badge-pending { background: #fffbeb; color: #92400e; border-color: #fcd34d; }
+        .badge-completed { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+        .badge-rejected { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+
+        /* Paciente — cotización */
         .patient-box {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            border-top: 3px solid #1a5490;
             padding: 12px 14px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
+            background: #ffffff;
         }
-        .patient-name { font-size: 13px; font-weight: bold; color: #0c4a6e; }
-        .patient-meta { color: #475569; font-size: 9.5px; margin-top: 4px; }
-        .totals {
-            margin-top: 14px;
+        .patient-label {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .patient-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1a5490;
+            margin-bottom: 4px;
+        }
+        .patient-meta {
+            color: #374151;
+            font-size: 9.5px;
+        }
+
+        /* Totales cotización */
+        .totals-wrap {
+            margin-top: 16px;
             width: 100%;
         }
-        .totals td { padding: 6px 8px; }
-        .totals .label { color: #475569; }
-        .totals .amount { text-align: right; font-weight: bold; }
-        .totals .grand td {
-            border-top: 2px solid #0ea5e9;
-            font-size: 12px;
-            color: #0c4a6e;
+        .totals-wrap td {
+            padding: 0;
+            vertical-align: top;
+        }
+        .totals-spacer { width: 55%; }
+        table.totals {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.totals td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 10px;
+        }
+        table.totals .label { color: #374151; }
+        table.totals .amount {
+            text-align: right;
+            font-weight: bold;
+            color: #111827;
+        }
+        table.totals .grand td {
+            background: #f0f6fc;
+            border-top: 2px solid #1a5490;
+            border-bottom: 2px solid #1a5490;
+            font-size: 11px;
+            color: #1a5490;
+            font-weight: bold;
             padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        /* Resumen por estado — tarjetas */
+        table.summary-cards {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px 0;
+            margin-top: 8px;
+        }
+        table.summary-cards td {
+            width: 33.33%;
+            border: 1px solid #cbd5e1;
+            border-top: 3px solid #1a5490;
+            padding: 12px 10px;
+            text-align: center;
+            background: #ffffff;
+        }
+        .summary-label {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 8px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .summary-count {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a5490;
+            margin: 6px 0 2px;
+        }
+        .summary-total {
+            font-size: 11px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        /* Firma */
+        .signature-block {
+            margin-top: 28px;
+            width: 240px;
+        }
+        .signature-label {
+            font-size: 10.5px;
+            color: #111827;
+            margin-bottom: 28px;
+        }
+        .signature-line {
+            border-bottom: 1px dotted #6b7280;
+            margin-bottom: 4px;
+        }
+        .signature-name {
+            font-size: 10px;
+            color: #374151;
+        }
+
+        /* Pie de página */
+        .report-footer {
+            margin-top: 28px;
+            padding-top: 12px;
+            border-top: 1px solid #cbd5e1;
+            text-align: center;
+        }
+        .footer-line {
+            font-style: italic;
+            color: #1a5490;
+            font-size: 9px;
+            line-height: 1.55;
+        }
+        .footer-nit {
+            margin-top: 2px;
+            font-style: normal;
+            font-size: 8.5px;
+            color: #4b5563;
+        }
+        .footer-meta {
+            margin-top: 8px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-style: normal;
+            font-size: 7.5px;
+            color: #9ca3af;
+        }
+
+        .legal-note {
+            margin-top: 14px;
+            font-size: 8.5px;
+            color: #6b7280;
+            font-style: italic;
+            line-height: 1.45;
+        }
+
+        .empty {
+            padding: 32px 20px;
+            text-align: center;
+            color: #6b7280;
+            background: #f9fafb;
+            border: 1px dashed #cbd5e1;
         }
     </style>
 </div>
+
 </body>
 </html>
