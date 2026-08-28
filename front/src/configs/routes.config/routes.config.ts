@@ -5,6 +5,7 @@ import {
     CATALOG_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
+    REPORTS_READ,
     ROLES_MANAGE,
 } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
@@ -75,6 +76,15 @@ export const protectedRoutes = [
         authority: [ROLES_MANAGE],
         meta: {
             header: 'Roles y permisos',
+        },
+    },
+    {
+        key: 'reports',
+        path: '/reportes',
+        component: lazy(() => import('@/views/reports/ReportList')),
+        authority: [REPORTS_READ],
+        meta: {
+            header: 'Reportes',
         },
     },
 ]

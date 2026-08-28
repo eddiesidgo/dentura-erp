@@ -24,6 +24,7 @@ public class Permission {
 	public static final String WORKS_READ = "works.read";
 	public static final String WORKS_WRITE = "works.write";
 	public static final String WORKS_DELETE = "works.delete";
+	public static final String REPORTS_READ = "reports.read";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

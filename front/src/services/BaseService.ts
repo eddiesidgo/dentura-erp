@@ -43,7 +43,9 @@ BaseService.interceptors.response.use(
         const { response } = error
 
         if (response && unauthorizedCode.includes(response.status)) {
-            store.dispatch(signOutSuccess())
+            if (error.config?.responseType !== 'blob') {
+                store.dispatch(signOutSuccess())
+            }
         }
 
         return Promise.reject(error)

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Cotización</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div class="patient-box">
+    <div class="patient-name" th:text="${quotation.patientName}">Paciente</div>
+    <div class="patient-meta">
+        Expediente <span th:text="${quotation.recordNumber}">P-001</span>
+        <span th:if="${quotation.dui != null}"> · DUI <span th:text="${quotation.dui}">00000000-0</span></span>
+        <span th:if="${quotation.phone != null}"> · <span th:text="${quotation.phone}">7777-0000</span></span>
+    </div>
+</div>
+
+<div th:if="${#lists.isEmpty(rows)}" class="empty" th:text="${emptyMessage}">Sin trabajos</div>
+
+<table th:if="${!#lists.isEmpty(rows)}" class="data">
+    <thead>
+    <tr>
+        <th>Tratamiento</th>
+        <th class="text-center">Ubic.</th>
+        <th class="text-center">Cant.</th>
+        <th class="text-right">Precio</th>
+        <th class="text-right">Total</th>
+        <th>Estado</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td>
+            <strong th:text="${row.treatmentCode}">CONS</strong><br/>
+            <span class="muted" th:text="${row.treatmentName}">Consulta</span>
+        </td>
+        <td class="text-center" th:text="${row.tooth}">—</td>
+        <td class="text-center" th:text="${row.quantity}">1</td>
+        <td class="text-right" th:text="${row.unitPrice}">$0.00</td>
+        <td class="text-right" th:text="${row.total}">$0.00</td>
+        <td>
+            <span class="badge"
+                  th:classappend="${row.status == 'COMPLETED'} ? ' badge-completed' : (${row.status == 'REJECTED'} ? ' badge-rejected' : ' badge-pending')"
+                  th:text="${row.statusLabel}">Pendiente</span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<table th:if="${!#lists.isEmpty(rows)}" class="totals">
+    <tr>
+        <td class="label">Pendiente</td>
+        <td class="amount" th:text="${quotation.pendingTotal}">$0.00</td>
+    </tr>
+    <tr>
+        <td class="label">Terminado</td>
+        <td class="amount" th:text="${quotation.completedTotal}">$0.00</td>
+    </tr>
+    <tr>
+        <td class="label">No aceptado</td>
+        <td class="amount" th:text="${quotation.rejectedTotal}">$0.00</td>
+    </tr>
+    <tr class="grand">
+        <td class="label">Cotización (pendiente + terminado)</td>
+        <td class="amount" th:text="${quotation.quoteTotal}">$0.00</td>
+    </tr>
+</table>
+
+<p class="muted" style="margin-top: 16px; font-size: 9px;">
+    Este documento es una cotización orientativa del plan de tratamiento. No constituye factura ni comprobante fiscal.
+</p>
+
+<div class="footer">
+    Documento generado por Dentura ERP · <span th:text="${year}">2026</span>
+</div>
+</body>
+</html>

@@ -5,6 +5,7 @@ import {
     AGENDA_READ,
     CATALOG_READ,
     PATIENTS_READ,
+    REPORTS_READ,
     ROLES_MANAGE,
 } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
@@ -58,6 +59,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'roles',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [ROLES_MANAGE],
+        subMenu: [],
+    },
+    {
+        key: 'reports',
+        path: '/reportes',
+        title: 'Reportes',
+        translateKey: 'nav.reports',
+        icon: 'reports',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [REPORTS_READ],
         subMenu: [],
     },
 ]

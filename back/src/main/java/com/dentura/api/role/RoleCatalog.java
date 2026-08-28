@@ -33,6 +33,7 @@ public class RoleCatalog {
 		ensurePermission(Permission.WORKS_READ, "Ver trabajos", "Consulta el plan de tratamientos del paciente");
 		ensurePermission(Permission.WORKS_WRITE, "Editar trabajos", "Crea y actualiza trabajos del paciente");
 		ensurePermission(Permission.WORKS_DELETE, "Eliminar trabajos", "Elimina trabajos del plan del paciente");
+		ensurePermission(Permission.REPORTS_READ, "Ver reportes", "Consulta e imprime reportes y cotizaciones");
 	}
 
 	@Transactional
@@ -66,6 +67,7 @@ public class RoleCatalog {
 		permissionRepository.findByCode(Permission.CATALOG_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.WORKS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.WORKS_WRITE).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.REPORTS_READ).ifPresent(receptionPerms::add);
 		reception.setPermissions(receptionPerms);
 		roleRepository.save(reception);
 	}

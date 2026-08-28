@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Listado de trabajos</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div th:if="${#lists.isEmpty(rows)}" class="empty" th:text="${emptyMessage}">Sin datos</div>
+
+<table th:if="${!#lists.isEmpty(rows)}" class="data">
+    <thead>
+    <tr>
+        <th>Paciente</th>
+        <th>Exp.</th>
+        <th>Tratamiento</th>
+        <th class="text-center">Ubic.</th>
+        <th class="text-center">Cant.</th>
+        <th class="text-right">Precio</th>
+        <th class="text-right">Total</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td th:text="${row.patientName}">Paciente</td>
+        <td class="muted" th:text="${row.recordNumber}">P-001</td>
+        <td>
+            <strong th:text="${row.treatmentCode}">CONS</strong><br/>
+            <span class="muted" th:text="${row.treatmentName}">Consulta</span>
+        </td>
+        <td class="text-center" th:text="${row.tooth}">—</td>
+        <td class="text-center" th:text="${row.quantity}">1</td>
+        <td class="text-right" th:text="${row.unitPrice}">$0.00</td>
+        <td class="text-right" th:text="${row.total}">$0.00</td>
+        <td>
+            <span class="badge"
+                  th:classappend="${row.status == 'COMPLETED'} ? ' badge-completed' : (${row.status == 'REJECTED'} ? ' badge-rejected' : ' badge-pending')"
+                  th:text="${row.statusLabel}">Pendiente</span>
+        </td>
+        <td class="muted" th:text="${row.createdAt}">01/01/2026</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    Documento generado por Dentura ERP · <span th:text="${year}">2026</span>
+</div>
+</body>
+</html>

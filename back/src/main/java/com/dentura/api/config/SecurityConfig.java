@@ -51,6 +51,7 @@ public class SecurityConfig {
 				}))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers("/error").permitAll()
 						.requestMatchers(
 								"/api/sign-in",
 								"/api/sign-up",
@@ -58,6 +59,7 @@ public class SecurityConfig {
 								"/api/reset-password",
 								"/api/health",
 								"/api/clinic-identity",
+								"/api/clinics/*/logo",
 								"/actuator/**",
 								"/",
 								"/index.html",

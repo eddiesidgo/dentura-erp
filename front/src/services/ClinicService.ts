@@ -45,3 +45,16 @@ export async function apiCreateClinic(data: { code: string; name: string }) {
         data,
     })
 }
+
+export async function apiUploadClinicLogo(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return ApiService.fetchData<ClinicIdentity>({
+        url: '/clinics/current/logo',
+        method: 'post',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}

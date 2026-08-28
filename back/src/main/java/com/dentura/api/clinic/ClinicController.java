@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dentura.api.auth.dto.AuthResponse;
 import com.dentura.api.clinic.dto.ClinicIdentityResponse;
@@ -45,6 +47,16 @@ public class ClinicController {
 	@PutMapping("/api/clinics/current")
 	public ClinicIdentityResponse updateCurrent(@Valid @RequestBody UpdateClinicRequest request) {
 		return clinicService.updateCurrent(request);
+	}
+
+	@PostMapping("/api/clinics/current/logo")
+	public ClinicIdentityResponse uploadLogo(@RequestParam("file") MultipartFile file) {
+		return clinicService.uploadLogo(file);
+	}
+
+	@GetMapping("/api/clinics/{id}/logo")
+	public ResponseEntity<byte[]> logo(@PathVariable Long id) {
+		return clinicService.serveLogo(id);
 	}
 
 	@PostMapping("/api/clinics")

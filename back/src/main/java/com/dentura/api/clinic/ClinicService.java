@@ -2,9 +2,13 @@ package com.dentura.api.clinic;
 
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.auth.JwtService;
@@ -29,6 +33,7 @@ public class ClinicService {
 	private final RoleCatalog roleCatalog;
 	private final PermissionService permissionService;
 	private final TreatmentSeeder treatmentSeeder;
+	private final ClinicLogoStorage clinicLogoStorage;
 
 	public ClinicService(
 			ClinicRepository clinicRepository,
@@ -36,13 +41,15 @@ public class ClinicService {
 			JwtService jwtService,
 			RoleCatalog roleCatalog,
 			PermissionService permissionService,
-			TreatmentSeeder treatmentSeeder) {
+			TreatmentSeeder treatmentSeeder,
+			ClinicLogoStorage clinicLogoStorage) {
 		this.clinicRepository = clinicRepository;
 		this.clinicAccess = clinicAccess;
 		this.jwtService = jwtService;
 		this.roleCatalog = roleCatalog;
 		this.permissionService = permissionService;
 		this.treatmentSeeder = treatmentSeeder;
+		this.clinicLogoStorage = clinicLogoStorage;
 	}
 
 	@Transactional(readOnly = true)
@@ -112,6 +119,26 @@ public class ClinicService {
 		return ClinicIdentityResponse.from(clinicRepository.save(clinic));
 	}
 
+	@Transactional
+	public ClinicIdentityResponse uploadLogo(MultipartFile file) {
+		clinicAccess.requireSuperAdmin();
+		Clinic clinic = requireById(clinicAccess.requireClinicId());
+		clinicLogoStorage.save(clinic.getId(), file);
+		clinic.setLogoUrl(clinicLogoStorage.logoApiPath(clinic.getId()));
+		return ClinicIdentityResponse.from(clinicRepository.save(clinic));
+	}
+
+	@Transactional(readOnly = true)
+	public ResponseEntity<byte[]> serveLogo(Long clinicId) {
+		Clinic clinic = requireById(clinicId);
+		return clinicLogoStorage.load(clinic.getId())
+				.map(logo -> ResponseEntity.ok()
+						.header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+						.contentType(MediaType.parseMediaType(logo.contentType()))
+						.body(logo.bytes()))
+				.orElseGet(() -> externalLogoRedirect(clinic.getLogoUrl()));
+	}
+
 	@Transactional(readOnly = true)
 	public AuthResponse switchClinic(Long clinicId) {
 		clinicAccess.requireSuperAdmin();
@@ -141,5 +168,14 @@ public class ClinicService {
 			return null;
 		}
 		return value.trim();
+	}
+
+	private ResponseEntity<byte[]> externalLogoRedirect(String logoUrl) {
+		if (logoUrl != null && logoUrl.startsWith("http")) {
+			return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
+					.header(HttpHeaders.LOCATION, logoUrl)
+					.build();
+		}
+		return ResponseEntity.notFound().build();
 	}
 }

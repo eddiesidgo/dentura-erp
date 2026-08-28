@@ -13,14 +13,16 @@ import {
     Tag,
     toast,
 } from '@/components/ui'
-import { HiOutlineClipboardList, HiPlusCircle } from 'react-icons/hi'
+import { HiOutlineClipboardList, HiOutlineDocumentDownload, HiPlusCircle } from 'react-icons/hi'
 import {
+    REPORTS_READ,
     WORKS_DELETE,
     WORKS_WRITE,
 } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { getApiErrorMessage } from '@/services/PatientService'
+import { downloadPatientQuotationPdf } from '@/services/ReportService'
 import { apiGetTreatments } from '@/services/TreatmentService'
 import {
     apiCreateWork,
@@ -73,9 +75,11 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
         useAppSelector((state) => state.auth.user.authority) || []
     const canWrite = useAuthority(userAuthority, [WORKS_WRITE])
     const canDelete = useAuthority(userAuthority, [WORKS_DELETE])
+    const canReports = useAuthority(userAuthority, [REPORTS_READ])
 
     const [works, setWorks] = useState<Work[]>([])
     const [loading, setLoading] = useState(false)
+    const [downloadingPdf, setDownloadingPdf] = useState(false)
     const [options, setOptions] = useState<TreatmentOption[]>([])
     const [form, setForm] = useState<WorkForm>(emptyForm)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -242,6 +246,26 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
         }
     }, [works])
 
+    const downloadQuotation = async () => {
+        setDownloadingPdf(true)
+        try {
+            await downloadPatientQuotationPdf(patientId)
+            toast.push(
+                <Notification type="success" title="PDF generado">
+                    Se descargó la cotización del paciente.
+                </Notification>,
+            )
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="No se pudo generar el PDF">
+                    {getApiErrorMessage(error, 'Intenta de nuevo')}
+                </Notification>,
+            )
+        } finally {
+            setDownloadingPdf(false)
+        }
+    }
+
     return (
         <>
             <AdaptableCard className="mb-4" bodyClass="p-5">
@@ -258,16 +282,28 @@ const PatientWorks = ({ patientId }: PatientWorksProps) => {
                             sirven de cotización (sin facturación).
                         </p>
                     </div>
-                    {canWrite && (
-                        <Button
-                            size="sm"
-                            variant="solid"
-                            icon={<HiPlusCircle />}
-                            onClick={openCreate}
-                        >
-                            Agregar trabajo
-                        </Button>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 mt-3 lg:mt-0">
+                        {canReports && (
+                            <Button
+                                size="sm"
+                                icon={<HiOutlineDocumentDownload />}
+                                loading={downloadingPdf}
+                                onClick={downloadQuotation}
+                            >
+                                Cotización PDF
+                            </Button>
+                        )}
+                        {canWrite && (
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                icon={<HiPlusCircle />}
+                                onClick={openCreate}
+                            >
+                                Agregar trabajo
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
                     <SummaryCard

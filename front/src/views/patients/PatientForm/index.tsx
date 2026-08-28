@@ -10,12 +10,9 @@ import {
     HiOutlineUser,
 } from 'react-icons/hi'
 import AdaptableCard from '@/components/shared/AdaptableCard'
-import IconText from '@/components/shared/IconText'
 import Loading from '@/components/shared/Loading'
 import StickyFooter from '@/components/shared/StickyFooter'
 import {
-    Alert,
-    Avatar,
     Button,
     DatePicker,
     FormContainer,
@@ -24,7 +21,6 @@ import {
     Notification,
     Select,
     Tabs,
-    Tag,
     toast,
 } from '@/components/ui'
 import {
@@ -33,17 +29,14 @@ import {
     apiUpdatePatient,
     getApiErrorMessage,
 } from '@/services/PatientService'
-import {
-    departmentOptions,
-    patientInitials,
-    sexOptions,
-} from '../constants'
+import { departmentOptions, sexOptions } from '../constants'
 import type { PatientPayload } from '@/@types/patient'
+import PatientFormSection from './PatientFormSection'
+import PatientProfileHeader from './PatientProfileHeader'
 import PatientWorks from './PatientWorks'
 import { WORKS_READ } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
-import useThemeClass from '@/utils/hooks/useThemeClass'
 
 type FormModel = {
     recordNumber: string
@@ -111,59 +104,6 @@ const toPayload = (values: FormModel): PatientPayload => ({
     notes: values.notes || null,
 })
 
-const PatientIdentity = ({ values }: { values: FormModel }) => {
-    const { textTheme, bgTheme } = useThemeClass()
-    const name =
-        values.lastName || values.firstName
-            ? `${values.lastName}${values.lastName && values.firstName ? ', ' : ''}${values.firstName}`
-            : 'Nueva ficha'
-    return (
-        <AdaptableCard className="mb-4" bodyClass="p-4 md:p-5">
-            <div className="flex flex-wrap items-center gap-4">
-                <Avatar
-                    size={56}
-                    shape="circle"
-                    className={`${bgTheme} bg-opacity-15 ${textTheme} text-lg font-semibold`}
-                >
-                    {patientInitials(values.firstName, values.lastName)}
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                    <h4 className="mb-1 truncate">{name}</h4>
-                    <div className="flex flex-wrap items-center gap-2">
-                        {values.recordNumber && (
-                            <Tag className="border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
-                                {values.recordNumber}
-                            </Tag>
-                        )}
-                        {values.mobile && (
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {values.mobile}
-                            </span>
-                        )}
-                        {values.allergies.trim() && (
-                            <Tag className="border-0 bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-100">
-                                Alergias
-                            </Tag>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </AdaptableCard>
-    )
-}
-
-const SectionTitle = ({
-    icon,
-    children,
-}: {
-    icon: React.ReactNode
-    children: React.ReactNode
-}) => (
-    <IconText className="mb-5 text-base font-semibold" icon={icon}>
-        {children}
-    </IconText>
-)
-
 const PatientForm = () => {
     const { patientId } = useParams()
     const navigate = useNavigate()
@@ -227,40 +167,40 @@ const PatientForm = () => {
     return (
         <Loading loading={loading}>
             {isEdit && canReadWorks ? (
-                <>
-                    <PatientIdentity values={initialValues} />
-                    <Tabs defaultValue="datos">
+                <Tabs defaultValue="datos" variant="pill">
+                    <AdaptableCard className="mb-4" bodyClass="p-3">
                         <Tabs.TabList>
-                            <Tabs.TabNav
-                                value="datos"
-                                icon={<HiOutlineUser />}
-                            >
-                                Datos
+                            <Tabs.TabNav value="datos" icon={<HiOutlineUser />}>
+                                Datos del paciente
                             </Tabs.TabNav>
                             <Tabs.TabNav
                                 value="trabajos"
                                 icon={<HiOutlineClipboardList />}
                             >
-                                Trabajos
+                                Plan de tratamiento
                             </Tabs.TabNav>
                         </Tabs.TabList>
-                        <div className="mt-5">
-                            <Tabs.TabContent value="datos">
-                                <PatientDataForm
-                                    isEdit
-                                    initialValues={initialValues}
-                                    showIdentity={false}
-                                />
-                            </Tabs.TabContent>
-                            <Tabs.TabContent value="trabajos">
-                                <PatientWorks patientId={Number(patientId)} />
-                            </Tabs.TabContent>
-                        </div>
-                    </Tabs>
-                </>
+                    </AdaptableCard>
+                    <Tabs.TabContent value="datos">
+                        <PatientDataForm
+                            isEdit
+                            initialValues={initialValues}
+                            showProfile
+                            showBack
+                        />
+                    </Tabs.TabContent>
+                    <Tabs.TabContent value="trabajos">
+                        <PatientProfileHeader
+                            values={initialValues}
+                            showBack={false}
+                        />
+                        <PatientWorks patientId={Number(patientId)} />
+                    </Tabs.TabContent>
+                </Tabs>
             ) : (
                 <PatientDataForm
-                    showIdentity
+                    showProfile
+                    showBack
                     isEdit={isEdit}
                     initialValues={initialValues}
                 />
@@ -272,11 +212,13 @@ const PatientForm = () => {
 const PatientDataForm = ({
     isEdit,
     initialValues,
-    showIdentity,
+    showProfile,
+    showBack = false,
 }: {
     isEdit: boolean
     initialValues: FormModel
-    showIdentity: boolean
+    showProfile: boolean
+    showBack?: boolean
 }) => {
     const navigate = useNavigate()
     const { patientId } = useParams()
@@ -321,200 +263,207 @@ const PatientDataForm = ({
         >
             {({ values, touched, errors, isSubmitting, setFieldValue }) => (
                 <Form>
-                    {showIdentity && <PatientIdentity values={values} />}
+                    {showProfile && (
+                        <PatientProfileHeader
+                            values={values}
+                            showBack={showBack}
+                        />
+                    )}
                     <FormContainer>
-                        {values.allergies.trim() && (
-                            <Alert showIcon type="danger" className="mb-4">
-                                Alergias registradas: {values.allergies}
-                            </Alert>
-                        )}
-                        <AdaptableCard className="mb-4" bodyClass="p-5">
-                            <SectionTitle icon={<HiOutlineUser />}>
-                                Datos personales
-                            </SectionTitle>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                                <FormItem
-                                    label="Expediente"
-                                    extra={
-                                        isEdit
-                                            ? undefined
-                                            : 'Se asigna al guardar si lo dejas vacío'
-                                    }
-                                >
-                                    <Field
-                                        type="text"
-                                        name="recordNumber"
-                                        placeholder="P-000001"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Sexo">
-                                    <Select
-                                        placeholder="Seleccionar"
-                                        options={sexOptions}
-                                        value={sexOptions.filter(
-                                            (option) =>
-                                                option.value === values.sex,
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+                            <PatientFormSection
+                                title="Datos personales"
+                                icon={<HiOutlineUser />}
+                                accent="sky"
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
+                                    <FormItem
+                                        label="Expediente"
+                                        extra={
+                                            isEdit
+                                                ? undefined
+                                                : 'Se asigna al guardar si lo dejas vacío'
+                                        }
+                                    >
+                                        <Field
+                                            type="text"
+                                            name="recordNumber"
+                                            placeholder="P-000001"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Sexo">
+                                        <Select
+                                            placeholder="Seleccionar"
+                                            options={sexOptions}
+                                            value={sexOptions.filter(
+                                                (option) =>
+                                                    option.value === values.sex,
+                                            )}
+                                            onChange={(option) =>
+                                                setFieldValue(
+                                                    'sex',
+                                                    option?.value || '',
+                                                )
+                                            }
+                                        />
+                                    </FormItem>
+                                    <FormItem
+                                        asterisk
+                                        label="Nombres"
+                                        invalid={Boolean(
+                                            errors.firstName &&
+                                                touched.firstName,
                                         )}
-                                        onChange={(option) =>
-                                            setFieldValue(
-                                                'sex',
-                                                option?.value || '',
-                                            )
-                                        }
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    asterisk
-                                    label="Nombres"
-                                    invalid={Boolean(
-                                        errors.firstName && touched.firstName,
-                                    )}
-                                    errorMessage={errors.firstName}
-                                >
-                                    <Field
-                                        type="text"
-                                        name="firstName"
-                                        placeholder="Nombres"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    asterisk
-                                    label="Apellidos"
-                                    invalid={Boolean(
-                                        errors.lastName && touched.lastName,
-                                    )}
-                                    errorMessage={errors.lastName}
-                                >
-                                    <Field
-                                        type="text"
-                                        name="lastName"
-                                        placeholder="Apellidos"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Fecha de nacimiento">
-                                    <DatePicker
-                                        inputFormat="DD/MM/YYYY"
-                                        placeholder="DD/MM/YYYY"
-                                        value={
-                                            values.dateOfBirth
-                                                ? dayjs(
-                                                      values.dateOfBirth,
-                                                  ).toDate()
-                                                : null
-                                        }
-                                        onChange={(date) =>
-                                            setFieldValue(
-                                                'dateOfBirth',
-                                                date
-                                                    ? dayjs(date).format(
-                                                          'YYYY-MM-DD',
-                                                      )
-                                                    : '',
-                                            )
-                                        }
-                                    />
-                                </FormItem>
-                                <FormItem label="Ocupación">
-                                    <Field
-                                        type="text"
-                                        name="occupation"
-                                        placeholder="Ocupación"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                            </div>
-                        </AdaptableCard>
-
-                        <AdaptableCard className="mb-4" bodyClass="p-5">
-                            <SectionTitle icon={<HiOutlinePhone />}>
-                                Contacto
-                            </SectionTitle>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                                <FormItem label="Celular">
-                                    <Field
-                                        type="text"
-                                        name="mobile"
-                                        placeholder="7777-0000"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Teléfono">
-                                    <Field
-                                        type="text"
-                                        name="phone"
-                                        placeholder="2222-0000"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    label="Correo"
-                                    invalid={Boolean(
-                                        errors.email && touched.email,
-                                    )}
-                                    errorMessage={errors.email}
-                                >
-                                    <Field
-                                        type="email"
-                                        name="email"
-                                        placeholder="correo@ejemplo.com"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Referido por">
-                                    <Field
-                                        type="text"
-                                        name="referredBy"
-                                        placeholder="Quién lo refirió"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    label="Dirección"
-                                    className="md:col-span-2"
-                                >
-                                    <Field
-                                        type="text"
-                                        name="address"
-                                        placeholder="Colonia, calle, número"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Municipio / ciudad">
-                                    <Field
-                                        type="text"
-                                        name="city"
-                                        placeholder="San Salvador"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="Departamento">
-                                    <Select
-                                        isClearable
-                                        placeholder="Seleccionar"
-                                        options={departmentOptions}
-                                        value={departmentOptions.filter(
-                                            (option) =>
-                                                option.value ===
-                                                values.department,
+                                        errorMessage={errors.firstName}
+                                    >
+                                        <Field
+                                            type="text"
+                                            name="firstName"
+                                            placeholder="Nombres"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem
+                                        asterisk
+                                        label="Apellidos"
+                                        invalid={Boolean(
+                                            errors.lastName && touched.lastName,
                                         )}
-                                        onChange={(option) =>
-                                            setFieldValue(
-                                                'department',
-                                                option?.value || '',
-                                            )
-                                        }
-                                    />
-                                </FormItem>
-                            </div>
-                        </AdaptableCard>
+                                        errorMessage={errors.lastName}
+                                    >
+                                        <Field
+                                            type="text"
+                                            name="lastName"
+                                            placeholder="Apellidos"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Fecha de nacimiento">
+                                        <DatePicker
+                                            inputFormat="DD/MM/YYYY"
+                                            placeholder="DD/MM/YYYY"
+                                            value={
+                                                values.dateOfBirth
+                                                    ? dayjs(
+                                                          values.dateOfBirth,
+                                                      ).toDate()
+                                                    : null
+                                            }
+                                            onChange={(date) =>
+                                                setFieldValue(
+                                                    'dateOfBirth',
+                                                    date
+                                                        ? dayjs(date).format(
+                                                              'YYYY-MM-DD',
+                                                          )
+                                                        : '',
+                                                )
+                                            }
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Ocupación">
+                                        <Field
+                                            type="text"
+                                            name="occupation"
+                                            placeholder="Ocupación"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                </div>
+                            </PatientFormSection>
 
-                        <AdaptableCard className="mb-4" bodyClass="p-5">
-                            <SectionTitle icon={<HiOutlineDocumentText />}>
-                                Datos fiscales y notas clínicas
-                            </SectionTitle>
+                            <PatientFormSection
+                                title="Contacto"
+                                icon={<HiOutlinePhone />}
+                                accent="emerald"
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
+                                    <FormItem label="Celular">
+                                        <Field
+                                            type="text"
+                                            name="mobile"
+                                            placeholder="7777-0000"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Teléfono">
+                                        <Field
+                                            type="text"
+                                            name="phone"
+                                            placeholder="2222-0000"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem
+                                        label="Correo"
+                                        invalid={Boolean(
+                                            errors.email && touched.email,
+                                        )}
+                                        errorMessage={errors.email}
+                                    >
+                                        <Field
+                                            type="email"
+                                            name="email"
+                                            placeholder="correo@ejemplo.com"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Referido por">
+                                        <Field
+                                            type="text"
+                                            name="referredBy"
+                                            placeholder="Quién lo refirió"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem
+                                        label="Dirección"
+                                        className="md:col-span-2"
+                                    >
+                                        <Field
+                                            type="text"
+                                            name="address"
+                                            placeholder="Colonia, calle, número"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Municipio / ciudad">
+                                        <Field
+                                            type="text"
+                                            name="city"
+                                            placeholder="San Salvador"
+                                            component={Input}
+                                        />
+                                    </FormItem>
+                                    <FormItem label="Departamento">
+                                        <Select
+                                            isClearable
+                                            placeholder="Seleccionar"
+                                            options={departmentOptions}
+                                            value={departmentOptions.filter(
+                                                (option) =>
+                                                    option.value ===
+                                                    values.department,
+                                            )}
+                                            onChange={(option) =>
+                                                setFieldValue(
+                                                    'department',
+                                                    option?.value || '',
+                                                )
+                                            }
+                                        />
+                                    </FormItem>
+                                </div>
+                            </PatientFormSection>
+                        </div>
+
+                        <PatientFormSection
+                            className="mb-4"
+                            title="Datos fiscales y notas clínicas"
+                            icon={<HiOutlineDocumentText />}
+                            accent="amber"
+                        >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                                 <FormItem label="DUI">
                                     <Field
@@ -555,11 +504,11 @@ const PatientDataForm = ({
                                     />
                                 </FormItem>
                             </div>
-                        </AdaptableCard>
+                        </PatientFormSection>
                     </FormContainer>
                     <StickyFooter
                         className="flex items-center justify-between py-4"
-                        stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                        stickyClass="border-t bg-white/95 dark:bg-gray-800/95 backdrop-blur border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
                     >
                         <Button
                             type="button"

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export const sexOptions = [
     { value: 'FEMALE', label: 'Femenino' },
     { value: 'MALE', label: 'Masculino' },
@@ -35,4 +37,24 @@ export const patientInitials = (firstName?: string, lastName?: string) => {
     const a = (firstName || '').trim().charAt(0)
     const b = (lastName || '').trim().charAt(0)
     return `${a}${b}`.toUpperCase() || '?'
+}
+
+export const patientAge = (dateOfBirth?: string | null) => {
+    if (!dateOfBirth) {
+        return null
+    }
+    const dob = dayjs(dateOfBirth)
+    if (!dob.isValid()) {
+        return null
+    }
+    const age = dayjs().diff(dob, 'year')
+    return age >= 0 ? age : null
+}
+
+export const patientLocation = (
+    city?: string | null,
+    department?: string | null,
+) => {
+    const parts = [city, department].filter(Boolean)
+    return parts.length > 0 ? parts.join(', ') : null
 }

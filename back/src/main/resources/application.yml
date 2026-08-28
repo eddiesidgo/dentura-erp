@@ -25,6 +25,8 @@ management:
 dentura:
   cors:
     allowed-origin-patterns: ${DENTURA_CORS_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  storage:
+    uploads-dir: ${DENTURA_UPLOADS_DIR:./data/uploads}
   jwt:
     secret: ${DENTURA_JWT_SECRET:change-me-in-production-use-a-long-random-secret-key-at-least-256-bits}
     expiration-ms: ${DENTURA_JWT_EXPIRATION_MS:86400000}

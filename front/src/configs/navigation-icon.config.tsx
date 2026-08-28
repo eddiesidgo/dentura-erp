@@ -1,6 +1,7 @@
 import {
     HiOutlineCalendar,
     HiOutlineClipboardList,
+    HiOutlineDocumentText,
     HiOutlineHome,
     HiOutlineKey,
     HiOutlineUserGroup,
@@ -15,6 +16,7 @@ const navigationIcon: NavigationIcons = {
     agenda: <HiOutlineCalendar />,
     treatments: <HiOutlineClipboardList />,
     roles: <HiOutlineKey />,
+    reports: <HiOutlineDocumentText />,
 }
 
 export default navigationIcon
