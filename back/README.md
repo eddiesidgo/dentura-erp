@@ -30,8 +30,8 @@ Perfil SQLite (Electron, futuro): `mvn spring-boot:run -Dspring-boot.run.profile
 Tooling local del proyecto (si no tienes Java/Maven en el sistema):
 
 ```bash
-export JAVA_HOME="$HOME/.local/share/dentura-tooling/jdk-21"
-export PATH="$JAVA_HOME/bin:$HOME/.local/share/dentura-tooling/maven/bin:$PATH"
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
 ## Arranque
