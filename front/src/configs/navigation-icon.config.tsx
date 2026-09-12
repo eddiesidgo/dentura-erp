@@ -1,5 +1,6 @@
 import {
     HiOutlineCalendar,
+    HiOutlineClipboardCheck,
     HiOutlineClipboardList,
     HiOutlineDocumentText,
     HiOutlineHome,
@@ -16,6 +17,7 @@ const navigationIcon: NavigationIcons = {
     patients: <HiOutlineUserGroup />,
     agenda: <HiOutlineCalendar />,
     treatments: <HiOutlineClipboardList />,
+    works: <HiOutlineClipboardCheck />,
     medications: <HiOutlineDocumentText />,
     referrals: <HiOutlineShare />,
     roles: <HiOutlineKey />,

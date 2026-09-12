@@ -9,6 +9,7 @@ import {
     REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
+    WORKS_READ,
 } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
@@ -51,6 +52,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'treatments',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [CATALOG_READ],
+        subMenu: [],
+    },
+    {
+        key: 'works',
+        path: '/trabajos',
+        title: 'Trabajos',
+        translateKey: 'nav.works',
+        icon: 'works',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [WORKS_READ],
         subMenu: [],
     },
     {

@@ -12,6 +12,8 @@ public interface MedicationRepository extends JpaRepository<Medication, Long> {
 
 	boolean existsByClinicId(Long clinicId);
 
+	long countByClinicId(Long clinicId);
+
 	boolean existsByClinicIdAndCodeIgnoreCase(Long clinicId, String code);
 
 	boolean existsByClinicIdAndCodeIgnoreCaseAndIdNot(Long clinicId, String code, Long id);

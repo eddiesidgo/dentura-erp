@@ -1,7 +1,15 @@
 package com.dentura.api.work;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -22,11 +30,14 @@ import com.dentura.api.treatment.Treatment;
 import com.dentura.api.treatment.TreatmentRepository;
 import com.dentura.api.work.dto.WorkRequest;
 import com.dentura.api.work.dto.WorkResponse;
+import com.dentura.api.work.dto.WorkTreatmentSummaryResponse;
 
 @Service
 public class WorkService {
 
 	private static final Set<String> STATUSES = Set.of(Work.PENDING, Work.COMPLETED, Work.REJECTED);
+	private static final ZoneId ZONE = ZoneId.of("America/El_Salvador");
+	private static final int MAX_RESULTS = 1000;
 
 	private final WorkRepository workRepository;
 	private final PatientRepository patientRepository;
@@ -51,22 +62,90 @@ public class WorkService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<WorkResponse> list(Long patientId) {
+	public List<WorkResponse> list(
+			Long patientId,
+			Long treatmentId,
+			String status,
+			LocalDate from,
+			LocalDate to) {
 		permissionService.require(Permission.WORKS_READ);
-		if (patientId == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe indicar el paciente");
-		}
 		Long clinicId = clinicAccess.requireClinicId();
-		requirePatient(patientId);
-		List<Work> works = workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, patientId);
+		if (patientId != null) {
+			requirePatient(patientId);
+		}
+		if (treatmentId != null) {
+			requireTreatment(treatmentId);
+		}
+		String normalizedStatus = status == null || status.isBlank() ? null : requireStatus(status.trim().toUpperCase(Locale.ROOT));
+		Instant fromInstant = from == null ? null : from.atStartOfDay(ZONE).toInstant();
+		Instant toInstant = to == null ? null : to.plusDays(1).atStartOfDay(ZONE).toInstant();
+		List<Work> works = workRepository.search(
+				clinicId,
+				patientId,
+				normalizedStatus,
+				treatmentId,
+				fromInstant,
+				toInstant,
+				fromInstant == null,
+				toInstant == null);
+		if (works.size() > MAX_RESULTS) {
+			works = works.subList(0, MAX_RESULTS);
+		}
 		return toResponses(works, clinicId);
+	}
+
+	@Transactional(readOnly = true)
+	public List<WorkTreatmentSummaryResponse> summaryByTreatment(
+			Long patientId,
+			String status,
+			LocalDate from,
+			LocalDate to) {
+		List<WorkResponse> works = list(patientId, null, status, from, to);
+		Map<Long, Acc> grouped = new LinkedHashMap<>();
+		for (WorkResponse work : works) {
+			Acc acc = grouped.computeIfAbsent(work.treatmentId(), id -> new Acc(
+					work.treatmentId(),
+					work.treatmentCode(),
+					work.treatmentName()));
+			acc.totalWorks++;
+			acc.quantityTotal += work.quantity();
+			acc.amountTotal = acc.amountTotal.add(work.total());
+			if (Work.PENDING.equals(work.status())) {
+				acc.pendingCount++;
+			} else if (Work.COMPLETED.equals(work.status())) {
+				acc.completedCount++;
+				acc.completedAmount = acc.completedAmount.add(work.total());
+			} else if (Work.REJECTED.equals(work.status())) {
+				acc.rejectedCount++;
+			}
+		}
+		List<WorkTreatmentSummaryResponse> rows = new ArrayList<>();
+		for (Acc acc : grouped.values()) {
+			rows.add(new WorkTreatmentSummaryResponse(
+					acc.treatmentId,
+					acc.treatmentCode,
+					acc.treatmentName,
+					acc.totalWorks,
+					acc.pendingCount,
+					acc.completedCount,
+					acc.rejectedCount,
+					acc.quantityTotal,
+					acc.amountTotal.setScale(2, RoundingMode.HALF_UP),
+					acc.completedAmount.setScale(2, RoundingMode.HALF_UP)));
+		}
+		rows.sort(Comparator
+				.comparing(WorkTreatmentSummaryResponse::completedCount)
+				.reversed()
+				.thenComparing(WorkTreatmentSummaryResponse::treatmentCode));
+		return rows;
 	}
 
 	@Transactional(readOnly = true)
 	public WorkResponse get(Long id) {
 		permissionService.require(Permission.WORKS_READ);
 		Work work = findOrThrow(id);
-		return WorkResponse.from(work, requireTreatment(work.getTreatmentId()));
+		Patient patient = requirePatient(work.getPatientId());
+		return WorkResponse.from(work, requireTreatment(work.getTreatmentId()), patient);
 	}
 
 	@Transactional
@@ -77,7 +156,7 @@ public class WorkService {
 		Work work = new Work();
 		work.setClinicId(clinicAccess.requireClinicId());
 		apply(work, request, patient, treatment);
-		return WorkResponse.from(workRepository.save(work), treatment);
+		return WorkResponse.from(workRepository.save(work), treatment, patient);
 	}
 
 	@Transactional
@@ -87,7 +166,7 @@ public class WorkService {
 		Patient patient = requirePatient(request.patientId());
 		Treatment treatment = requireTreatment(request.treatmentId());
 		apply(work, request, patient, treatment);
-		return WorkResponse.from(workRepository.save(work), treatment);
+		return WorkResponse.from(workRepository.save(work), treatment, patient);
 	}
 
 	@Transactional
@@ -133,16 +212,20 @@ public class WorkService {
 
 	private List<WorkResponse> toResponses(List<Work> works, Long clinicId) {
 		List<Long> treatmentIds = works.stream().map(Work::getTreatmentId).distinct().toList();
+		List<Long> patientIds = works.stream().map(Work::getPatientId).distinct().toList();
 		Map<Long, Treatment> treatments = treatmentRepository.findAllById(treatmentIds).stream()
 				.filter(treatment -> clinicId.equals(treatment.getClinicId()))
 				.collect(Collectors.toMap(Treatment::getId, Function.identity()));
+		Map<Long, Patient> patients = patientRepository.findAllById(patientIds).stream()
+				.filter(patient -> clinicId.equals(patient.getClinicId()))
+				.collect(Collectors.toMap(Patient::getId, Function.identity()));
 		return works.stream()
 				.map(work -> {
 					Treatment treatment = treatments.get(work.getTreatmentId());
 					if (treatment == null) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tratamiento no encontrado");
 					}
-					return WorkResponse.from(work, treatment);
+					return WorkResponse.from(work, treatment, patients.get(work.getPatientId()));
 				})
 				.toList();
 	}
@@ -152,5 +235,24 @@ public class WorkService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de trabajo inválido");
 		}
 		return status;
+	}
+
+	private static final class Acc {
+		private final Long treatmentId;
+		private final String treatmentCode;
+		private final String treatmentName;
+		private long totalWorks;
+		private long pendingCount;
+		private long completedCount;
+		private long rejectedCount;
+		private int quantityTotal;
+		private BigDecimal amountTotal = BigDecimal.ZERO;
+		private BigDecimal completedAmount = BigDecimal.ZERO;
+
+		private Acc(Long treatmentId, String treatmentCode, String treatmentName) {
+			this.treatmentId = treatmentId;
+			this.treatmentCode = treatmentCode;
+			this.treatmentName = treatmentName;
+		}
 	}
 }

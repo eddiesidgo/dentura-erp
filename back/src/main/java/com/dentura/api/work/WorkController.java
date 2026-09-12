@@ -1,7 +1,9 @@
 package com.dentura.api.work;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dentura.api.work.dto.WorkRequest;
 import com.dentura.api.work.dto.WorkResponse;
+import com.dentura.api.work.dto.WorkTreatmentSummaryResponse;
 
 import jakarta.validation.Valid;
 
@@ -30,8 +33,22 @@ public class WorkController {
 	}
 
 	@GetMapping
-	public List<WorkResponse> list(@RequestParam(required = false) Long patientId) {
-		return workService.list(patientId);
+	public List<WorkResponse> list(
+			@RequestParam(required = false) Long patientId,
+			@RequestParam(required = false) Long treatmentId,
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		return workService.list(patientId, treatmentId, status, from, to);
+	}
+
+	@GetMapping("/summary-by-treatment")
+	public List<WorkTreatmentSummaryResponse> summaryByTreatment(
+			@RequestParam(required = false) Long patientId,
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		return workService.summaryByTreatment(patientId, status, from, to);
 	}
 
 	@GetMapping("/{id}")

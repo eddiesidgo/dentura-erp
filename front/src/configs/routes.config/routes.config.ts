@@ -9,6 +9,7 @@ import {
     REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
+    WORKS_READ,
 } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
 
@@ -69,6 +70,15 @@ export const protectedRoutes = [
         authority: [CATALOG_READ],
         meta: {
             header: 'Tratamientos',
+        },
+    },
+    {
+        key: 'works',
+        path: '/trabajos',
+        component: lazy(() => import('@/views/works/WorkList')),
+        authority: [WORKS_READ],
+        meta: {
+            header: 'Listado de trabajos',
         },
     },
     {

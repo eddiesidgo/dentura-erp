@@ -28,7 +28,7 @@ Clínicas dentales en El Salvador (y similares) que:
 | Pacientes | CRUD, búsqueda, ficha (datos personales/contacto/fiscales básicos). Fuente de referido opcional |
 | Agenda | Calendario y citas |
 | Catálogo de tratamientos | Códigos, nombres, precios |
-| Trabajos / plan | Por paciente; estados: Terminados / Pendientes / No aceptados (base de cotización) |
+| Trabajos / plan | Por paciente; estados: Terminados / Pendientes / No aceptados (base de cotización). **Listado clínico** `/trabajos` con filtros (paciente, tratamiento, estado, fechas) y resumen por tratamiento |
 | Reportes | Listado/resumen de trabajos, cotización, recibo de pago, receta, resumen de pagos, pacientes por fuente de referidos; vista previa + PDF |
 | Odontograma | Hallazgos por pieza (FDI), superficies, condición y estado; pestaña en ficha |
 | Pagos | Cobros por paciente, recibo secuencial, asignaciones a trabajos, saldo vs plan |

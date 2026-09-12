@@ -1,11 +1,30 @@
 import ApiService from './ApiService'
-import type { Work, WorkPayload } from '@/@types/work'
+import type {
+    Work,
+    WorkListParams,
+    WorkPayload,
+    WorkTreatmentSummary,
+} from '@/@types/work'
 
-export async function apiGetWorks(patientId: number | string) {
+export async function apiGetWorks(
+    patientIdOrParams: number | string | WorkListParams,
+) {
+    const params =
+        typeof patientIdOrParams === 'object'
+            ? patientIdOrParams
+            : { patientId: patientIdOrParams }
     return ApiService.fetchData<Work[]>({
         url: '/works',
         method: 'get',
-        params: { patientId },
+        params,
+    })
+}
+
+export async function apiGetWorksSummaryByTreatment(params?: WorkListParams) {
+    return ApiService.fetchData<WorkTreatmentSummary[]>({
+        url: '/works/summary-by-treatment',
+        method: 'get',
+        params,
     })
 }
 
