@@ -5,6 +5,7 @@ import {
     CATALOG_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
+    PRESCRIPTIONS_READ,
     REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
@@ -68,6 +69,15 @@ export const protectedRoutes = [
         authority: [CATALOG_READ],
         meta: {
             header: 'Tratamientos',
+        },
+    },
+    {
+        key: 'medications',
+        path: '/medicamentos',
+        component: lazy(() => import('@/views/medications/MedicationList')),
+        authority: [PRESCRIPTIONS_READ],
+        meta: {
+            header: 'Medicamentos',
         },
     },
     {

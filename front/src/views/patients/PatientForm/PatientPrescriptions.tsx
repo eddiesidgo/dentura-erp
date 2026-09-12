@@ -21,30 +21,25 @@ import {
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { getApiErrorMessage } from '@/services/PatientService'
+import { apiGetMedications } from '@/services/MedicationService'
 import {
     apiCreatePrescription,
-    apiCreatePrescriptionTemplate,
     apiDeletePrescription,
-    apiDeletePrescriptionTemplate,
     apiGetPrescriptions,
-    apiGetPrescriptionTemplates,
     apiUpdatePrescription,
 } from '@/services/PrescriptionService'
-import type {
-    Prescription,
-    PrescriptionPayload,
-    PrescriptionTemplate,
-} from '@/@types/prescription'
+import type { Medication } from '@/@types/medication'
+import type { Prescription, PrescriptionPayload } from '@/@types/prescription'
 
 type PrescriptionForm = {
     id?: number
+    medicationId?: number
     drug: string
     dose: string
     frequency: string
     duration: string
     instructions: string
     notes: string
-    templateId?: number
 }
 
 const emptyForm: PrescriptionForm = {
@@ -67,15 +62,12 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
     const canDelete = useAuthority(userAuthority, [PRESCRIPTIONS_DELETE])
 
     const [items, setItems] = useState<Prescription[]>([])
-    const [templates, setTemplates] = useState<PrescriptionTemplate[]>([])
+    const [medications, setMedications] = useState<Medication[]>([])
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState<PrescriptionForm>(emptyForm)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [savingTemplate, setSavingTemplate] = useState(false)
     const [toDelete, setToDelete] = useState<Prescription | null>(null)
-    const [templateToDelete, setTemplateToDelete] =
-        useState<PrescriptionTemplate | null>(null)
     const [printPrescriptionId, setPrintPrescriptionId] = useState<number | null>(
         null,
     )
@@ -96,19 +88,22 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
         }
     }, [patientId])
 
-    const loadTemplates = useCallback(async () => {
+    const loadMedications = useCallback(async () => {
         try {
-            const { data } = await apiGetPrescriptionTemplates()
-            setTemplates(data.filter((template) => template.active))
+            const { data } = await apiGetMedications({
+                active: true,
+                size: 200,
+            })
+            setMedications(data.data)
         } catch {
-            setTemplates([])
+            setMedications([])
         }
     }, [])
 
     useEffect(() => {
         loadPrescriptions()
-        loadTemplates()
-    }, [loadPrescriptions, loadTemplates])
+        loadMedications()
+    }, [loadPrescriptions, loadMedications])
 
     const openCreate = () => {
         setForm(emptyForm)
@@ -118,31 +113,31 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
     const openEdit = (item: Prescription) => {
         setForm({
             id: item.id,
+            medicationId: item.medicationId ?? undefined,
             drug: item.drug,
             dose: item.dose ?? '',
             frequency: item.frequency ?? '',
             duration: item.duration ?? '',
             instructions: item.instructions ?? '',
             notes: item.notes ?? '',
-            templateId: item.templateId ?? undefined,
         })
         setDialogOpen(true)
     }
 
-    const applyTemplate = (templateId?: number) => {
-        const template = templates.find((item) => item.id === templateId)
-        if (!template) {
-            setForm((prev) => ({ ...prev, templateId: undefined }))
+    const applyMedication = (medicationId?: number) => {
+        const medication = medications.find((item) => item.id === medicationId)
+        if (!medication) {
+            setForm((prev) => ({ ...prev, medicationId: undefined }))
             return
         }
         setForm((prev) => ({
             ...prev,
-            templateId: template.id,
-            drug: template.drug,
-            dose: template.dose ?? '',
-            frequency: template.frequency ?? '',
-            duration: template.duration ?? '',
-            instructions: template.instructions ?? '',
+            medicationId: medication.id,
+            drug: medication.name,
+            dose: medication.dose ?? '',
+            frequency: medication.frequency ?? '',
+            duration: medication.duration ?? '',
+            instructions: medication.instructions ?? '',
         }))
     }
 
@@ -160,7 +155,7 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                 duration: form.duration || null,
                 instructions: form.instructions || null,
                 notes: form.notes || null,
-                templateId: form.templateId ?? null,
+                medicationId: form.medicationId ?? null,
             }
             if (form.id) {
                 await apiUpdatePrescription(form.id, payload)
@@ -177,40 +172,6 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
             )
         } finally {
             setSaving(false)
-        }
-    }
-
-    const saveAsTemplate = async () => {
-        if (!form.drug.trim()) {
-            return
-        }
-        setSavingTemplate(true)
-        try {
-            await apiCreatePrescriptionTemplate({
-                drug: form.drug.trim(),
-                dose: form.dose || null,
-                frequency: form.frequency || null,
-                duration: form.duration || null,
-                instructions: form.instructions || null,
-                active: true,
-            })
-            await loadTemplates()
-            toast.push(
-                <Notification type="success" title="Plantilla guardada">
-                    Se agregó al catálogo de plantillas.
-                </Notification>,
-            )
-        } catch (error) {
-            toast.push(
-                <Notification type="danger" title="No se pudo guardar">
-                    {getApiErrorMessage(
-                        error,
-                        'Error al guardar la plantilla',
-                    )}
-                </Notification>,
-            )
-        } finally {
-            setSavingTemplate(false)
         }
     }
 
@@ -231,29 +192,11 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
         }
     }
 
-    const confirmDeleteTemplate = async () => {
-        if (!templateToDelete) {
-            return
-        }
-        try {
-            await apiDeletePrescriptionTemplate(templateToDelete.id)
-            setTemplateToDelete(null)
-            await loadTemplates()
-        } catch (error) {
-            toast.push(
-                <Notification type="danger" title="No se pudo eliminar">
-                    {getApiErrorMessage(
-                        error,
-                        'Error al eliminar la plantilla',
-                    )}
-                </Notification>,
-            )
-        }
-    }
-
-    const templateOptions = templates.map((template) => ({
-        value: template.id,
-        label: `${template.drug}${template.dose ? ` · ${template.dose}` : ''}`,
+    const medicationOptions = medications.map((medication) => ({
+        value: medication.id,
+        label: `${medication.code} · ${medication.name}${
+            medication.dose ? ` · ${medication.dose}` : ''
+        }`,
     }))
 
     return (
@@ -275,7 +218,8 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                             Recetas
                         </IconText>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Prescripciones del paciente y plantillas rápidas.
+                            Prescripciones del paciente desde el catálogo de
+                            medicamentos.
                         </p>
                     </div>
                     {canWrite && (
@@ -365,7 +309,8 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                                             Sin recetas
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Crea una receta o usa una plantilla.
+                                            Crea una receta desde el catálogo de
+                                            medicamentos.
                                         </p>
                                     </td>
                                 </tr>
@@ -373,40 +318,6 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                         </tbody>
                     </table>
                 </div>
-
-                {templates.length > 0 && (
-                    <div className="mt-5">
-                        <div className="text-sm font-semibold mb-2">
-                            Plantillas guardadas
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {templates.map((template) => (
-                                <div
-                                    key={template.id}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm"
-                                >
-                                    <span>
-                                        {template.drug}
-                                        {template.dose
-                                            ? ` · ${template.dose}`
-                                            : ''}
-                                    </span>
-                                    {canDelete && (
-                                        <button
-                                            type="button"
-                                            className="text-xs text-red-600 hover:underline"
-                                            onClick={() =>
-                                                setTemplateToDelete(template)
-                                            }
-                                        >
-                                            Eliminar
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </AdaptableCard>
 
             <FormDrawer
@@ -416,37 +327,25 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                 title={form.id ? 'Editar receta' : 'Nueva receta'}
                 saving={saving}
                 saveDisabled={!form.drug.trim()}
-                footerStart={
-                    canWrite ? (
-                        <Button
-                            size="sm"
-                            loading={savingTemplate}
-                            disabled={!form.drug.trim()}
-                            onClick={saveAsTemplate}
-                        >
-                            Guardar como plantilla
-                        </Button>
-                    ) : undefined
-                }
                 onClose={() => setDialogOpen(false)}
                 onSave={savePrescription}
             >
                 <div className="flex flex-col gap-3">
-                    {templates.length > 0 && (
+                    {medications.length > 0 && (
                         <div>
                             <div className="mb-1 font-semibold">
-                                Cargar plantilla
+                                Medicamento del catálogo
                             </div>
                             <Select
                                 isClearable
-                                placeholder="Seleccionar plantilla"
-                                options={templateOptions}
-                                value={templateOptions.filter(
+                                placeholder="Seleccionar medicamento"
+                                options={medicationOptions}
+                                value={medicationOptions.filter(
                                     (option) =>
-                                        option.value === form.templateId,
+                                        option.value === form.medicationId,
                                 )}
                                 onChange={(option) =>
-                                    applyTemplate(option?.value)
+                                    applyMedication(option?.value)
                                 }
                             />
                         </div>
@@ -460,6 +359,7 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                                 setForm((prev) => ({
                                     ...prev,
                                     drug: e.target.value,
+                                    medicationId: undefined,
                                 }))
                             }
                         />
@@ -551,27 +451,6 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                 <p>
                     ¿Eliminar la receta de{' '}
                     <span className="font-semibold">{toDelete?.drug}</span>?
-                </p>
-            </ConfirmDialog>
-
-            <ConfirmDialog
-                isOpen={Boolean(templateToDelete)}
-                type="danger"
-                title="Eliminar plantilla"
-                confirmButtonColor="red-600"
-                confirmText="Eliminar"
-                cancelText="Cancelar"
-                onClose={() => setTemplateToDelete(null)}
-                onRequestClose={() => setTemplateToDelete(null)}
-                onCancel={() => setTemplateToDelete(null)}
-                onConfirm={confirmDeleteTemplate}
-            >
-                <p>
-                    ¿Eliminar la plantilla{' '}
-                    <span className="font-semibold">
-                        {templateToDelete?.drug}
-                    </span>
-                    ?
                 </p>
             </ConfirmDialog>
         </>

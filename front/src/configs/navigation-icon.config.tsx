@@ -16,6 +16,7 @@ const navigationIcon: NavigationIcons = {
     patients: <HiOutlineUserGroup />,
     agenda: <HiOutlineCalendar />,
     treatments: <HiOutlineClipboardList />,
+    medications: <HiOutlineDocumentText />,
     referrals: <HiOutlineShare />,
     roles: <HiOutlineKey />,
     reports: <HiOutlineDocumentText />,

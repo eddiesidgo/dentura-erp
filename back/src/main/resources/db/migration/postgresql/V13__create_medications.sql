@@ -1,0 +1,27 @@
+CREATE TABLE medications (
+    id BIGSERIAL PRIMARY KEY,
+    clinic_id BIGINT NOT NULL,
+    code VARCHAR(20) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    form VARCHAR(80),
+    dose VARCHAR(80),
+    frequency VARCHAR(80),
+    duration VARCHAR(80),
+    instructions TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT fk_medications_clinic FOREIGN KEY (clinic_id) REFERENCES clinics (id),
+    CONSTRAINT uq_medications_clinic_code UNIQUE (clinic_id, code)
+);
+
+CREATE INDEX idx_medications_clinic_active ON medications (clinic_id, active);
+CREATE INDEX idx_medications_clinic_name ON medications (clinic_id, name);
+
+ALTER TABLE prescriptions
+    ADD COLUMN medication_id BIGINT NULL;
+
+ALTER TABLE prescriptions
+    ADD CONSTRAINT fk_prescriptions_medication
+    FOREIGN KEY (medication_id) REFERENCES medications (id) ON DELETE SET NULL;

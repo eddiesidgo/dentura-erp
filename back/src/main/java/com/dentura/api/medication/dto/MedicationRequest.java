@@ -1,30 +1,27 @@
-package com.dentura.api.prescription.dto;
-
-import java.time.Instant;
+package com.dentura.api.medication.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record PrescriptionRequest(
-		@NotNull(message = "El paciente es obligatorio") Long patientId,
-		@NotBlank(message = "El medicamento es obligatorio") @Size(max = 160) String drug,
+public record MedicationRequest(
+		@NotBlank(message = "El código es obligatorio") @Size(max = 20) String code,
+		@NotBlank(message = "El nombre es obligatorio") @Size(max = 160) String name,
+		@Size(max = 80) String form,
 		@Size(max = 80) String dose,
 		@Size(max = 80) String frequency,
 		@Size(max = 80) String duration,
 		String instructions,
-		Instant prescribedAt,
-		Long templateId,
-		Long medicationId,
-		String notes) {
+		Boolean active,
+		Integer sortOrder) {
 
-	public PrescriptionRequest {
-		drug = blankToNull(drug);
+	public MedicationRequest {
+		code = blankToNull(code) == null ? null : blankToNull(code).toUpperCase();
+		name = blankToNull(name);
+		form = blankToNull(form);
 		dose = blankToNull(dose);
 		frequency = blankToNull(frequency);
 		duration = blankToNull(duration);
 		instructions = blankToNull(instructions);
-		notes = blankToNull(notes);
 	}
 
 	private static String blankToNull(String value) {

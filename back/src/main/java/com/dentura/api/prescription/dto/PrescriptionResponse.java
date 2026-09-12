@@ -15,6 +15,7 @@ public record PrescriptionResponse(
 		String instructions,
 		Instant prescribedAt,
 		Long templateId,
+		Long medicationId,
 		String notes,
 		Instant createdAt,
 		Instant updatedAt) {
@@ -31,6 +32,7 @@ public record PrescriptionResponse(
 				prescription.getInstructions(),
 				prescription.getPrescribedAt(),
 				prescription.getTemplateId(),
+				prescription.getMedicationId(),
 				prescription.getNotes(),
 				prescription.getCreatedAt(),
 				prescription.getUpdatedAt());

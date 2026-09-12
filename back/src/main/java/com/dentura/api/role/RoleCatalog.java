@@ -89,6 +89,7 @@ public class RoleCatalog {
 		permissionRepository.findByCode(Permission.PHOTOS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PHOTOS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PRESCRIPTIONS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PRESCRIPTIONS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.REFERRALS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.REFERRALS_WRITE).ifPresent(receptionPerms::add);
 		reception.setPermissions(receptionPerms);

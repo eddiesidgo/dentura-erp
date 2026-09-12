@@ -33,7 +33,7 @@ Clínicas dentales en El Salvador (y similares) que:
 | Odontograma | Hallazgos por pieza (FDI), superficies, condición y estado; pestaña en ficha |
 | Pagos | Cobros por paciente, recibo secuencial, asignaciones a trabajos, saldo vs plan |
 | Fotos / RVG | Archivos por paciente (almacenamiento local) |
-| Recetas | Prescripciones + plantillas; impresión/PDF |
+| Recetas | Prescripciones + **catálogo de medicamentos** + plantillas legacy; impresión/PDF |
 | Referidos | Catálogo de fuentes + referidos salientes; reporte por fuente |
 
 ### Explícitamente fuera de alcance (sigue)

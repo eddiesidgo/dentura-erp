@@ -8,6 +8,7 @@ export type Prescription = {
     duration: string | null
     instructions: string | null
     prescribedAt: string
+    medicationId: number | null
     templateId: number | null
     notes: string | null
     createdAt: string
@@ -22,6 +23,7 @@ export type PrescriptionPayload = {
     duration?: string | null
     instructions?: string | null
     prescribedAt?: string | null
+    medicationId?: number | null
     templateId?: number | null
     notes?: string | null
 }

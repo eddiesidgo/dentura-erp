@@ -18,6 +18,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.dentura.api.appointment.Appointment;
 import com.dentura.api.appointment.AppointmentRepository;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.medication.Medication;
+import com.dentura.api.medication.MedicationRepository;
+import com.dentura.api.medication.MedicationSeeder;
 import com.dentura.api.odontogram.OdontogramEntry;
 import com.dentura.api.odontogram.OdontogramEntryRepository;
 import com.dentura.api.patient.Patient;
@@ -61,6 +64,8 @@ public class DemoDataSeeder {
 	private final PrescriptionRepository prescriptionRepository;
 	private final ReferralSourceRepository referralSourceRepository;
 	private final OutboundReferralRepository outboundReferralRepository;
+	private final MedicationRepository medicationRepository;
+	private final MedicationSeeder medicationSeeder;
 
 	public DemoDataSeeder(
 			@Value("${dentura.demo.seed-enabled:false}") boolean enabled,
@@ -76,7 +81,9 @@ public class DemoDataSeeder {
 			PrescriptionTemplateRepository prescriptionTemplateRepository,
 			PrescriptionRepository prescriptionRepository,
 			ReferralSourceRepository referralSourceRepository,
-			OutboundReferralRepository outboundReferralRepository) {
+			OutboundReferralRepository outboundReferralRepository,
+			MedicationRepository medicationRepository,
+			MedicationSeeder medicationSeeder) {
 		this.enabled = enabled;
 		this.clinicAccess = clinicAccess;
 		this.patientRepository = patientRepository;
@@ -91,6 +98,8 @@ public class DemoDataSeeder {
 		this.prescriptionRepository = prescriptionRepository;
 		this.referralSourceRepository = referralSourceRepository;
 		this.outboundReferralRepository = outboundReferralRepository;
+		this.medicationRepository = medicationRepository;
+		this.medicationSeeder = medicationSeeder;
 	}
 
 	public boolean isEnabled() {
@@ -106,6 +115,7 @@ public class DemoDataSeeder {
 		}
 		clinicAccess.requireSuperAdmin();
 		Long clinicId = clinicAccess.requireClinicId();
+		medicationSeeder.ensureClinicCatalog(clinicId);
 
 		if (patientRepository.existsByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "001")) {
 			return DemoSeedResult.alreadyPresent(clinicId);
@@ -185,8 +195,20 @@ public class DemoDataSeeder {
 		paymentAllocationRepository.save(alloc);
 
 		PrescriptionTemplate amox = saveTemplate(clinicId, "Amoxicilina 500 mg", "1 cápsula", "cada 8 horas", "7 días", "Tomar con alimentos");
-		savePrescription(clinicId, ana.getId(), amox, "Tras restauración");
-		savePrescription(clinicId, luis.getId(), null, "Ibuprofeno 400 mg", "1 tableta", "cada 8 horas", "3 días", "Si hay dolor", "Pre-exodoncia");
+		Medication amoxMed = medicationRepository.findByClinicIdAndCodeIgnoreCase(clinicId, "AMOX500").orElse(null);
+		Medication ibuMed = medicationRepository.findByClinicIdAndCodeIgnoreCase(clinicId, "IBU400").orElse(null);
+		savePrescription(clinicId, ana.getId(), amox, amoxMed, "Tras restauración");
+		savePrescription(
+				clinicId,
+				luis.getId(),
+				null,
+				ibuMed,
+				ibuMed != null ? ibuMed.getName() : "Ibuprofeno 400 mg",
+				ibuMed != null ? ibuMed.getDose() : "1 tableta",
+				ibuMed != null ? ibuMed.getFrequency() : "cada 8 horas",
+				ibuMed != null ? ibuMed.getDuration() : "3 días",
+				ibuMed != null ? ibuMed.getInstructions() : "Si hay dolor",
+				"Pre-exodoncia");
 
 		saveOutbound(clinicId, luis.getId(), "Endodoncia", "Dr. Pérez Endodoncia", "Evaluar 48", OutboundReferral.SENT);
 		saveOutbound(clinicId, maria.getId(), "Ortodoncia", "Centro Ortodoncia SV", "Apiñamiento leve", OutboundReferral.DRAFT);
@@ -361,11 +383,17 @@ public class DemoDataSeeder {
 		return prescriptionTemplateRepository.save(template);
 	}
 
-	private void savePrescription(Long clinicId, Long patientId, PrescriptionTemplate template, String notes) {
+	private void savePrescription(
+			Long clinicId,
+			Long patientId,
+			PrescriptionTemplate template,
+			Medication medication,
+			String notes) {
 		savePrescription(
 				clinicId,
 				patientId,
 				template,
+				medication,
 				template.getDrug(),
 				template.getDose(),
 				template.getFrequency(),
@@ -378,6 +406,7 @@ public class DemoDataSeeder {
 			Long clinicId,
 			Long patientId,
 			PrescriptionTemplate template,
+			Medication medication,
 			String drug,
 			String dose,
 			String frequency,
@@ -388,6 +417,7 @@ public class DemoDataSeeder {
 		prescription.setClinicId(clinicId);
 		prescription.setPatientId(patientId);
 		prescription.setTemplateId(template == null ? null : template.getId());
+		prescription.setMedicationId(medication == null ? null : medication.getId());
 		prescription.setDrug(drug);
 		prescription.setDose(dose);
 		prescription.setFrequency(frequency);

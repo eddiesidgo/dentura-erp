@@ -18,6 +18,7 @@ import com.dentura.api.clinic.dto.ClinicIdentityResponse;
 import com.dentura.api.clinic.dto.CreateClinicRequest;
 import com.dentura.api.clinic.dto.UpdateClinicRequest;
 import com.dentura.api.domain.User;
+import com.dentura.api.medication.MedicationSeeder;
 import com.dentura.api.role.PermissionService;
 import com.dentura.api.role.RoleCatalog;
 import com.dentura.api.treatment.TreatmentSeeder;
@@ -33,6 +34,7 @@ public class ClinicService {
 	private final RoleCatalog roleCatalog;
 	private final PermissionService permissionService;
 	private final TreatmentSeeder treatmentSeeder;
+	private final MedicationSeeder medicationSeeder;
 	private final ClinicLogoStorage clinicLogoStorage;
 
 	public ClinicService(
@@ -42,6 +44,7 @@ public class ClinicService {
 			RoleCatalog roleCatalog,
 			PermissionService permissionService,
 			TreatmentSeeder treatmentSeeder,
+			MedicationSeeder medicationSeeder,
 			ClinicLogoStorage clinicLogoStorage) {
 		this.clinicRepository = clinicRepository;
 		this.clinicAccess = clinicAccess;
@@ -49,6 +52,7 @@ public class ClinicService {
 		this.roleCatalog = roleCatalog;
 		this.permissionService = permissionService;
 		this.treatmentSeeder = treatmentSeeder;
+		this.medicationSeeder = medicationSeeder;
 		this.clinicLogoStorage = clinicLogoStorage;
 	}
 
@@ -83,6 +87,7 @@ public class ClinicService {
 		Clinic saved = clinicRepository.save(clinic);
 		roleCatalog.ensureClinicRoles(saved.getId());
 		treatmentSeeder.ensureClinicCatalog(saved.getId());
+		medicationSeeder.ensureClinicCatalog(saved.getId());
 		return ClinicIdentityResponse.from(saved);
 	}
 

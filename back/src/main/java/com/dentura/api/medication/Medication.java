@@ -1,4 +1,4 @@
-package com.dentura.api.prescription;
+package com.dentura.api.medication;
 
 import java.time.Instant;
 
@@ -10,10 +10,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "prescriptions")
-public class Prescription {
+@Table(name = "medications", uniqueConstraints = {
+		@UniqueConstraint(columnNames = { "clinic_id", "code" })
+})
+public class Medication {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,11 +25,14 @@ public class Prescription {
 	@Column(name = "clinic_id", nullable = false)
 	private Long clinicId;
 
-	@Column(name = "patient_id", nullable = false)
-	private Long patientId;
+	@Column(nullable = false, length = 20)
+	private String code;
 
 	@Column(nullable = false, length = 160)
-	private String drug;
+	private String name;
+
+	@Column(length = 80)
+	private String form;
 
 	@Column(length = 80)
 	private String dose;
@@ -40,17 +46,11 @@ public class Prescription {
 	@Column(columnDefinition = "TEXT")
 	private String instructions;
 
-	@Column(name = "prescribed_at", nullable = false)
-	private Instant prescribedAt;
+	@Column(nullable = false)
+	private boolean active = true;
 
-	@Column(name = "template_id")
-	private Long templateId;
-
-	@Column(name = "medication_id")
-	private Long medicationId;
-
-	@Column(columnDefinition = "TEXT")
-	private String notes;
+	@Column(name = "sort_order", nullable = false)
+	private int sortOrder = 0;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -82,20 +82,28 @@ public class Prescription {
 		this.clinicId = clinicId;
 	}
 
-	public Long getPatientId() {
-		return patientId;
+	public String getCode() {
+		return code;
 	}
 
-	public void setPatientId(Long patientId) {
-		this.patientId = patientId;
+	public void setCode(String code) {
+		this.code = code;
 	}
 
-	public String getDrug() {
-		return drug;
+	public String getName() {
+		return name;
 	}
 
-	public void setDrug(String drug) {
-		this.drug = drug;
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getForm() {
+		return form;
+	}
+
+	public void setForm(String form) {
+		this.form = form;
 	}
 
 	public String getDose() {
@@ -130,36 +138,20 @@ public class Prescription {
 		this.instructions = instructions;
 	}
 
-	public Instant getPrescribedAt() {
-		return prescribedAt;
+	public boolean isActive() {
+		return active;
 	}
 
-	public void setPrescribedAt(Instant prescribedAt) {
-		this.prescribedAt = prescribedAt;
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
-	public Long getTemplateId() {
-		return templateId;
+	public int getSortOrder() {
+		return sortOrder;
 	}
 
-	public void setTemplateId(Long templateId) {
-		this.templateId = templateId;
-	}
-
-	public Long getMedicationId() {
-		return medicationId;
-	}
-
-	public void setMedicationId(Long medicationId) {
-		this.medicationId = medicationId;
-	}
-
-	public String getNotes() {
-		return notes;
-	}
-
-	public void setNotes(String notes) {
-		this.notes = notes;
+	public void setSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 
 	public Instant getCreatedAt() {

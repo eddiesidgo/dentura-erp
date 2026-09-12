@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.medication.Medication;
+import com.dentura.api.medication.MedicationRepository;
 import com.dentura.api.patient.PatientRepository;
 import com.dentura.api.prescription.dto.PrescriptionRequest;
 import com.dentura.api.prescription.dto.PrescriptionResponse;
@@ -20,6 +22,7 @@ public class PrescriptionService {
 
 	private final PrescriptionRepository prescriptionRepository;
 	private final PrescriptionTemplateRepository templateRepository;
+	private final MedicationRepository medicationRepository;
 	private final PatientRepository patientRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
@@ -27,11 +30,13 @@ public class PrescriptionService {
 	public PrescriptionService(
 			PrescriptionRepository prescriptionRepository,
 			PrescriptionTemplateRepository templateRepository,
+			MedicationRepository medicationRepository,
 			PatientRepository patientRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService) {
 		this.prescriptionRepository = prescriptionRepository;
 		this.templateRepository = templateRepository;
+		this.medicationRepository = medicationRepository;
 		this.patientRepository = patientRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
@@ -92,6 +97,7 @@ public class PrescriptionService {
 		prescription.setInstructions(request.instructions());
 		prescription.setPrescribedAt(request.prescribedAt() == null ? Instant.now() : request.prescribedAt());
 		prescription.setTemplateId(resolveTemplateId(request.templateId(), clinicId));
+		prescription.setMedicationId(resolveMedicationId(request.medicationId(), clinicId));
 		prescription.setNotes(request.notes());
 	}
 
@@ -102,6 +108,15 @@ public class PrescriptionService {
 		return templateRepository.findByIdAndClinicId(templateId, clinicId)
 				.map(PrescriptionTemplate::getId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plantilla no válida"));
+	}
+
+	private Long resolveMedicationId(Long medicationId, Long clinicId) {
+		if (medicationId == null) {
+			return null;
+		}
+		return medicationRepository.findByIdAndClinicId(medicationId, clinicId)
+				.map(Medication::getId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Medicamento no válido"));
 	}
 
 	private Prescription findOrThrow(Long id) {
