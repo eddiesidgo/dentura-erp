@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Pacientes por fuente de referidos</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: watermark}"></th:block>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div th:if="${#lists.isEmpty(rows)}" class="empty" th:text="${emptyMessage}">Sin datos</div>
+
+<table th:if="${!#lists.isEmpty(rows)}" class="data">
+    <thead>
+    <tr>
+        <th>Fuente de referido</th>
+        <th class="text-center">Pacientes</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td>
+            <span class="strong" th:text="${row.label}">Google</span>
+            <span th:if="${row.secondary != null}" class="muted" th:text="${row.secondary}"></span>
+        </td>
+        <td class="text-center strong" th:text="${row.value}">0</td>
+    </tr>
+    </tbody>
+</table>
+
+<th:block th:replace="~{reports/fragments :: footer}"></th:block>
+</body>
+</html>

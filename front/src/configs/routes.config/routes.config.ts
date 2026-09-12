@@ -5,6 +5,7 @@ import {
     CATALOG_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
+    REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
 } from '@/constants/roles.constant'
@@ -67,6 +68,17 @@ export const protectedRoutes = [
         authority: [CATALOG_READ],
         meta: {
             header: 'Tratamientos',
+        },
+    },
+    {
+        key: 'referrals',
+        path: '/referencias',
+        component: lazy(
+            () => import('@/views/referrals/ReferralSourceList'),
+        ),
+        authority: [REFERRALS_READ],
+        meta: {
+            header: 'Fuentes de referido',
         },
     },
     {

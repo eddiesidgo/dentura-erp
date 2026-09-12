@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Comprobante de pago</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: watermark}"></th:block>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div class="patient-box">
+    <div class="patient-label">Paciente</div>
+    <div class="patient-name" th:text="${receipt.patientName}">Paciente</div>
+    <div class="patient-meta">
+        Expediente <strong th:text="${receipt.recordNumber}">P-001</strong>
+        <span th:if="${receipt.dui != null}"> · DUI <span th:text="${receipt.dui}">00000000-0</span></span>
+        <span th:if="${receipt.phone != null}"> · Tel. <span th:text="${receipt.phone}">7777-0000</span></span>
+    </div>
+</div>
+
+<table class="totals" style="margin-bottom: 16px; width: 100%;">
+    <tr>
+        <td class="label">Recibo</td>
+        <td class="amount">#<span th:text="${receipt.receiptNumber}">1</span></td>
+    </tr>
+    <tr>
+        <td class="label">Fecha de pago</td>
+        <td class="amount" th:text="${receipt.paidAt}">01/01/2026 10:00</td>
+    </tr>
+    <tr>
+        <td class="label">Método</td>
+        <td class="amount" th:text="${receipt.methodLabel}">Efectivo</td>
+    </tr>
+    <tr class="grand">
+        <td class="label">Monto recibido</td>
+        <td class="amount" th:text="${receipt.amount}">$0.00</td>
+    </tr>
+</table>
+
+<p th:if="${receipt.notes != null}" class="legal-note" style="margin-top: 0;">
+    Notas: <span th:text="${receipt.notes}">Notas</span>
+</p>
+
+<div th:if="${#lists.isEmpty(receipt.allocations)}" class="empty" th:text="${emptyMessage}">Sin asignaciones</div>
+
+<table th:if="${!#lists.isEmpty(receipt.allocations)}" class="data">
+    <thead>
+    <tr>
+        <th>Concepto / tratamiento</th>
+        <th class="text-right">Monto</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="line : ${receipt.allocations}">
+        <td th:text="${line.description}">Consulta</td>
+        <td class="text-right strong" th:text="${line.amount}">$0.00</td>
+    </tr>
+    </tbody>
+</table>
+
+<p class="legal-note">
+    Este documento es un comprobante interno de pago. No constituye factura ni comprobante fiscal.
+</p>
+
+<th:block th:replace="~{reports/fragments :: signature}"></th:block>
+<th:block th:replace="~{reports/fragments :: footer}"></th:block>
+</body>
+</html>

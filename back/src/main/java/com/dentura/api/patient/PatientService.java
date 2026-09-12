@@ -23,6 +23,7 @@ import com.dentura.api.patient.dto.PatientKpisResponse;
 import com.dentura.api.patient.dto.PatientPageResponse;
 import com.dentura.api.patient.dto.PatientRequest;
 import com.dentura.api.patient.dto.PatientResponse;
+import com.dentura.api.referral.ReferralSourceRepository;
 import com.dentura.api.role.Permission;
 import com.dentura.api.role.PermissionService;
 
@@ -34,16 +35,19 @@ public class PatientService {
 
 	private final PatientRepository patientRepository;
 	private final AppointmentRepository appointmentRepository;
+	private final ReferralSourceRepository referralSourceRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
 
 	public PatientService(
 			PatientRepository patientRepository,
 			AppointmentRepository appointmentRepository,
+			ReferralSourceRepository referralSourceRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService) {
 		this.patientRepository = patientRepository;
 		this.appointmentRepository = appointmentRepository;
+		this.referralSourceRepository = referralSourceRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
 	}
@@ -171,11 +175,21 @@ public class PatientService {
 		patient.setNit(request.nit());
 		patient.setOccupation(request.occupation());
 		patient.setReferredBy(request.referredBy());
+		patient.setReferralSourceId(resolveReferralSourceId(request.referralSourceId()));
 		patient.setAllergies(request.allergies());
 		patient.setNotes(request.notes());
 		if (request.active() != null) {
 			patient.setActive(request.active());
 		}
+	}
+
+	private Long resolveReferralSourceId(Long referralSourceId) {
+		if (referralSourceId == null) {
+			return null;
+		}
+		return referralSourceRepository.findByIdAndClinicId(referralSourceId, clinicAccess.requireClinicId())
+				.map(source -> source.getId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fuente de referidos no válida"));
 	}
 
 	private void assertUniqueDui(String dui, Long currentId) {

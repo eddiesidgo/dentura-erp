@@ -2,15 +2,19 @@ package com.dentura.api.report;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.clinic.Clinic;
 import com.dentura.api.clinic.ClinicAccess;
@@ -18,10 +22,19 @@ import com.dentura.api.clinic.ClinicLogoStorage;
 import com.dentura.api.clinic.ClinicService;
 import com.dentura.api.patient.Patient;
 import com.dentura.api.patient.PatientRepository;
+import com.dentura.api.payment.Payment;
+import com.dentura.api.payment.PaymentAllocation;
+import com.dentura.api.payment.PaymentAllocationRepository;
+import com.dentura.api.payment.PaymentRepository;
+import com.dentura.api.prescription.Prescription;
+import com.dentura.api.prescription.PrescriptionRepository;
+import com.dentura.api.referral.ReferralSource;
+import com.dentura.api.referral.ReferralSourceRepository;
 import com.dentura.api.report.dto.ClinicLetterhead;
-import com.dentura.api.report.dto.PatientQuotationResponse;
+import com.dentura.api.report.dto.GenericReportRow;
+import com.dentura.api.report.dto.PaymentReceiptResponse;
+import com.dentura.api.report.dto.PrescriptionReportResponse;
 import com.dentura.api.report.dto.ReportClinicView;
-import com.dentura.api.report.dto.ReportDocumentResponse;
 import com.dentura.api.report.dto.StatusSummaryRow;
 import com.dentura.api.report.dto.WorkReportRow;
 import com.dentura.api.role.Permission;
@@ -37,6 +50,10 @@ public class ReportService {
 	private final WorkRepository workRepository;
 	private final PatientRepository patientRepository;
 	private final TreatmentRepository treatmentRepository;
+	private final PaymentRepository paymentRepository;
+	private final PaymentAllocationRepository paymentAllocationRepository;
+	private final PrescriptionRepository prescriptionRepository;
+	private final ReferralSourceRepository referralSourceRepository;
 	private final ClinicAccess clinicAccess;
 	private final ClinicService clinicService;
 	private final ClinicLogoStorage clinicLogoStorage;
@@ -46,6 +63,10 @@ public class ReportService {
 			WorkRepository workRepository,
 			PatientRepository patientRepository,
 			TreatmentRepository treatmentRepository,
+			PaymentRepository paymentRepository,
+			PaymentAllocationRepository paymentAllocationRepository,
+			PrescriptionRepository prescriptionRepository,
+			ReferralSourceRepository referralSourceRepository,
 			ClinicAccess clinicAccess,
 			ClinicService clinicService,
 			ClinicLogoStorage clinicLogoStorage,
@@ -53,6 +74,10 @@ public class ReportService {
 		this.workRepository = workRepository;
 		this.patientRepository = patientRepository;
 		this.treatmentRepository = treatmentRepository;
+		this.paymentRepository = paymentRepository;
+		this.paymentAllocationRepository = paymentAllocationRepository;
+		this.prescriptionRepository = prescriptionRepository;
+		this.referralSourceRepository = referralSourceRepository;
 		this.clinicAccess = clinicAccess;
 		this.clinicService = clinicService;
 		this.clinicLogoStorage = clinicLogoStorage;
@@ -97,8 +122,7 @@ public class ReportService {
 		permissionService.require(Permission.REPORTS_READ);
 		Long clinicId = clinicAccess.requireClinicId();
 		Patient patient = patientRepository.findByIdAndClinicId(patientId, clinicId)
-				.orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
-						org.springframework.http.HttpStatus.NOT_FOUND, "Paciente no encontrado"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
 		List<Work> works = workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, patientId);
 		List<WorkReportRow> rows = mapRows(works);
 		BigDecimal pending = sumWorks(works, Work.PENDING);
@@ -114,6 +138,138 @@ public class ReportService {
 				ReportFormat.money(completed),
 				ReportFormat.money(rejected),
 				ReportFormat.money(pending.add(completed)));
+	}
+
+	@Transactional(readOnly = true)
+	public PaymentReceiptResponse paymentReceipt(Long paymentId) {
+		permissionService.require(Permission.REPORTS_READ);
+		Long clinicId = clinicAccess.requireClinicId();
+		Payment payment = paymentRepository.findByIdAndClinicId(paymentId, clinicId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pago no encontrado"));
+		Patient patient = patientRepository.findByIdAndClinicId(payment.getPatientId(), clinicId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
+		List<PaymentAllocation> allocations = paymentAllocationRepository
+				.findByPaymentIdOrderByIdAsc(payment.getId());
+		Map<Long, Work> works = loadWorksForAllocations(clinicId, allocations);
+		Map<Long, Treatment> treatments = loadTreatmentsForWorks(clinicId, works);
+
+		List<PaymentReceiptResponse.AllocationLine> lines = allocations.stream()
+				.map(allocation -> {
+					String description = "Abono general";
+					if (allocation.getWorkId() != null) {
+						Work work = works.get(allocation.getWorkId());
+						if (work != null) {
+							Treatment treatment = treatments.get(work.getTreatmentId());
+							String treatmentName = treatment != null ? treatment.getName() : "Tratamiento";
+							String tooth = work.getTooth() != null && !work.getTooth().isBlank()
+									? " · Pieza " + work.getTooth()
+									: "";
+							description = treatmentName + tooth;
+						} else {
+							description = "Trabajo #" + allocation.getWorkId();
+						}
+					}
+					return new PaymentReceiptResponse.AllocationLine(
+							description,
+							ReportFormat.money(allocation.getAmount()));
+				})
+				.toList();
+
+		return new PaymentReceiptResponse(
+				payment.getReceiptNumber(),
+				ReportFormat.dateTime(payment.getPaidAt()),
+				ReportFormat.money(payment.getAmount()),
+				payment.getMethod(),
+				ReportFormat.paymentMethodLabel(payment.getMethod()),
+				payment.getNotes(),
+				patient.getLastName() + ", " + patient.getFirstName(),
+				patient.getRecordNumber(),
+				patient.getDui(),
+				patient.getMobile() != null ? patient.getMobile() : patient.getPhone(),
+				lines);
+	}
+
+	@Transactional(readOnly = true)
+	public PrescriptionReportResponse prescriptionReport(Long prescriptionId) {
+		permissionService.require(Permission.REPORTS_READ);
+		Long clinicId = clinicAccess.requireClinicId();
+		Prescription prescription = prescriptionRepository.findByIdAndClinicId(prescriptionId, clinicId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receta no encontrada"));
+		Patient patient = patientRepository.findByIdAndClinicId(prescription.getPatientId(), clinicId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
+		return new PrescriptionReportResponse(
+				patient.getLastName() + ", " + patient.getFirstName(),
+				patient.getRecordNumber(),
+				patient.getDui(),
+				patient.getMobile() != null ? patient.getMobile() : patient.getPhone(),
+				prescription.getDrug(),
+				prescription.getDose(),
+				prescription.getFrequency(),
+				prescription.getDuration(),
+				prescription.getInstructions(),
+				prescription.getNotes(),
+				ReportFormat.date(prescription.getPrescribedAt()));
+	}
+
+	@Transactional(readOnly = true)
+	public List<StatusSummaryRow> paymentsSummary(Instant from, Instant to) {
+		permissionService.require(Permission.REPORTS_READ);
+		List<Payment> payments = paymentRepository.searchByPaidAt(
+				clinicAccess.requireClinicId(),
+				from != null ? from : Instant.EPOCH,
+				to != null ? to : Instant.parse("9999-12-31T23:59:59.999Z"),
+				from == null,
+				to == null);
+		Map<String, SummaryAccumulator> grouped = new LinkedHashMap<>();
+		grouped.put(Payment.CASH, new SummaryAccumulator(Payment.CASH));
+		grouped.put(Payment.CARD, new SummaryAccumulator(Payment.CARD));
+		grouped.put(Payment.TRANSFER, new SummaryAccumulator(Payment.TRANSFER));
+		grouped.put(Payment.OTHER, new SummaryAccumulator(Payment.OTHER));
+		for (Payment payment : payments) {
+			SummaryAccumulator acc = grouped.computeIfAbsent(payment.getMethod(), SummaryAccumulator::new);
+			acc.count++;
+			acc.total = acc.total.add(payment.getAmount());
+		}
+		return grouped.values().stream()
+				.map(acc -> StatusSummaryRow.of(
+						acc.status,
+						ReportFormat.paymentMethodLabel(acc.status),
+						acc.count,
+						acc.total))
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<GenericReportRow> referralsBySource() {
+		permissionService.require(Permission.REPORTS_READ);
+		Long clinicId = clinicAccess.requireClinicId();
+		Map<Long, String> sourceNames = referralSourceRepository.findByClinicIdOrderByNameAsc(clinicId).stream()
+				.collect(Collectors.toMap(ReferralSource::getId, ReferralSource::getName, (a, b) -> a, LinkedHashMap::new));
+
+		Map<Long, Long> counts = new LinkedHashMap<>();
+		long withoutSource = 0;
+		for (Object[] row : patientRepository.countGroupedByReferralSource(clinicId)) {
+			Long sourceId = (Long) row[0];
+			long count = ((Number) row[1]).longValue();
+			if (sourceId == null) {
+				withoutSource = count;
+			} else {
+				counts.put(sourceId, count);
+			}
+		}
+
+		List<GenericReportRow> rows = new ArrayList<>();
+		for (Map.Entry<Long, String> entry : sourceNames.entrySet()) {
+			long count = counts.getOrDefault(entry.getKey(), 0L);
+			rows.add(GenericReportRow.count(entry.getValue(), count));
+		}
+		for (Map.Entry<Long, Long> entry : counts.entrySet()) {
+			if (!sourceNames.containsKey(entry.getKey())) {
+				rows.add(GenericReportRow.count("Fuente #" + entry.getKey(), entry.getValue()));
+			}
+		}
+		rows.add(GenericReportRow.count("Sin fuente", withoutSource));
+		return rows;
 	}
 
 	@Transactional(readOnly = true)
@@ -170,6 +326,34 @@ public class ReportService {
 				to != null ? to : Instant.parse("9999-12-31T23:59:59.999Z"),
 				from == null,
 				to == null);
+	}
+
+	private Map<Long, Work> loadWorksForAllocations(Long clinicId, List<PaymentAllocation> allocations) {
+		List<Long> workIds = allocations.stream()
+				.map(PaymentAllocation::getWorkId)
+				.filter(Objects::nonNull)
+				.distinct()
+				.toList();
+		if (workIds.isEmpty()) {
+			return Map.of();
+		}
+		return workRepository.findAllById(workIds).stream()
+				.filter(work -> clinicId.equals(work.getClinicId()))
+				.collect(Collectors.toMap(Work::getId, Function.identity()));
+	}
+
+	private Map<Long, Treatment> loadTreatmentsForWorks(Long clinicId, Map<Long, Work> works) {
+		List<Long> treatmentIds = works.values().stream()
+				.map(Work::getTreatmentId)
+				.filter(Objects::nonNull)
+				.distinct()
+				.toList();
+		if (treatmentIds.isEmpty()) {
+			return Map.of();
+		}
+		return treatmentRepository.findAllById(treatmentIds).stream()
+				.filter(treatment -> clinicId.equals(treatment.getClinicId()))
+				.collect(Collectors.toMap(Treatment::getId, Function.identity()));
 	}
 
 	private List<WorkReportRow> mapRows(List<Work> works) {

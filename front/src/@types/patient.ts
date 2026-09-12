@@ -15,6 +15,7 @@ export type Patient = {
     nit: string | null
     occupation: string | null
     referredBy: string | null
+    referralSourceId: number | null
     allergies: string | null
     notes: string | null
     active: boolean
@@ -38,6 +39,7 @@ export type PatientPayload = {
     nit?: string | null
     occupation?: string | null
     referredBy?: string | null
+    referralSourceId?: number | null
     allergies?: string | null
     notes?: string | null
     active?: boolean

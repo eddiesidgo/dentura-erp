@@ -5,6 +5,7 @@ import {
     AGENDA_READ,
     CATALOG_READ,
     PATIENTS_READ,
+    REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
 } from '@/constants/roles.constant'
@@ -49,6 +50,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'treatments',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [CATALOG_READ],
+        subMenu: [],
+    },
+    {
+        key: 'referrals',
+        path: '/referencias',
+        title: 'Referencias',
+        translateKey: 'nav.referrals',
+        icon: 'referrals',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [REFERRALS_READ],
         subMenu: [],
     },
     {

@@ -4,6 +4,7 @@ import {
     HiOutlineDocumentText,
     HiOutlineHome,
     HiOutlineKey,
+    HiOutlineShare,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
 import type { JSX } from 'react'
@@ -15,6 +16,7 @@ const navigationIcon: NavigationIcons = {
     patients: <HiOutlineUserGroup />,
     agenda: <HiOutlineCalendar />,
     treatments: <HiOutlineClipboardList />,
+    referrals: <HiOutlineShare />,
     roles: <HiOutlineKey />,
     reports: <HiOutlineDocumentText />,
 }

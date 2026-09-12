@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Receta médica</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: watermark}"></th:block>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div class="patient-box">
+    <div class="patient-label">Paciente</div>
+    <div class="patient-name" th:text="${prescription.patientName}">Paciente</div>
+    <div class="patient-meta">
+        Expediente <strong th:text="${prescription.recordNumber}">P-001</strong>
+        <span th:if="${prescription.dui != null}"> · DUI <span th:text="${prescription.dui}">00000000-0</span></span>
+        <span th:if="${prescription.phone != null}"> · Tel. <span th:text="${prescription.phone}">7777-0000</span></span>
+        <span> · Fecha <span th:text="${prescription.prescribedAt}">01/01/2026</span></span>
+    </div>
+</div>
+
+<div class="patient-box" style="border-top-color: #0f766e;">
+    <div class="patient-label">Medicamento</div>
+    <div class="patient-name" th:text="${prescription.drug}">Amoxicilina</div>
+    <div class="patient-meta">
+        <span th:if="${prescription.dose != null}">Dosis: <strong th:text="${prescription.dose}">500 mg</strong></span>
+        <span th:if="${prescription.dose != null and prescription.frequency != null}"> · </span>
+        <span th:if="${prescription.frequency != null}">Frecuencia: <strong th:text="${prescription.frequency}">cada 8 h</strong></span>
+        <span th:if="${(prescription.dose != null or prescription.frequency != null) and prescription.duration != null}"> · </span>
+        <span th:if="${prescription.duration != null}">Duración: <strong th:text="${prescription.duration}">7 días</strong></span>
+    </div>
+</div>
+
+<div th:if="${prescription.instructions != null}" style="margin-bottom: 14px;">
+    <div class="patient-label">Indicaciones</div>
+    <p style="margin: 4px 0 0; font-size: 11px;" th:text="${prescription.instructions}">Tomar con alimentos</p>
+</div>
+
+<div th:if="${prescription.notes != null}" style="margin-bottom: 14px;">
+    <div class="patient-label">Notas</div>
+    <p style="margin: 4px 0 0; font-size: 11px;" th:text="${prescription.notes}">Notas</p>
+</div>
+
+<th:block th:replace="~{reports/fragments :: signature}"></th:block>
+<th:block th:replace="~{reports/fragments :: footer}"></th:block>
+</body>
+</html>

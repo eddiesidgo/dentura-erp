@@ -4,9 +4,13 @@ import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import dayjs from 'dayjs'
 import {
+    HiOutlineCash,
     HiOutlineClipboardList,
     HiOutlineDocumentText,
+    HiOutlineHeart,
     HiOutlinePhone,
+    HiOutlinePhotograph,
+    HiOutlineShare,
     HiOutlineUser,
 } from 'react-icons/hi'
 import AdaptableCard from '@/components/shared/AdaptableCard'
@@ -29,12 +33,26 @@ import {
     apiUpdatePatient,
     getApiErrorMessage,
 } from '@/services/PatientService'
+import { apiGetReferralSources } from '@/services/ReferralService'
 import { departmentOptions, sexOptions } from '../constants'
 import type { PatientPayload } from '@/@types/patient'
+import type { ReferralSource } from '@/@types/referral'
 import PatientFormSection from './PatientFormSection'
 import PatientProfileHeader from './PatientProfileHeader'
 import PatientWorks from './PatientWorks'
-import { WORKS_READ } from '@/constants/roles.constant'
+import PatientOdontogram from './PatientOdontogram'
+import PatientPhotos from './PatientPhotos'
+import PatientPrescriptions from './PatientPrescriptions'
+import PatientPayments from './PatientPayments'
+import PatientReferrals from './PatientReferrals'
+import {
+    ODONTOGRAM_READ,
+    PAYMENTS_READ,
+    PHOTOS_READ,
+    PRESCRIPTIONS_READ,
+    REFERRALS_READ,
+    WORKS_READ,
+} from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
 
@@ -54,6 +72,7 @@ type FormModel = {
     nit: string
     occupation: string
     referredBy: string
+    referralSourceId: number | null
     allergies: string
     notes: string
 }
@@ -80,6 +99,7 @@ const emptyValues: FormModel = {
     nit: '',
     occupation: '',
     referredBy: '',
+    referralSourceId: null,
     allergies: '',
     notes: '',
 }
@@ -100,6 +120,7 @@ const toPayload = (values: FormModel): PatientPayload => ({
     nit: values.nit || null,
     occupation: values.occupation || null,
     referredBy: values.referredBy || null,
+    referralSourceId: values.referralSourceId,
     allergies: values.allergies || null,
     notes: values.notes || null,
 })
@@ -111,6 +132,21 @@ const PatientForm = () => {
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
     const canReadWorks = useAuthority(userAuthority, [WORKS_READ])
+    const canReadOdontogram = useAuthority(userAuthority, [ODONTOGRAM_READ])
+    const canReadPhotos = useAuthority(userAuthority, [PHOTOS_READ])
+    const canReadPrescriptions = useAuthority(userAuthority, [
+        PRESCRIPTIONS_READ,
+    ])
+    const canReadPayments = useAuthority(userAuthority, [PAYMENTS_READ])
+    const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
+    const showChartTabs =
+        isEdit &&
+        (canReadWorks ||
+            canReadOdontogram ||
+            canReadPhotos ||
+            canReadPrescriptions ||
+            canReadPayments ||
+            canReadReferrals)
     const [loading, setLoading] = useState(isEdit)
     const [initialValues, setInitialValues] = useState<FormModel>(emptyValues)
 
@@ -142,6 +178,7 @@ const PatientForm = () => {
                     nit: data.nit ?? '',
                     occupation: data.occupation ?? '',
                     referredBy: data.referredBy ?? '',
+                    referralSourceId: data.referralSourceId ?? null,
                     allergies: data.allergies ?? '',
                     notes: data.notes ?? '',
                 })
@@ -166,19 +203,61 @@ const PatientForm = () => {
 
     return (
         <Loading loading={loading}>
-            {isEdit && canReadWorks ? (
+            {showChartTabs ? (
                 <Tabs defaultValue="datos" variant="pill">
                     <AdaptableCard className="mb-4" bodyClass="p-3">
                         <Tabs.TabList>
                             <Tabs.TabNav value="datos" icon={<HiOutlineUser />}>
                                 Datos del paciente
                             </Tabs.TabNav>
-                            <Tabs.TabNav
-                                value="trabajos"
-                                icon={<HiOutlineClipboardList />}
-                            >
-                                Plan de tratamiento
-                            </Tabs.TabNav>
+                            {canReadWorks && (
+                                <Tabs.TabNav
+                                    value="trabajos"
+                                    icon={<HiOutlineClipboardList />}
+                                >
+                                    Plan de tratamiento
+                                </Tabs.TabNav>
+                            )}
+                            {canReadOdontogram && (
+                                <Tabs.TabNav
+                                    value="odontograma"
+                                    icon={<HiOutlineHeart />}
+                                >
+                                    Odontograma
+                                </Tabs.TabNav>
+                            )}
+                            {canReadPhotos && (
+                                <Tabs.TabNav
+                                    value="fotos"
+                                    icon={<HiOutlinePhotograph />}
+                                >
+                                    Fotos
+                                </Tabs.TabNav>
+                            )}
+                            {canReadPrescriptions && (
+                                <Tabs.TabNav
+                                    value="recetas"
+                                    icon={<HiOutlineDocumentText />}
+                                >
+                                    Recetas
+                                </Tabs.TabNav>
+                            )}
+                            {canReadPayments && (
+                                <Tabs.TabNav
+                                    value="pagos"
+                                    icon={<HiOutlineCash />}
+                                >
+                                    Pagos
+                                </Tabs.TabNav>
+                            )}
+                            {canReadReferrals && (
+                                <Tabs.TabNav
+                                    value="referidos"
+                                    icon={<HiOutlineShare />}
+                                >
+                                    Referidos
+                                </Tabs.TabNav>
+                            )}
                         </Tabs.TabList>
                     </AdaptableCard>
                     <Tabs.TabContent value="datos">
@@ -189,13 +268,62 @@ const PatientForm = () => {
                             showBack
                         />
                     </Tabs.TabContent>
-                    <Tabs.TabContent value="trabajos">
-                        <PatientProfileHeader
-                            values={initialValues}
-                            showBack={false}
-                        />
-                        <PatientWorks patientId={Number(patientId)} />
-                    </Tabs.TabContent>
+                    {canReadWorks && (
+                        <Tabs.TabContent value="trabajos">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientWorks patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadOdontogram && (
+                        <Tabs.TabContent value="odontograma">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientOdontogram patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadPhotos && (
+                        <Tabs.TabContent value="fotos">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientPhotos patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadPrescriptions && (
+                        <Tabs.TabContent value="recetas">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientPrescriptions
+                                patientId={Number(patientId)}
+                            />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadPayments && (
+                        <Tabs.TabContent value="pagos">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientPayments patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadReferrals && (
+                        <Tabs.TabContent value="referidos">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientReferrals patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
                 </Tabs>
             ) : (
                 <PatientDataForm
@@ -222,6 +350,38 @@ const PatientDataForm = ({
 }) => {
     const navigate = useNavigate()
     const { patientId } = useParams()
+    const userAuthority =
+        useAppSelector((state) => state.auth.user.authority) || []
+    const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
+    const [referralSources, setReferralSources] = useState<ReferralSource[]>([])
+
+    useEffect(() => {
+        if (!canReadReferrals) {
+            return
+        }
+        let cancelled = false
+        const load = async () => {
+            try {
+                const { data } = await apiGetReferralSources()
+                if (!cancelled) {
+                    setReferralSources(data.filter((source) => source.active))
+                }
+            } catch {
+                if (!cancelled) {
+                    setReferralSources([])
+                }
+            }
+        }
+        load()
+        return () => {
+            cancelled = true
+        }
+    }, [canReadReferrals])
+
+    const referralSourceOptions = referralSources.map((source) => ({
+        value: source.id,
+        label: `${source.name}${source.type ? ` · ${source.type}` : ''}`,
+    }))
 
     return (
         <Formik
@@ -417,6 +577,29 @@ const PatientDataForm = ({
                                             component={Input}
                                         />
                                     </FormItem>
+                                    {canReadReferrals && (
+                                        <FormItem
+                                            label="Fuente de referido"
+                                            className="md:col-span-2"
+                                        >
+                                            <Select
+                                                isClearable
+                                                placeholder="Seleccionar fuente"
+                                                options={referralSourceOptions}
+                                                value={referralSourceOptions.filter(
+                                                    (option) =>
+                                                        option.value ===
+                                                        values.referralSourceId,
+                                                )}
+                                                onChange={(option) =>
+                                                    setFieldValue(
+                                                        'referralSourceId',
+                                                        option?.value ?? null,
+                                                    )
+                                                }
+                                            />
+                                        </FormItem>
+                                    )}
                                     <FormItem
                                         label="Dirección"
                                         className="md:col-span-2"

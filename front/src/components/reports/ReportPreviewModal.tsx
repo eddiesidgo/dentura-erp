@@ -5,13 +5,24 @@ import ReportDocumentView from '@/components/reports/ReportDocumentView'
 import type { ReportDocument, ReportParams } from '@/@types/report'
 import {
     fetchPatientQuotationReport,
+    fetchPaymentReceiptReport,
+    fetchPaymentsSummaryReport,
+    fetchPrescriptionReport,
+    fetchReferralsBySourceReport,
     fetchWorksListReport,
     fetchWorksSummaryReport,
 } from '@/services/ReportService'
 import { getApiErrorMessage } from '@/services/PatientService'
 import { downloadElementAsPdf } from '@/utils/downloadElementAsPdf'
 
-export type ReportPreviewKind = 'works-list' | 'works-summary' | 'quotation'
+export type ReportPreviewKind =
+    | 'works-list'
+    | 'works-summary'
+    | 'quotation'
+    | 'payment-receipt'
+    | 'prescription'
+    | 'payments-summary'
+    | 'referrals-by-source'
 
 type ReportPreviewModalProps = {
     isOpen: boolean
@@ -19,6 +30,8 @@ type ReportPreviewModalProps = {
     kind: ReportPreviewKind
     params?: ReportParams
     patientId?: number
+    paymentId?: number
+    prescriptionId?: number
     downloadFilename: string
 }
 
@@ -26,6 +39,8 @@ const loadReport = async (
     kind: ReportPreviewKind,
     params?: ReportParams,
     patientId?: number,
+    paymentId?: number,
+    prescriptionId?: number,
 ): Promise<ReportDocument> => {
     switch (kind) {
         case 'works-list':
@@ -37,6 +52,20 @@ const loadReport = async (
                 throw new Error('Paciente no definido')
             }
             return fetchPatientQuotationReport(patientId)
+        case 'payment-receipt':
+            if (paymentId == null) {
+                throw new Error('Pago no definido')
+            }
+            return fetchPaymentReceiptReport(paymentId)
+        case 'prescription':
+            if (prescriptionId == null) {
+                throw new Error('Receta no definida')
+            }
+            return fetchPrescriptionReport(prescriptionId)
+        case 'payments-summary':
+            return fetchPaymentsSummaryReport(params)
+        case 'referrals-by-source':
+            return fetchReferralsBySourceReport()
     }
 }
 
@@ -46,6 +75,8 @@ const ReportPreviewModal = ({
     kind,
     params,
     patientId,
+    paymentId,
+    prescriptionId,
     downloadFilename,
 }: ReportPreviewModalProps) => {
     const documentRef = useRef<HTMLDivElement>(null)
@@ -63,7 +94,7 @@ const ReportPreviewModal = ({
 
         let cancelled = false
         setLoading(true)
-        loadReport(kind, params, patientId)
+        loadReport(kind, params, patientId, paymentId, prescriptionId)
             .then((data) => {
                 if (!cancelled) {
                     setReport(data)
@@ -88,7 +119,7 @@ const ReportPreviewModal = ({
         return () => {
             cancelled = true
         }
-    }, [isOpen, kind, patientId, paramsKey, onClose])
+    }, [isOpen, kind, patientId, paymentId, prescriptionId, paramsKey, onClose])
 
     const handleDownload = useCallback(async () => {
         const node = documentRef.current

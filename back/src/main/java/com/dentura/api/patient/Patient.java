@@ -72,6 +72,9 @@ public class Patient {
 	@Column(name = "referred_by", length = 160)
 	private String referredBy;
 
+	@Column(name = "referral_source_id")
+	private Long referralSourceId;
+
 	@Column(columnDefinition = "TEXT")
 	private String allergies;
 
@@ -233,6 +236,14 @@ public class Patient {
 
 	public void setReferredBy(String referredBy) {
 		this.referredBy = referredBy;
+	}
+
+	public Long getReferralSourceId() {
+		return referralSourceId;
+	}
+
+	public void setReferralSourceId(Long referralSourceId) {
+		this.referralSourceId = referralSourceId;
 	}
 
 	public String getAllergies() {

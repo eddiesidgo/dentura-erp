@@ -1,6 +1,7 @@
 package com.dentura.api.patient;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -48,6 +49,14 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 			Pageable pageable);
 
 	long countByClinicId(Long clinicId);
+
+	@Query("""
+			SELECT p.referralSourceId, COUNT(p)
+			FROM Patient p
+			WHERE p.clinicId = :clinicId
+			GROUP BY p.referralSourceId
+			""")
+	List<Object[]> countGroupedByReferralSource(@Param("clinicId") Long clinicId);
 
 	@Query("""
 			SELECT COUNT(p) FROM Patient p

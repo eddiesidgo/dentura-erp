@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.dentura.api.clinic.ClinicAccess;
 import com.dentura.api.patient.Patient;
 import com.dentura.api.patient.PatientRepository;
+import com.dentura.api.payment.PaymentAllocationRepository;
 import com.dentura.api.role.Permission;
 import com.dentura.api.role.PermissionService;
 import com.dentura.api.treatment.Treatment;
@@ -30,6 +31,7 @@ public class WorkService {
 	private final WorkRepository workRepository;
 	private final PatientRepository patientRepository;
 	private final TreatmentRepository treatmentRepository;
+	private final PaymentAllocationRepository paymentAllocationRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
 
@@ -37,11 +39,13 @@ public class WorkService {
 			WorkRepository workRepository,
 			PatientRepository patientRepository,
 			TreatmentRepository treatmentRepository,
+			PaymentAllocationRepository paymentAllocationRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService) {
 		this.workRepository = workRepository;
 		this.patientRepository = patientRepository;
 		this.treatmentRepository = treatmentRepository;
+		this.paymentAllocationRepository = paymentAllocationRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
 	}
@@ -90,6 +94,11 @@ public class WorkService {
 	public void delete(Long id) {
 		permissionService.require(Permission.WORKS_DELETE);
 		Work work = findOrThrow(id);
+		if (paymentAllocationRepository.existsByWorkId(work.getId())) {
+			throw new ResponseStatusException(
+					HttpStatus.BAD_REQUEST,
+					"No se puede eliminar: hay pagos asignados a este trabajo");
+		}
 		workRepository.delete(work);
 	}
 

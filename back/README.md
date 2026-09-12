@@ -75,6 +75,29 @@ El front React usa proxy Vite `/api` → `8080` y `VITE_ENABLE_MOCK=false`.
 | `DENTURA_JWT_SECRET` | (dev default) | Clave HMAC JWT |
 | `DENTURA_SEED_ADMIN_USER` | `admin` | Usuario inicial |
 | `DENTURA_SEED_ADMIN_PASSWORD` | `123Qwe` | Contraseña inicial |
+| `DENTURA_DEMO_SEED_ENABLED` | `false` | Si `true`, habilita `POST /api/demo/seed` (super_admin). **No** inserta data al arrancar. Nunca en cliente. |
+
+## Data de demostración (solo bajo demanda)
+
+Odontograma, pagos y recetas **no** aparecen en el sidebar: están como pestañas dentro de la ficha del paciente (`/pacientes/:id`). En el menú lateral solo está **Referencias** (catálogo de fuentes).
+
+Para cargar pacientes DEMO (idempotente, no se duplica):
+
+```bash
+# 1) Arrancar API con el flag (en otra terminal)
+export DENTURA_DEMO_SEED_ENABLED=true
+cd back && ./mvnw spring-boot:run
+
+# 2) Login y seed
+TOKEN=$(curl -s -X POST http://localhost:8080/api/sign-in \
+  -H 'Content-Type: application/json' \
+  -d '{"userName":"admin","password":"123Qwe"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])')
+
+curl -s -X POST http://localhost:8080/api/demo/seed \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+Luego en el front: **Pacientes** → busca `DEMO-001` → abre la ficha y usa las pestañas Odontograma / Fotos / Recetas / Pagos / Referidos.
 
 ## Build JAR
 

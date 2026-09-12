@@ -3,7 +3,6 @@ package com.dentura.api.report;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
@@ -58,6 +57,31 @@ public class ReportController {
 		return reportPdfFacade.patientQuotationDocument(patientId);
 	}
 
+	@GetMapping(value = "/payments/summary.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse paymentsSummaryJson(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		Instant fromInstant = startOfDay(from);
+		Instant toInstant = endExclusive(to);
+		String summary = buildDateSummary(from, to);
+		return reportPdfFacade.paymentsSummaryDocument(fromInstant, toInstant, summary);
+	}
+
+	@GetMapping(value = "/payments/{paymentId}.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse paymentReceiptJson(@PathVariable Long paymentId) {
+		return reportPdfFacade.paymentReceiptDocument(paymentId);
+	}
+
+	@GetMapping(value = "/prescriptions/{id}.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse prescriptionJson(@PathVariable Long id) {
+		return reportPdfFacade.prescriptionDocument(id);
+	}
+
+	@GetMapping(value = "/referrals/by-source.json", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ReportDocumentResponse referralsBySourceJson() {
+		return reportPdfFacade.referralsBySourceDocument();
+	}
+
 	@GetMapping(value = "/works/list.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
 	public ResponseEntity<byte[]> worksListPdf(
 			@RequestParam(required = false) Long patientId,
@@ -87,6 +111,35 @@ public class ReportController {
 	public ResponseEntity<byte[]> patientQuotationPdf(@PathVariable Long patientId) {
 		byte[] pdf = reportPdfFacade.patientQuotationPdf(patientId);
 		return pdfResponse("cotizacion-paciente-" + patientId + ".pdf", pdf);
+	}
+
+	@GetMapping(value = "/payments/summary.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+	public ResponseEntity<byte[]> paymentsSummaryPdf(
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		Instant fromInstant = startOfDay(from);
+		Instant toInstant = endExclusive(to);
+		String summary = buildDateSummary(from, to);
+		byte[] pdf = reportPdfFacade.paymentsSummaryPdf(fromInstant, toInstant, summary);
+		return pdfResponse("pagos-resumen.pdf", pdf);
+	}
+
+	@GetMapping(value = "/payments/{paymentId}.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+	public ResponseEntity<byte[]> paymentReceiptPdf(@PathVariable Long paymentId) {
+		byte[] pdf = reportPdfFacade.paymentReceiptPdf(paymentId);
+		return pdfResponse("recibo-pago-" + paymentId + ".pdf", pdf);
+	}
+
+	@GetMapping(value = "/prescriptions/{id}.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+	public ResponseEntity<byte[]> prescriptionPdf(@PathVariable Long id) {
+		byte[] pdf = reportPdfFacade.prescriptionPdf(id);
+		return pdfResponse("receta-" + id + ".pdf", pdf);
+	}
+
+	@GetMapping(value = "/referrals/by-source.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+	public ResponseEntity<byte[]> referralsBySourcePdf() {
+		byte[] pdf = reportPdfFacade.referralsBySourcePdf();
+		return pdfResponse("referidos-por-fuente.pdf", pdf);
 	}
 
 	private ResponseEntity<byte[]> pdfResponse(String filename, byte[] pdf) {

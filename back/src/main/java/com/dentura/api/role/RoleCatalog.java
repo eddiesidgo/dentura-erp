@@ -34,6 +34,21 @@ public class RoleCatalog {
 		ensurePermission(Permission.WORKS_WRITE, "Editar trabajos", "Crea y actualiza trabajos del paciente");
 		ensurePermission(Permission.WORKS_DELETE, "Eliminar trabajos", "Elimina trabajos del plan del paciente");
 		ensurePermission(Permission.REPORTS_READ, "Ver reportes", "Consulta e imprime reportes y cotizaciones");
+		ensurePermission(Permission.ODONTOGRAM_READ, "Ver odontograma", "Consulta el odontograma del paciente");
+		ensurePermission(Permission.ODONTOGRAM_WRITE, "Editar odontograma", "Registra hallazgos en el odontograma");
+		ensurePermission(Permission.ODONTOGRAM_DELETE, "Eliminar odontograma", "Elimina hallazgos del odontograma");
+		ensurePermission(Permission.PAYMENTS_READ, "Ver pagos", "Consulta recibos y saldo del paciente");
+		ensurePermission(Permission.PAYMENTS_WRITE, "Registrar pagos", "Crea y actualiza recibos de pago");
+		ensurePermission(Permission.PAYMENTS_DELETE, "Eliminar pagos", "Elimina recibos de pago");
+		ensurePermission(Permission.PHOTOS_READ, "Ver fotos", "Consulta la galería clínica del paciente");
+		ensurePermission(Permission.PHOTOS_WRITE, "Subir fotos", "Sube fotos y radiografías del paciente");
+		ensurePermission(Permission.PHOTOS_DELETE, "Eliminar fotos", "Elimina fotos de la galería clínica");
+		ensurePermission(Permission.PRESCRIPTIONS_READ, "Ver recetas", "Consulta recetas e historial");
+		ensurePermission(Permission.PRESCRIPTIONS_WRITE, "Emitir recetas", "Crea y actualiza recetas médicas");
+		ensurePermission(Permission.PRESCRIPTIONS_DELETE, "Eliminar recetas", "Elimina recetas del historial");
+		ensurePermission(Permission.REFERRALS_READ, "Ver referencias", "Consulta fuentes y referidos salientes");
+		ensurePermission(Permission.REFERRALS_WRITE, "Editar referencias", "Gestiona fuentes y referidos a especialistas");
+		ensurePermission(Permission.REFERRALS_DELETE, "Eliminar referencias", "Elimina fuentes o referidos");
 	}
 
 	@Transactional
@@ -68,6 +83,14 @@ public class RoleCatalog {
 		permissionRepository.findByCode(Permission.WORKS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.WORKS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.REPORTS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.ODONTOGRAM_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PAYMENTS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PAYMENTS_WRITE).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PHOTOS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PHOTOS_WRITE).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.PRESCRIPTIONS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.REFERRALS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.REFERRALS_WRITE).ifPresent(receptionPerms::add);
 		reception.setPermissions(receptionPerms);
 		roleRepository.save(reception);
 	}

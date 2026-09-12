@@ -25,3 +25,32 @@ export async function fetchPatientQuotationReport(patientId: number) {
     )
     return response.data
 }
+
+export async function fetchPaymentReceiptReport(paymentId: number) {
+    const response = await BaseService.get<ReportDocument>(
+        `/reports/payments/${paymentId}.json`,
+    )
+    return response.data
+}
+
+export async function fetchPrescriptionReport(prescriptionId: number) {
+    const response = await BaseService.get<ReportDocument>(
+        `/reports/prescriptions/${prescriptionId}.json`,
+    )
+    return response.data
+}
+
+export async function fetchPaymentsSummaryReport(params?: ReportParams) {
+    const response = await BaseService.get<ReportDocument>(
+        '/reports/payments/summary.json',
+        { params },
+    )
+    return response.data
+}
+
+export async function fetchReferralsBySourceReport() {
+    const response = await BaseService.get<ReportDocument>(
+        '/reports/referrals/by-source.json',
+    )
+    return response.data
+}

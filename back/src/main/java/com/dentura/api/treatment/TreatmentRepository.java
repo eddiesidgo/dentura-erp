@@ -18,6 +18,8 @@ public interface TreatmentRepository extends JpaRepository<Treatment, Long> {
 
 	Optional<Treatment> findByIdAndClinicId(Long id, Long clinicId);
 
+	Optional<Treatment> findByClinicIdAndCodeIgnoreCase(Long clinicId, String code);
+
 	@Query("""
 			SELECT t FROM Treatment t
 			WHERE t.clinicId = :clinicId

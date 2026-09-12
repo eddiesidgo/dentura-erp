@@ -1,0 +1,19 @@
+CREATE TABLE odontogram_entries (
+    id BIGSERIAL PRIMARY KEY,
+    clinic_id BIGINT NOT NULL,
+    patient_id BIGINT NOT NULL,
+    tooth VARCHAR(10) NOT NULL,
+    surfaces VARCHAR(20),
+    condition VARCHAR(40) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'EXISTING',
+    work_id BIGINT,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT fk_odontogram_clinic FOREIGN KEY (clinic_id) REFERENCES clinics (id),
+    CONSTRAINT fk_odontogram_patient FOREIGN KEY (patient_id) REFERENCES patients (id) ON DELETE CASCADE,
+    CONSTRAINT fk_odontogram_work FOREIGN KEY (work_id) REFERENCES works (id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_odontogram_clinic_patient ON odontogram_entries (clinic_id, patient_id);
+CREATE INDEX idx_odontogram_tooth ON odontogram_entries (clinic_id, patient_id, tooth);

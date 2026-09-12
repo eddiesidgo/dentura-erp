@@ -55,6 +55,22 @@ class ReportControllerTest {
 				.andExpect(jsonPath("$.title").value("Resumen por estado"));
 	}
 
+	@Test
+	void paymentsSummaryAndReferralsReportsReturnDocuments() throws Exception {
+		String token = bearer();
+		mockMvc.perform(get("/api/reports/payments/summary.json")
+				.header("Authorization", token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.reportType").value("PAYMENTS_SUMMARY"))
+				.andExpect(jsonPath("$.summaryRows").isArray());
+
+		mockMvc.perform(get("/api/reports/referrals/by-source.json")
+				.header("Authorization", token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.reportType").value("REFERRALS_BY_SOURCE"))
+				.andExpect(jsonPath("$.genericRows").isArray());
+	}
+
 	private String bearer() throws Exception {
 		MvcResult result = mockMvc.perform(post("/api/sign-in")
 				.contentType(MediaType.APPLICATION_JSON)

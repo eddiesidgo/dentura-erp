@@ -25,6 +25,21 @@ public class Permission {
 	public static final String WORKS_WRITE = "works.write";
 	public static final String WORKS_DELETE = "works.delete";
 	public static final String REPORTS_READ = "reports.read";
+	public static final String ODONTOGRAM_READ = "odontogram.read";
+	public static final String ODONTOGRAM_WRITE = "odontogram.write";
+	public static final String ODONTOGRAM_DELETE = "odontogram.delete";
+	public static final String PAYMENTS_READ = "payments.read";
+	public static final String PAYMENTS_WRITE = "payments.write";
+	public static final String PAYMENTS_DELETE = "payments.delete";
+	public static final String PHOTOS_READ = "photos.read";
+	public static final String PHOTOS_WRITE = "photos.write";
+	public static final String PHOTOS_DELETE = "photos.delete";
+	public static final String PRESCRIPTIONS_READ = "prescriptions.read";
+	public static final String PRESCRIPTIONS_WRITE = "prescriptions.write";
+	public static final String PRESCRIPTIONS_DELETE = "prescriptions.delete";
+	public static final String REFERRALS_READ = "referrals.read";
+	public static final String REFERRALS_WRITE = "referrals.write";
+	public static final String REFERRALS_DELETE = "referrals.delete";
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

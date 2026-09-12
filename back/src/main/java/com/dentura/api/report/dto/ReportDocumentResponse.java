@@ -13,5 +13,8 @@ public record ReportDocumentResponse(
 		String emptyMessage,
 		List<WorkReportRow> rows,
 		List<StatusSummaryRow> summaryRows,
-		PatientQuotationResponse quotation) {
+		PatientQuotationResponse quotation,
+		PaymentReceiptResponse paymentReceipt,
+		PrescriptionReportResponse prescription,
+		List<GenericReportRow> genericRows) {
 }

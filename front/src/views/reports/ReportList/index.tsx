@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import {
+    HiOutlineCash,
     HiOutlineClipboardList,
     HiOutlineDocumentText,
     HiOutlineEye,
+    HiOutlineUserGroup,
 } from 'react-icons/hi'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import IconText from '@/components/shared/IconText'
@@ -38,6 +40,8 @@ const ReportList = () => {
     const [listTo, setListTo] = useState<Date | null>(null)
     const [summaryFrom, setSummaryFrom] = useState<Date | null>(null)
     const [summaryTo, setSummaryTo] = useState<Date | null>(null)
+    const [paymentsFrom, setPaymentsFrom] = useState<Date | null>(null)
+    const [paymentsTo, setPaymentsTo] = useState<Date | null>(null)
     const [preview, setPreview] = useState<PreviewState | null>(null)
 
     const dateParams = (from: Date | null, to: Date | null): ReportParams => ({
@@ -56,6 +60,11 @@ const ReportList = () => {
     const summaryParams = useMemo(
         () => dateParams(summaryFrom, summaryTo),
         [summaryFrom, summaryTo],
+    )
+
+    const paymentsParams = useMemo(
+        () => dateParams(paymentsFrom, paymentsTo),
+        [paymentsFrom, paymentsTo],
     )
 
     const openPreview = (state: PreviewState) => setPreview(state)
@@ -182,10 +191,80 @@ const ReportList = () => {
                 </AdaptableCard>
 
                 <AdaptableCard bodyClass="p-5">
-                    <h6 className="font-semibold mb-1">Cotización por paciente</h6>
+                    <IconText
+                        className="mb-4 text-base font-semibold"
+                        icon={<HiOutlineCash className="text-lg text-amber-600" />}
+                    >
+                        Resumen de pagos
+                    </IconText>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Totales por método de pago en el rango de fechas.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 max-w-2xl">
+                        <div>
+                            <div className="mb-1.5 text-sm font-semibold">Desde</div>
+                            <DatePicker
+                                inputFormat="DD/MM/YYYY"
+                                placeholder="Fecha inicio"
+                                value={paymentsFrom}
+                                onChange={setPaymentsFrom}
+                            />
+                        </div>
+                        <div>
+                            <div className="mb-1.5 text-sm font-semibold">Hasta</div>
+                            <DatePicker
+                                inputFormat="DD/MM/YYYY"
+                                placeholder="Fecha fin"
+                                value={paymentsTo}
+                                onChange={setPaymentsTo}
+                            />
+                        </div>
+                    </div>
+                    <Button
+                        variant="solid"
+                        icon={<HiOutlineEye />}
+                        onClick={() =>
+                            openPreview({
+                                kind: 'payments-summary',
+                                params: paymentsParams,
+                                filename: 'pagos-resumen.pdf',
+                            })
+                        }
+                    >
+                        Ver reporte
+                    </Button>
+                </AdaptableCard>
+
+                <AdaptableCard bodyClass="p-5">
+                    <IconText
+                        className="mb-4 text-base font-semibold"
+                        icon={<HiOutlineUserGroup className="text-lg text-violet-600" />}
+                    >
+                        Pacientes por fuente de referidos
+                    </IconText>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Conteo de pacientes por origen de referido, incluyendo sin fuente.
+                    </p>
+                    <Button
+                        variant="solid"
+                        icon={<HiOutlineEye />}
+                        onClick={() =>
+                            openPreview({
+                                kind: 'referrals-by-source',
+                                filename: 'referidos-por-fuente.pdf',
+                            })
+                        }
+                    >
+                        Ver reporte
+                    </Button>
+                </AdaptableCard>
+
+                <AdaptableCard bodyClass="p-5">
+                    <h6 className="font-semibold mb-1">Documentos por paciente</h6>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Abre la cotización desde la ficha del paciente, pestaña{' '}
-                        <strong>Plan de tratamiento</strong>.
+                        Cotización desde <strong>Plan de tratamiento</strong>, recibo
+                        desde <strong>Pagos</strong> y receta desde{' '}
+                        <strong>Recetas</strong>.
                     </p>
                 </AdaptableCard>
             </div>

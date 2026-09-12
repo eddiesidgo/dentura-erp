@@ -53,4 +53,16 @@ public final class ReportFormat {
 			default -> "Pendiente";
 		};
 	}
+
+	public static String paymentMethodLabel(String method) {
+		if (method == null) {
+			return "Otro";
+		}
+		return switch (method) {
+			case "CASH" -> "Efectivo";
+			case "CARD" -> "Tarjeta";
+			case "TRANSFER" -> "Transferencia";
+			default -> "Otro";
+		};
+	}
 }

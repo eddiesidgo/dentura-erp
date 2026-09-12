@@ -1,7 +1,7 @@
 # Dentura ERP — Contexto y bases
 
 > Documento de contexto del producto. Nombre provisional: **Dentura ERP** (puede cambiar).
-> Fecha de captura: 2026-08-25.
+> Fecha de captura: 2026-08-25. Actualizado: 2026-09-12.
 
 ## 1. Origen / referencia
 
@@ -19,30 +19,40 @@ Clínicas dentales en El Salvador (y similares) que:
 - **Prefieren local / on-prem** (desconfianza o rechazo a la nube)
 - Pueden querer **versión web** (navegador en LAN) o **versión desktop**
 
-## 3. Alcance funcional (MVP y fases)
+## 3. Alcance funcional
 
-### Incluido en la definición de producto (sin morosos ni cuenta corriente)
+### Implementado (fases 0–4 + módulos mid-tier)
 
 | Área | Descripción |
 |------|-------------|
-| Pacientes | CRUD, búsqueda, ficha (datos personales/contacto). Datos fiscales básicos en ficha (NIT, etc.) sin módulo de facturas |
-| Agenda | Calendario, citas, recordatorios |
+| Pacientes | CRUD, búsqueda, ficha (datos personales/contacto/fiscales básicos). Fuente de referido opcional |
+| Agenda | Calendario y citas |
 | Catálogo de tratamientos | Códigos, nombres, precios |
 | Trabajos / plan | Por paciente; estados: Terminados / Pendientes / No aceptados (base de cotización) |
-| Reportes | Trabajos por tratamiento/estado/fechas; impresión/PDF simple |
-| (Posterior) | Fotos/RVG, recetas, odontograma, facturación DTE, sync cloud |
+| Reportes | Listado/resumen de trabajos, cotización, recibo de pago, receta, resumen de pagos, pacientes por fuente de referidos; vista previa + PDF |
+| Odontograma | Hallazgos por pieza (FDI), superficies, condición y estado; pestaña en ficha |
+| Pagos | Cobros por paciente, recibo secuencial, asignaciones a trabajos, saldo vs plan |
+| Fotos / RVG | Archivos por paciente (almacenamiento local) |
+| Recetas | Prescripciones + plantillas; impresión/PDF |
+| Referidos | Catálogo de fuentes + referidos salientes; reporte por fuente |
 
-### Explícitamente fuera del MVP actual
+### Explícitamente fuera de alcance (sigue)
 
 - Morosos
-- Cuenta corriente / libro contable de cargos-abonos-ajustes
+- **Cuenta corriente / libro de cargos-abonos-ajustes** (sigue fuera; los pagos son cobros simples, no contabilidad de cargos/abonos)
 - Facturación electrónica completa (DTE) — solo datos fiscales en ficha por ahora
+
+### Backlog (diferido)
+
+- **Recordatorios de citas** (WhatsApp / email): diferidos mientras el producto es ERP local sin integraciones de mensajería
+- Instalador Windows, backup, licencia offline (fase comercial)
+- DTE, sync cloud
 
 ### Sobre “facturas” (hallazgo GestOdon)
 
 - Había datos fiscales + tipo de comprobante + cobros tipo cuenta corriente
 - **No** se demostró módulo de facturas/DTE completo en las capturas
-- En Dentura: no priorizar facturación formal en MVP
+- En Dentura: no priorizar facturación formal; pagos = recibos internos
 
 ## 4. Stack acordado (dirección)
 
@@ -75,34 +85,33 @@ React → API Spring Boot → SQLite | Postgres
 
 ## 5. Plan de desarrollo (fases)
 
-| Fase | Contenido | Orden de valor |
-|------|-----------|----------------|
-| 0 | Monorepo: web (React), api (Spring), desktop (Electron); auth simple; SQLite + perfil Postgres; JAR sirve front | Cimientos |
-| 1 | Pacientes | 1º |
-| 2 | Agenda | 2º |
-| 3 | Catálogo + trabajos + estados (cotización base) | 3º |
-| 4 | Reportes e impresión | 4º |
-| 5 | Instalador Windows, backup SQLite, licencia offline opcional | Comercial |
-| 6+ | Fotos/RVG, recetas, odontograma, DTE, cloud | Post-MVP |
+| Fase | Contenido | Estado |
+|------|-----------|--------|
+| 0 | Monorepo: web (React), api (Spring), desktop (Electron); auth; SQLite + perfil Postgres; JAR sirve front | Hecho |
+| 1 | Pacientes | Hecho |
+| 2 | Agenda | Hecho |
+| 3 | Catálogo + trabajos + estados (cotización base) | Hecho |
+| 4 | Reportes e impresión (trabajos + cotización + pagos/recetas/referidos) | Hecho |
+| Mid-tier | Odontograma, pagos, fotos, recetas, referidos | Hecho |
+| 5 | Instalador Windows, backup SQLite, licencia offline opcional | Pendiente |
+| Backlog | Recordatorios (WhatsApp/email), DTE, cloud | Diferido |
 
-## 6. Odontograma (nota, no MVP)
+## 6. Odontograma
 
-- Básico: complejidad media
-- Clínico completo: de los módulos más densos del PMS
-- No incluido en el MVP inicial
+- Implementado a nivel básico: piezas FDI, superficies, condiciones y estados, vínculo opcional a trabajo
+- Clínico completo (gráficos densos, periodontograma, etc.) queda como evolución futura
 
 ## 7. Decisiones pendientes
 
 - [ ] Confirmar nombre final (Dentura ERP provisional)
-- [ ] MVP solo SQLite vs SQLite + Postgres desde día 1
 - [ ] Licenciamiento offline sí/no en Fase 5
-- [ ] Estructura monorepo exacta al incorporar la plantilla React de `front/`
+- [ ] Cuándo reactivar recordatorios (canal local vs proveedor externo)
 
 ## 8. Referencias internas
 
 - Análisis de alcance GestOdon: conversación previa / capturas en `documents/img/`
 - Plantilla frontend: `front/`
-- API backend: `back/` (Spring Boot 3.4 + Maven + SQLite)
+- API backend: `back/` (Spring Boot 3.4 + Maven + SQLite/Postgres)
 - Desktop Electron: `desktop/` (levanta el JAR de `back/target/` y abre la UI)
 
 ## 9. Tooling local (Java / Maven)
@@ -118,6 +127,6 @@ Arranque API: `cd back && mvn spring-boot:run` → http://localhost:8080/api/hea
 
 ## 10. Autenticación (implementado)
 
-- Backend: JWT + Spring Security, SQLite `users`, seed `admin` / `123Qwe`
+- Backend: JWT + Spring Security, seed `admin` / `123Qwe`
 - Endpoints: `/api/sign-in`, `/api/sign-up`, `/api/sign-out`, `/api/forgot-password`, `/api/reset-password`
 - Front: Mirage desactivado (`VITE_ENABLE_MOCK=false`), proxy Vite `/api` → `:8080`, CORS con origin patterns

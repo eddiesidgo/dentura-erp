@@ -1,7 +1,10 @@
 import { forwardRef } from 'react'
 import classNames from 'classnames'
 import type {
+    GenericReportRow,
     PatientQuotationView,
+    PaymentReceiptView,
+    PrescriptionReportView,
     ReportClinicView,
     ReportDocument,
     StatusSummaryRow,
@@ -388,6 +391,257 @@ const SignatureBlock = ({ clinicName }: { clinicName: string }) => (
     </div>
 )
 
+const PaymentReceiptBody = ({ receipt }: { receipt: PaymentReceiptView }) => {
+    const hasAllocations = receipt.allocations.length > 0
+    return (
+        <>
+            <div className="relative mb-6 border border-gray-200 border-t-[3px] border-t-sky-900 bg-white px-4 py-3">
+                <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500">
+                    Paciente
+                </p>
+                <p className="font-serif text-lg font-bold text-sky-900">
+                    {receipt.patientName}
+                </p>
+                <p className="text-[11px] text-gray-600">
+                    Expediente <strong>{receipt.recordNumber}</strong>
+                    {receipt.dui && <> · DUI {receipt.dui}</>}
+                    {receipt.phone && <> · Tel. {receipt.phone}</>}
+                </p>
+            </div>
+
+            <div className="relative mb-6 flex justify-end">
+                <table className="w-full max-w-xs text-[11px]">
+                    <tbody>
+                        <tr>
+                            <td className="py-1.5 text-gray-600">Recibo</td>
+                            <td className="py-1.5 text-right font-semibold">
+                                #{receipt.receiptNumber}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="py-1.5 text-gray-600">Fecha de pago</td>
+                            <td className="py-1.5 text-right font-semibold">
+                                {receipt.paidAt}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td className="py-1.5 text-gray-600">Método</td>
+                            <td className="py-1.5 text-right font-semibold">
+                                {receipt.methodLabel}
+                            </td>
+                        </tr>
+                        <tr className="border-t-2 border-sky-900 bg-sky-50/60">
+                            <td className="py-2.5 font-semibold text-sky-900">
+                                Monto recibido
+                            </td>
+                            <td className="py-2.5 text-right text-sm font-bold text-sky-900">
+                                {receipt.amount}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {receipt.notes && (
+                <p className="relative mb-4 text-[10px] italic text-gray-500">
+                    Notas: {receipt.notes}
+                </p>
+            )}
+
+            {hasAllocations && (
+                <table className="relative w-full border-collapse text-[11px]">
+                    <thead>
+                        <tr className="bg-sky-900 text-white">
+                            <th className="px-2 py-2 text-left font-semibold uppercase tracking-wide">
+                                Concepto / tratamiento
+                            </th>
+                            <th className="px-2 py-2 text-right font-semibold uppercase tracking-wide">
+                                Monto
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {receipt.allocations.map((line, index) => (
+                            <tr
+                                key={`${line.description}-${index}`}
+                                className={
+                                    index % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'
+                                }
+                            >
+                                <td className="border-b border-gray-200 px-2 py-2">
+                                    {line.description}
+                                </td>
+                                <td className="border-b border-gray-200 px-2 py-2 text-right font-semibold">
+                                    {line.amount}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+
+            <p className="relative mt-4 text-[10px] italic text-gray-500">
+                Este documento es un comprobante interno de pago. No constituye
+                factura ni comprobante fiscal.
+            </p>
+        </>
+    )
+}
+
+const PrescriptionBody = ({
+    prescription,
+}: {
+    prescription: PrescriptionReportView
+}) => (
+    <>
+        <div className="relative mb-6 border border-gray-200 border-t-[3px] border-t-sky-900 bg-white px-4 py-3">
+            <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500">
+                Paciente
+            </p>
+            <p className="font-serif text-lg font-bold text-sky-900">
+                {prescription.patientName}
+            </p>
+            <p className="text-[11px] text-gray-600">
+                Expediente <strong>{prescription.recordNumber}</strong>
+                {prescription.dui && <> · DUI {prescription.dui}</>}
+                {prescription.phone && <> · Tel. {prescription.phone}</>}
+                <> · Fecha {prescription.prescribedAt}</>
+            </p>
+        </div>
+
+        <div className="relative mb-6 border border-gray-200 border-t-[3px] border-t-teal-700 bg-white px-4 py-3">
+            <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500">
+                Medicamento
+            </p>
+            <p className="font-serif text-lg font-bold text-sky-900">
+                {prescription.drug}
+            </p>
+            <p className="text-[11px] text-gray-600">
+                {[
+                    prescription.dose ? `Dosis: ${prescription.dose}` : null,
+                    prescription.frequency
+                        ? `Frecuencia: ${prescription.frequency}`
+                        : null,
+                    prescription.duration
+                        ? `Duración: ${prescription.duration}`
+                        : null,
+                ]
+                    .filter(Boolean)
+                    .join(' · ')}
+            </p>
+        </div>
+
+        {prescription.instructions && (
+            <div className="relative mb-4">
+                <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500">
+                    Indicaciones
+                </p>
+                <p className="mt-1 text-[11px] text-gray-700">
+                    {prescription.instructions}
+                </p>
+            </div>
+        )}
+
+        {prescription.notes && (
+            <div className="relative mb-4">
+                <p className="text-[9px] uppercase tracking-[0.15em] text-gray-500">
+                    Notas
+                </p>
+                <p className="mt-1 text-[11px] text-gray-700">{prescription.notes}</p>
+            </div>
+        )}
+    </>
+)
+
+const PaymentsSummaryBody = ({ rows }: { rows: StatusSummaryRow[] }) => (
+    <>
+        <div className="relative mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {rows.map((row) => (
+                <div
+                    key={row.status}
+                    className="rounded border border-gray-200 border-t-[3px] border-t-sky-900 bg-white px-3 py-4 text-center"
+                >
+                    <p className="text-[9px] uppercase tracking-[0.12em] text-gray-500">
+                        {row.statusLabel}
+                    </p>
+                    <p className="mt-2 font-serif text-2xl font-bold text-sky-900">
+                        {row.count}
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800">{row.total}</p>
+                </div>
+            ))}
+        </div>
+        <table className="relative w-full border-collapse text-[11px]">
+            <thead>
+                <tr className="bg-sky-900 text-white">
+                    <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide">
+                        Método de pago
+                    </th>
+                    <th className="px-3 py-2 text-center font-semibold uppercase tracking-wide">
+                        Pagos
+                    </th>
+                    <th className="px-3 py-2 text-right font-semibold uppercase tracking-wide">
+                        Monto total
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map((row, index) => (
+                    <tr
+                        key={row.status}
+                        className={index % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'}
+                    >
+                        <td className="border-b border-gray-200 px-3 py-2 font-semibold">
+                            {row.statusLabel}
+                        </td>
+                        <td className="border-b border-gray-200 px-3 py-2 text-center font-semibold">
+                            {row.count}
+                        </td>
+                        <td className="border-b border-gray-200 px-3 py-2 text-right font-semibold">
+                            {row.total}
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </>
+)
+
+const GenericRowsTable = ({ rows }: { rows: GenericReportRow[] }) => (
+    <table className="relative w-full border-collapse text-[11px]">
+        <thead>
+            <tr className="bg-sky-900 text-white">
+                <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide">
+                    Concepto
+                </th>
+                <th className="px-3 py-2 text-center font-semibold uppercase tracking-wide">
+                    Valor
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {rows.map((row, index) => (
+                <tr
+                    key={`${row.label}-${index}`}
+                    className={index % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'}
+                >
+                    <td className="border-b border-gray-200 px-3 py-2">
+                        <span className="font-semibold">{row.label}</span>
+                        {row.secondary && (
+                            <span className="ml-2 text-[10px] text-gray-500">
+                                {row.secondary}
+                            </span>
+                        )}
+                    </td>
+                    <td className="border-b border-gray-200 px-3 py-2 text-center font-semibold">
+                        {row.value}
+                    </td>
+                </tr>
+            ))}
+        </tbody>
+    </table>
+)
+
 type ReportDocumentViewProps = {
     document: ReportDocument
 }
@@ -398,8 +652,12 @@ const ReportDocumentView = forwardRef<HTMLDivElement, ReportDocumentViewProps>(
         const rows = document.rows ?? []
         const summaryRows = document.summaryRows ?? []
         const quotation = document.quotation
+        const paymentReceipt = document.paymentReceipt
+        const prescription = document.prescription
+        const genericRows = document.genericRows ?? []
         const hasRows = rows.length > 0
         const hasSummary = summaryRows.length > 0
+        const hasGeneric = genericRows.length > 0
 
         return (
             <div
@@ -443,6 +701,37 @@ const ReportDocumentView = forwardRef<HTMLDivElement, ReportDocumentViewProps>(
                                 <SignatureBlock clinicName={clinic.name} />
                             </>
                         )}
+                    </>
+                )}
+
+                {reportType === 'PAYMENT_RECEIPT' && paymentReceipt && (
+                    <>
+                        <PaymentReceiptBody receipt={paymentReceipt} />
+                        {!paymentReceipt.allocations.length && (
+                            <EmptyState message={document.emptyMessage} />
+                        )}
+                        <SignatureBlock clinicName={clinic.name} />
+                    </>
+                )}
+
+                {reportType === 'PRESCRIPTION' && prescription && (
+                    <>
+                        <PrescriptionBody prescription={prescription} />
+                        <SignatureBlock clinicName={clinic.name} />
+                    </>
+                )}
+
+                {reportType === 'PAYMENTS_SUMMARY' && (
+                    <>
+                        {!hasSummary && <EmptyState message={document.emptyMessage} />}
+                        {hasSummary && <PaymentsSummaryBody rows={summaryRows} />}
+                    </>
+                )}
+
+                {reportType === 'REFERRALS_BY_SOURCE' && (
+                    <>
+                        {!hasGeneric && <EmptyState message={document.emptyMessage} />}
+                        {hasGeneric && <GenericRowsTable rows={genericRows} />}
                     </>
                 )}
 

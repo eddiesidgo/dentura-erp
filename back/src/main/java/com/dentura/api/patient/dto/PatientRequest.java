@@ -23,6 +23,7 @@ public record PatientRequest(
 		@Size(max = 30) String nit,
 		@Size(max = 120) String occupation,
 		@Size(max = 160) String referredBy,
+		Long referralSourceId,
 		String allergies,
 		String notes,
 		Boolean active) {

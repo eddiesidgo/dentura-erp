@@ -34,3 +34,6 @@ dentura:
     admin-username: ${DENTURA_SEED_ADMIN_USER:admin}
     admin-password: ${DENTURA_SEED_ADMIN_PASSWORD:123Qwe}
     admin-email: ${DENTURA_SEED_ADMIN_EMAIL:admin@dentura.local}
+  demo:
+    # Solo desarrollo. Default false: clientes jamás reciben data DEMO al arrancar.
+    seed-enabled: ${DENTURA_DEMO_SEED_ENABLED:false}
