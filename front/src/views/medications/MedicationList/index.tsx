@@ -3,7 +3,7 @@ import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DataTable from '@/components/shared/DataTable'
 import FormDrawer from '@/components/shared/FormDrawer'
-import IconText from '@/components/shared/IconText'
+import PageHeader from '@/components/shared/PageHeader'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
@@ -15,7 +15,7 @@ import {
     toast,
 } from '@/components/ui'
 import {
-    HiOutlineClipboardList,
+    HiOutlineDocumentText,
     HiOutlineSearch,
     HiPlusCircle,
 } from 'react-icons/hi'
@@ -76,7 +76,7 @@ const formatRegimen = (medication: Medication) => {
 }
 
 const MedicationList = () => {
-    const { pageTitleTheme, textTheme } = useThemeClass()
+    const { textTheme } = useThemeClass()
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
@@ -318,28 +318,18 @@ const MedicationList = () => {
 
     return (
         <>
-            <AdaptableCard className="h-full" bodyClass="h-full p-5">
-                <div className="lg:flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <IconText
-                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                            icon={
-                                <HiOutlineClipboardList className="text-xl" />
-                            }
-                        >
-                            Catálogo de medicamentos
-                        </IconText>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Define medicamentos para reutilizar al emitir
-                            recetas.
-                        </p>
-                        {total > 0 && (
-                            <Tag className="mt-3 border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
-                                {total} ítem{total === 1 ? '' : 's'}
-                            </Tag>
-                        )}
-                    </div>
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-2 mt-3 lg:mt-0">
+            <PageHeader
+                title="Medicamentos"
+                subtitle="Catálogo"
+                info="Define medicamentos para reutilizar al emitir recetas."
+                chips={
+                    total > 0
+                        ? [`${total} ítem${total === 1 ? '' : 's'}`]
+                        : undefined
+                }
+            />
+            <AdaptableCard className="h-full" bodyClass="h-full p-0">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end gap-2 mb-5">
                         <Segment
                             size="sm"
                             value={[tableData.activeFilter]}
@@ -376,7 +366,6 @@ const MedicationList = () => {
                                 Nuevo
                             </Button>
                         )}
-                    </div>
                 </div>
                 {!loading && medications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -432,7 +421,7 @@ const MedicationList = () => {
             <FormDrawer
                 isOpen={dialogOpen}
                 accent="amber"
-                icon={<HiOutlineClipboardList />}
+                icon={<HiOutlineDocumentText />}
                 title={
                     form.id ? 'Editar medicamento' : 'Nuevo medicamento'
                 }

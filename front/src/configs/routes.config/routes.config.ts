@@ -3,6 +3,7 @@ import authRoute from './authRoute'
 import {
     AGENDA_READ,
     CATALOG_READ,
+    ODONTOGRAM_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
     PRESCRIPTIONS_READ,
@@ -31,7 +32,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/patients/PatientList')),
         authority: [PATIENTS_READ],
         meta: {
-            header: 'Pacientes',
+            header: '',
         },
     },
     {
@@ -60,7 +61,25 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/agenda/AgendaCalendar')),
         authority: [AGENDA_READ],
         meta: {
-            header: 'Agenda',
+            header: '',
+        },
+    },
+    {
+        key: 'odontogram',
+        path: '/odontograma',
+        component: lazy(() => import('@/views/odontogram')),
+        authority: [ODONTOGRAM_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
+        key: 'odontogram',
+        path: '/odontograma/:patientId',
+        component: lazy(() => import('@/views/odontogram')),
+        authority: [ODONTOGRAM_READ],
+        meta: {
+            header: '',
         },
     },
     {
@@ -69,7 +88,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/treatments/TreatmentList')),
         authority: [CATALOG_READ],
         meta: {
-            header: 'Tratamientos',
+            header: '',
         },
     },
     {
@@ -78,7 +97,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/works/WorkList')),
         authority: [WORKS_READ],
         meta: {
-            header: 'Listado de trabajos',
+            header: '',
         },
     },
     {
@@ -87,7 +106,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/medications/MedicationList')),
         authority: [PRESCRIPTIONS_READ],
         meta: {
-            header: 'Medicamentos',
+            header: '',
         },
     },
     {
@@ -98,7 +117,7 @@ export const protectedRoutes = [
         ),
         authority: [REFERRALS_READ],
         meta: {
-            header: 'Fuentes de referido',
+            header: '',
         },
     },
     {
@@ -107,7 +126,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/roles/RoleList')),
         authority: [ROLES_MANAGE],
         meta: {
-            header: 'Roles y permisos',
+            header: '',
         },
     },
     {
@@ -116,7 +135,7 @@ export const protectedRoutes = [
         component: lazy(() => import('@/views/reports/ReportList')),
         authority: [REPORTS_READ],
         meta: {
-            header: 'Reportes',
+            header: '',
         },
     },
 ]

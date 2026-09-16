@@ -68,8 +68,8 @@ const PatientProfileHeader = ({
     const hasAllergies = Boolean(values.allergies.trim())
 
     return (
-        <div className="mb-5 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
-            <div className="border-l-4 border-l-sky-500 px-5 py-5 md:px-6 md:py-6">
+        <div className="mb-5 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-800">
+            <div className="px-5 py-5 md:px-6 md:py-6">
                 {showBack && (
                     <Button
                         size="sm"
@@ -81,7 +81,7 @@ const PatientProfileHeader = ({
                         Volver al listado
                     </Button>
                 )}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <Avatar
                         size={80}
                         shape="circle"
@@ -90,12 +90,12 @@ const PatientProfileHeader = ({
                         {patientInitials(values.firstName, values.lastName)}
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 truncate">
+                        <h3 className="mb-2 truncate text-xl font-bold text-gray-900 dark:text-gray-100">
                             {name}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
                             {values.recordNumber && (
-                                <Tag className="border-0 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-medium">
+                                <Tag className="border-0 bg-gray-100 font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-100">
                                     {values.recordNumber}
                                 </Tag>
                             )}

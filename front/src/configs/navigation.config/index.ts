@@ -4,6 +4,7 @@ import {
 import {
     AGENDA_READ,
     CATALOG_READ,
+    ODONTOGRAM_READ,
     PATIENTS_READ,
     PRESCRIPTIONS_READ,
     REFERRALS_READ,
@@ -42,6 +43,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'agenda',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [AGENDA_READ],
+        subMenu: [],
+    },
+    {
+        key: 'odontogram',
+        path: '/odontograma',
+        title: 'Odontograma',
+        translateKey: 'nav.odontogram',
+        icon: 'odontogram',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ODONTOGRAM_READ],
         subMenu: [],
     },
     {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import FormDrawer from '@/components/shared/FormDrawer'
+import PageHeader from '@/components/shared/PageHeader'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
@@ -12,7 +13,6 @@ import {
     Tag,
     toast,
 } from '@/components/ui'
-import useThemeClass from '@/utils/hooks/useThemeClass'
 import { getApiErrorMessage } from '@/services/PatientService'
 import {
     apiAssignUserRoles,
@@ -56,7 +56,6 @@ const emptyForm: RoleForm = {
 }
 
 const RoleList = () => {
-    const { pageTitleTheme } = useThemeClass()
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const [permissions, setPermissions] = useState<Permission[]>([])
     const [roles, setRoles] = useState<Role[]>([])
@@ -187,16 +186,11 @@ const RoleList = () => {
 
     return (
         <>
-            <AdaptableCard className="mb-4">
-                <div className="lg:flex items-center justify-between mb-4">
-                    <div>
-                        <h5 className={pageTitleTheme}>Roles de esta clínica</h5>
-                        <p className="text-sm">
-                            Define qué puede hacer cada rol. El permiso
-                            «Asignar roles y permisos» habilita esta pantalla.
-                            Solo aplica a esta clínica.
-                        </p>
-                    </div>
+            <PageHeader
+                title="Roles y permisos"
+                subtitle="Administración"
+                info="Define qué puede hacer cada rol. El permiso «Asignar roles y permisos» habilita esta pantalla. Solo aplica a esta clínica."
+                extra={
                     <Button
                         size="sm"
                         variant="solid"
@@ -205,6 +199,13 @@ const RoleList = () => {
                     >
                         Nuevo rol
                     </Button>
+                }
+            />
+            <AdaptableCard className="mb-4" bodyClass="p-0">
+                <div className="mb-4">
+                    <h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        Roles de esta clínica
+                    </h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
@@ -265,10 +266,10 @@ const RoleList = () => {
                 </div>
             </AdaptableCard>
 
-            <AdaptableCard>
-                <h5 className={`mb-2 ${pageTitleTheme}`}>
+            <AdaptableCard bodyClass="p-0">
+                <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-slate-100">
                     Usuarios de la clínica
-                </h5>
+                </h3>
                 <p className="text-sm mb-4">
                     Asigna uno o varios roles. Solo usuarios de esta clínica.
                     El usuario debe volver a iniciar sesión para ver menús

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import dayjs from 'dayjs'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import DataTable from '@/components/shared/DataTable'
-import IconText from '@/components/shared/IconText'
+import PageHeader from '@/components/shared/PageHeader'
 import {
     Button,
     DatePicker,
@@ -12,7 +12,7 @@ import {
     Tag,
     toast,
 } from '@/components/ui'
-import { HiOutlineClipboardCheck, HiOutlineRefresh } from 'react-icons/hi'
+import { HiOutlineRefresh } from 'react-icons/hi'
 import { WORKS_READ } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
@@ -45,7 +45,7 @@ const statusFilterOptions: Option[] = [
 type ViewMode = 'detail' | 'by-treatment'
 
 const WorkList = () => {
-    const { pageTitleTheme, textTheme } = useThemeClass()
+    const { textTheme } = useThemeClass()
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
@@ -308,21 +308,12 @@ const WorkList = () => {
 
     return (
         <div className="flex flex-col gap-4">
-            <AdaptableCard bodyClass="p-5">
-                <div className="lg:flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <IconText
-                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                            icon={<HiOutlineClipboardCheck className="text-xl" />}
-                        >
-                            Listado de trabajos
-                        </IconText>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Consulta trabajos por paciente, tratamiento, estado y
-                            fechas (detalle o resumen por código de tratamiento).
-                        </p>
-                    </div>
-                    <div className="flex gap-2 mt-3 lg:mt-0">
+            <PageHeader
+                title="Listado de trabajos"
+                subtitle="Operaciones"
+                info="Consulta trabajos por paciente, tratamiento, estado y fechas (detalle o resumen por código de tratamiento)."
+                extra={
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             size="sm"
                             variant={viewMode === 'detail' ? 'solid' : 'default'}
@@ -347,8 +338,9 @@ const WorkList = () => {
                             Actualizar
                         </Button>
                     </div>
-                </div>
-
+                }
+            />
+            <AdaptableCard bodyClass="p-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mb-4">
                     <div>
                         <div className="mb-1.5 text-sm font-semibold">Paciente</div>

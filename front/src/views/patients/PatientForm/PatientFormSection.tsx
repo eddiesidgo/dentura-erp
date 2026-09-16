@@ -1,26 +1,13 @@
 import classNames from 'classnames'
 import type { ReactNode } from 'react'
 import AdaptableCard from '@/components/shared/AdaptableCard'
-import IconText from '@/components/shared/IconText'
-
-type SectionAccent = 'sky' | 'emerald' | 'amber'
-
-const accentClass: Record<SectionAccent, string> = {
-    sky: 'border-l-sky-500',
-    emerald: 'border-l-emerald-500',
-    amber: 'border-l-amber-500',
-}
-
-const iconClass: Record<SectionAccent, string> = {
-    sky: 'text-sky-600 dark:text-sky-300',
-    emerald: 'text-emerald-600 dark:text-emerald-300',
-    amber: 'text-amber-600 dark:text-amber-300',
-}
+import IconTile from '@/components/shared/IconTile'
+import type { IconTileAccent } from '@/components/shared/IconTile'
 
 type PatientFormSectionProps = {
     title: string
     icon: ReactNode
-    accent: SectionAccent
+    accent?: IconTileAccent
     children: ReactNode
     className?: string
 }
@@ -28,27 +15,22 @@ type PatientFormSectionProps = {
 const PatientFormSection = ({
     title,
     icon,
-    accent,
+    accent = 'sky',
     children,
     className,
 }: PatientFormSectionProps) => (
     <AdaptableCard
         className={classNames('h-full', className)}
-        bodyClass={classNames(
-            'p-5 border-l-4',
-            accentClass[accent],
-        )}
+        bodyClass="p-5 md:p-6"
     >
-        <IconText
-            className="mb-5 text-base font-semibold"
-            icon={
-                <span className={classNames('text-xl', iconClass[accent])}>
-                    {icon}
-                </span>
-            }
-        >
-            {title}
-        </IconText>
+        <div className="mb-5 flex items-center gap-3 border-b border-gray-100 pb-4 dark:border-gray-700/80">
+            <IconTile accent={accent} size="sm">
+                {icon}
+            </IconTile>
+            <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {title}
+            </h4>
+        </div>
         {children}
     </AdaptableCard>
 )

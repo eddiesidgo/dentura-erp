@@ -6,10 +6,10 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import CalendarView from '@/components/shared/CalendarView'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-import IconText from '@/components/shared/IconText'
+import PageHeader from '@/components/shared/PageHeader'
 import { Button, Notification, Tag, toast } from '@/components/ui'
 import AuthorityCheck from '@/components/shared/AuthorityCheck'
-import { HiOutlineCalendar, HiPlusCircle } from 'react-icons/hi'
+import { HiPlusCircle } from 'react-icons/hi'
 import {
     apiCreateAppointment,
     apiDeleteAppointment,
@@ -23,7 +23,6 @@ import {
 } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
-import useThemeClass from '@/utils/hooks/useThemeClass'
 import AppointmentDrawer, {
     type AppointmentForm,
 } from './AppointmentDrawer'
@@ -42,7 +41,6 @@ const toIso = (date: Date) => date.toISOString()
 
 const AgendaCalendar = () => {
     const navigate = useNavigate()
-    const { pageTitleTheme } = useThemeClass()
     const userAuthority = useAppSelector((state) => state.auth.user.authority) || []
     const canWrite = useAuthority(userAuthority, [AGENDA_WRITE])
     const canDelete = useAuthority(userAuthority, [AGENDA_DELETE])
@@ -224,21 +222,12 @@ const AgendaCalendar = () => {
 
     return (
         <>
-            <AdaptableCard bodyClass="p-5">
-                <div className="lg:flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <IconText
-                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                            icon={<HiOutlineCalendar className="text-xl" />}
-                        >
-                            Agenda
-                        </IconText>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Selecciona un horario para crear o abre una cita
-                            para editarla. Arrastra para reprogramar.
-                        </p>
-                    </div>
-                    <div className="flex gap-2 mt-3 lg:mt-0">
+            <PageHeader
+                title="Agenda"
+                subtitle="Clínica"
+                info="Selecciona un horario para crear o abre una cita para editarla. Arrastra para reprogramar."
+                extra={
+                    <div className="flex gap-2">
                         <Button
                             size="sm"
                             variant="plain"
@@ -260,8 +249,10 @@ const AgendaCalendar = () => {
                             </Button>
                         </AuthorityCheck>
                     </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-5">
+                }
+            />
+            <AdaptableCard bodyClass="p-0">
+                <div className="mb-5 flex flex-wrap gap-2">
                     {statusOptions.map((option) => (
                         <Tag
                             key={option.value}

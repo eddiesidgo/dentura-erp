@@ -9,6 +9,7 @@ import {
     Checkbox,
     Input,
     Notification,
+    Segment,
     Select,
     Tag,
     toast,
@@ -33,45 +34,21 @@ import type {
     OdontogramEntryPayload,
     OdontogramStatus,
 } from '@/@types/odontogram'
-
-const UPPER_TEETH = [
-    '18',
-    '17',
-    '16',
-    '15',
-    '14',
-    '13',
-    '12',
-    '11',
-    '21',
-    '22',
-    '23',
-    '24',
-    '25',
-    '26',
-    '27',
-    '28',
-]
-const LOWER_TEETH = [
-    '48',
-    '47',
-    '46',
-    '45',
-    '44',
-    '43',
-    '42',
-    '41',
-    '31',
-    '32',
-    '33',
-    '34',
-    '35',
-    '36',
-    '37',
-    '38',
-]
-
-const SURFACE_OPTIONS = ['M', 'O', 'D', 'B', 'L'] as const
+import OdontogramChart from './odontogram/OdontogramChart'
+import OdontogramToolbar from './odontogram/OdontogramToolbar'
+import ToothLabDialog from './odontogram/ToothLabDialog'
+import {
+    SURFACE_OPTIONS,
+    WHOLE_TOOTH_CONDITIONS,
+    type Dentition,
+    type ToothSurface,
+} from './odontogram/constants'
+import {
+    findEntryForSurface,
+    findWholeToothEntry,
+    removeSurface,
+} from './odontogram/findEntry'
+import { parseSurfaces } from './odontogram/resolveToothPaint'
 
 const conditionOptions: { value: OdontogramCondition; label: string }[] = [
     { value: 'CARIES', label: 'Caries' },
@@ -114,19 +91,29 @@ type EntryForm = {
     notes: string
 }
 
-const emptyForm = (tooth = ''): EntryForm => ({
+const emptyForm = (
+    tooth = '',
+    surfaces: string[] = [],
+    condition: OdontogramCondition = 'CARIES',
+    status: OdontogramStatus = 'EXISTING',
+): EntryForm => ({
     tooth,
-    surfaces: [],
-    condition: 'CARIES',
-    status: 'EXISTING',
+    surfaces,
+    condition,
+    status,
     notes: '',
 })
 
 type PatientOdontogramProps = {
     patientId: number
+    /** Hide the inner card title when the parent page already has a header. */
+    embedded?: boolean
 }
 
-const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
+const PatientOdontogram = ({
+    patientId,
+    embedded = false,
+}: PatientOdontogramProps) => {
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
     const canWrite = useAuthority(userAuthority, [ODONTOGRAM_WRITE])
@@ -137,7 +124,14 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
     const [form, setForm] = useState<EntryForm>(emptyForm())
     const [dialogOpen, setDialogOpen] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [painting, setPainting] = useState(false)
     const [toDelete, setToDelete] = useState<OdontogramEntry | null>(null)
+    const [labTooth, setLabTooth] = useState<string | null>(null)
+    const [dentition, setDentition] = useState<Dentition>('permanent')
+    const [activeCondition, setActiveCondition] =
+        useState<OdontogramCondition | null>(null)
+    const [activeStatus, setActiveStatus] =
+        useState<OdontogramStatus>('EXISTING')
 
     const loadEntries = useCallback(async () => {
         setLoading(true)
@@ -172,8 +166,20 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
         return map
     }, [entries])
 
-    const openCreate = (tooth?: string) => {
-        setForm(emptyForm(tooth || ''))
+    const openCreate = (
+        tooth?: string,
+        surface?: ToothSurface,
+        condition?: OdontogramCondition,
+        status?: OdontogramStatus,
+    ) => {
+        setForm(
+            emptyForm(
+                tooth || '',
+                surface ? [surface] : [],
+                condition || 'CARIES',
+                status || 'EXISTING',
+            ),
+        )
         setDialogOpen(true)
     }
 
@@ -185,15 +191,140 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
                 .toUpperCase()
                 .split('')
                 .filter((surface) =>
-                    SURFACE_OPTIONS.includes(
-                        surface as (typeof SURFACE_OPTIONS)[number],
-                    ),
+                    SURFACE_OPTIONS.includes(surface as ToothSurface),
                 ),
             condition: entry.condition,
             status: entry.status,
             notes: entry.notes ?? '',
         })
         setDialogOpen(true)
+    }
+
+    const paintEntry = async (tooth: string, surface?: ToothSurface) => {
+        if (!activeCondition || painting) {
+            return
+        }
+        const whole = WHOLE_TOOTH_CONDITIONS.has(activeCondition)
+        const toothEntries = entriesByTooth.get(tooth) || []
+
+        // Surface conditions need an explicit face — never save blank surfaces
+        // (blank used to paint the whole crown as the first condition).
+        if (!whole && !surface) {
+            openCreate(tooth, undefined, activeCondition, activeStatus)
+            return
+        }
+
+        setPainting(true)
+        try {
+            if (whole) {
+                const existingWhole = findWholeToothEntry(toothEntries)
+                const payload: OdontogramEntryPayload = {
+                    patientId,
+                    tooth,
+                    surfaces: null,
+                    condition: activeCondition,
+                    status: activeStatus,
+                    notes: existingWhole?.notes ?? null,
+                }
+                if (existingWhole) {
+                    await apiUpdateOdontogramEntry(existingWhole.id, payload)
+                } else {
+                    await apiCreateOdontogramEntry(payload)
+                }
+            } else if (surface) {
+                const existing = findEntryForSurface(toothEntries, surface)
+                if (existing) {
+                    const listed = parseSurfaces(existing.surfaces)
+                    if (listed.length > 1 && listed.includes(surface)) {
+                        // Split multi-surface entry so other faces keep their condition
+                        await apiUpdateOdontogramEntry(existing.id, {
+                            patientId,
+                            tooth,
+                            surfaces: removeSurface(existing.surfaces, surface),
+                            condition: existing.condition,
+                            status: existing.status,
+                            notes: existing.notes,
+                        })
+                        await apiCreateOdontogramEntry({
+                            patientId,
+                            tooth,
+                            surfaces: surface,
+                            condition: activeCondition,
+                            status: activeStatus,
+                            notes: null,
+                        })
+                    } else {
+                        await apiUpdateOdontogramEntry(existing.id, {
+                            patientId,
+                            tooth,
+                            surfaces: surface,
+                            condition: activeCondition,
+                            status: activeStatus,
+                            notes: existing.notes,
+                        })
+                    }
+                } else {
+                    await apiCreateOdontogramEntry({
+                        patientId,
+                        tooth,
+                        surfaces: surface,
+                        condition: activeCondition,
+                        status: activeStatus,
+                        notes: null,
+                    })
+                }
+            }
+            await loadEntries()
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="No se pudo registrar">
+                    {getApiErrorMessage(
+                        error,
+                        'Error al aplicar la convención',
+                    )}
+                </Notification>,
+            )
+        } finally {
+            setPainting(false)
+        }
+    }
+
+    const handleSurfaceClick = (tooth: string, surface: ToothSurface) => {
+        if (canWrite && activeCondition) {
+            void paintEntry(tooth, surface)
+            return
+        }
+        const existing = findEntryForSurface(
+            entriesByTooth.get(tooth) || [],
+            surface,
+        )
+        if (existing) {
+            openEdit(existing)
+            return
+        }
+        if (canWrite) {
+            openCreate(tooth, surface)
+        }
+    }
+
+    const handleToothClick = (tooth: string) => {
+        if (canWrite && activeCondition) {
+            void paintEntry(tooth)
+            return
+        }
+        const toothEntries = entriesByTooth.get(tooth) || []
+        const whole = findWholeToothEntry(toothEntries)
+        if (whole) {
+            openEdit(whole)
+            return
+        }
+        if (toothEntries[0]) {
+            openEdit(toothEntries[0])
+            return
+        }
+        if (canWrite) {
+            openCreate(tooth)
+        }
     }
 
     const saveEntry = async () => {
@@ -251,81 +382,75 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
         }
     }
 
-    const renderToothRow = (teeth: string[], label: string) => (
-        <div className="mb-4">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
-                {label}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-                {teeth.map((tooth, index) => {
-                    const count = entriesByTooth.get(tooth)?.length || 0
-                    return (
-                        <button
-                            key={tooth}
-                            type="button"
-                            disabled={!canWrite && count === 0}
-                            className={`relative min-w-[2.5rem] h-10 rounded-md border text-sm font-semibold transition ${
-                                count > 0
-                                    ? 'border-sky-400 bg-sky-50 text-sky-700 dark:border-sky-500/60 dark:bg-sky-500/15 dark:text-sky-100'
-                                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
-                            } ${index === 7 ? 'mr-3' : ''}`}
-                            onClick={() => {
-                                if (canWrite) {
-                                    openCreate(tooth)
-                                    return
-                                }
-                                const existing = entriesByTooth.get(tooth)?.[0]
-                                if (existing) {
-                                    openEdit(existing)
-                                }
-                            }}
-                        >
-                            {tooth}
-                            {count > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-600 px-1 text-[10px] text-white">
-                                    {count}
-                                </span>
-                            )}
-                        </button>
-                    )
-                })}
-            </div>
-        </div>
-    )
-
     return (
         <>
             <AdaptableCard className="mb-4" bodyClass="p-5">
                 <div className="lg:flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <IconText
-                            className="mb-1 text-base font-semibold"
-                            icon={<HiOutlineHeart className="text-lg" />}
-                        >
-                            Odontograma
-                        </IconText>
+                        {!embedded && (
+                            <IconText
+                                className="mb-1 text-base font-semibold"
+                                icon={<HiOutlineHeart className="text-lg" />}
+                            >
+                                Odontograma
+                            </IconText>
+                        )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Piezas FDI adultas. Haz clic en un diente para
-                            registrar superficies y condición.
+                            Hover sobre una cara muestra M/O/D/B/L. Icono de lupa
+                            abre el laboratorio del diente. Con convención:
+                            pinta/actualiza; sin ella, clic edita o crea.
                         </p>
                     </div>
-                    {canWrite && (
-                        <Button
+                    <div className="mt-3 flex flex-wrap items-center gap-2 lg:mt-0">
+                        <Segment
+                            value={[dentition]}
                             size="sm"
-                            variant="solid"
-                            icon={<HiPlusCircle />}
-                            className="mt-3 lg:mt-0"
-                            onClick={() => openCreate()}
+                            onChange={(val) => {
+                                const next = Array.isArray(val) ? val[0] : val
+                                if (next === 'permanent' || next === 'primary') {
+                                    setDentition(next)
+                                }
+                            }}
                         >
-                            Nueva entrada
-                        </Button>
-                    )}
+                            <Segment.Item value="permanent">
+                                Permanente
+                            </Segment.Item>
+                            <Segment.Item value="primary">
+                                Temporal
+                            </Segment.Item>
+                        </Segment>
+                        {canWrite && (
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                icon={<HiPlusCircle />}
+                                onClick={() => openCreate()}
+                            >
+                                Nueva entrada
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
-                {renderToothRow(UPPER_TEETH, 'Arcada superior')}
-                {renderToothRow(LOWER_TEETH, 'Arcada inferior')}
+                <OdontogramToolbar
+                    canWrite={canWrite}
+                    activeCondition={activeCondition}
+                    activeStatus={activeStatus}
+                    onConditionChange={setActiveCondition}
+                    onStatusChange={setActiveStatus}
+                />
 
-                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 mt-2">
+                <OdontogramChart
+                    dentition={dentition}
+                    entriesByTooth={entriesByTooth}
+                    canWrite={canWrite}
+                    paintMode={Boolean(activeCondition)}
+                    onSurfaceClick={handleSurfaceClick}
+                    onToothClick={handleToothClick}
+                    onInspectTooth={setLabTooth}
+                />
+
+                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 mt-4">
                     <table className="min-w-full text-sm">
                         <thead>
                             <tr className="text-left bg-gray-50 dark:bg-gray-700/40">
@@ -392,7 +517,8 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
                                             Sin registros en el odontograma
                                         </p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Selecciona una pieza para comenzar.
+                                            Elige una convención y pinta, o
+                                            selecciona una pieza.
                                         </p>
                                     </td>
                                 </tr>
@@ -401,6 +527,16 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
                     </table>
                 </div>
             </AdaptableCard>
+
+            <ToothLabDialog
+                tooth={labTooth}
+                entries={labTooth ? entriesByTooth.get(labTooth) || [] : []}
+                canWrite={canWrite}
+                paintMode={Boolean(activeCondition)}
+                onClose={() => setLabTooth(null)}
+                onSurfaceClick={handleSurfaceClick}
+                onToothClick={handleToothClick}
+            />
 
             <FormDrawer
                 isOpen={dialogOpen}
@@ -422,7 +558,9 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
                             onChange={(e) =>
                                 setForm((prev) => ({
                                     ...prev,
-                                    tooth: e.target.value.replace(/\D/g, '').slice(0, 2),
+                                    tooth: e.target.value
+                                        .replace(/\D/g, '')
+                                        .slice(0, 2),
                                 }))
                             }
                         />
@@ -440,7 +578,8 @@ const PatientOdontogram = ({ patientId }: PatientOdontogramProps) => {
                                             surfaces: checked
                                                 ? [...prev.surfaces, surface]
                                                 : prev.surfaces.filter(
-                                                      (item) => item !== surface,
+                                                      (item) =>
+                                                          item !== surface,
                                                   ),
                                         }))
                                     }

@@ -1,101 +1,67 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
+import type { ApexOptions } from 'apexcharts'
 import {
     HiOutlineCalendar,
     HiOutlineClipboardList,
-    HiOutlineHome,
-    HiOutlineKey,
+    HiOutlinePlus,
+    HiOutlineUserAdd,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
-import IconText from '@/components/shared/IconText'
-import Card from '@/components/ui/Card'
-import Skeleton from '@/components/ui/Skeleton'
-import Tag from '@/components/ui/Tag'
-import useThemeClass from '@/utils/hooks/useThemeClass'
+import AdaptableCard from '@/components/shared/AdaptableCard'
+import Chart from '@/components/shared/Chart'
+import { Button, Spinner } from '@/components/ui'
+import { useConfig } from '@/components/ui/ConfigProvider'
 import { useAppSelector } from '@/store'
 import {
     AGENDA_READ,
+    AGENDA_WRITE,
     CATALOG_READ,
     PATIENTS_READ,
-    ROLES_MANAGE,
+    PATIENTS_WRITE,
 } from '@/constants/roles.constant'
+import { COLORS } from '@/constants/chart.constant'
 import { apiGetAppointments } from '@/services/AppointmentService'
 import { apiGetPatientKpis } from '@/services/PatientService'
+import type { Appointment, AppointmentStatus } from '@/@types/appointment'
 import type { PatientKpis } from '@/@types/patient'
+import { statusOptions } from '@/views/agenda/constants'
+import useAuthority from '@/utils/hooks/useAuthority'
 
-type Shortcut = {
-    title: string
-    description: string
-    path: string
-    icon: React.ReactNode
-    authority: string[]
-    accent: 'sky' | 'emerald' | 'amber' | 'violet'
+const formatNumber = (value: number) =>
+    new Intl.NumberFormat('es-SV').format(value)
+
+const formatPercent = (value: number) =>
+    `${value.toFixed(1).replace('.', ',')}%`
+
+const STATUS_CHART_COLORS: Record<AppointmentStatus, string> = {
+    SCHEDULED: COLORS[1],
+    CONFIRMED: COLORS[2],
+    COMPLETED: COLORS[0],
+    CANCELLED: COLORS[4],
+    NO_SHOW: COLORS[3],
 }
 
-type HomeKpiCardProps = {
-    title: string
+const KpiTile = ({
+    label,
+    value,
+    hint,
+    tone,
+}: {
+    label: string
     value: number
-    helper: string
-    loading: boolean
-    tone?: 'sky' | 'emerald' | 'amber' | 'indigo'
-}
-
-const shortcutAccent: Record<Shortcut['accent'], string> = {
-    sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
-    emerald:
-        'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
-    amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
-    violet:
-        'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
-}
-
-const kpiToneClass: Record<
-    NonNullable<HomeKpiCardProps['tone']>,
-    string
-> = {
-    sky: 'border-l-sky-500',
-    emerald: 'border-l-emerald-500',
-    amber: 'border-l-amber-500',
-    indigo: 'border-l-indigo-500',
-}
-
-const numberFormatter = new Intl.NumberFormat('es-SV')
-
-const shortcuts: Shortcut[] = [
-    {
-        title: 'Pacientes',
-        description: 'Padrón, fichas y datos de contacto',
-        path: '/pacientes',
-        icon: <HiOutlineUserGroup className="text-2xl" />,
-        authority: [PATIENTS_READ],
-        accent: 'sky',
-    },
-    {
-        title: 'Agenda',
-        description: 'Citas de la semana y estados',
-        path: '/agenda',
-        icon: <HiOutlineCalendar className="text-2xl" />,
-        authority: [AGENDA_READ],
-        accent: 'emerald',
-    },
-    {
-        title: 'Tratamientos',
-        description: 'Catálogo, códigos y precios',
-        path: '/tratamientos',
-        icon: <HiOutlineClipboardList className="text-2xl" />,
-        authority: [CATALOG_READ],
-        accent: 'amber',
-    },
-    {
-        title: 'Roles',
-        description: 'Permisos por clínica',
-        path: '/roles',
-        icon: <HiOutlineKey className="text-2xl" />,
-        authority: [ROLES_MANAGE],
-        accent: 'violet',
-    },
-]
+    hint?: string
+    tone: string
+}) => (
+    <div className={`rounded-xl p-3 text-white shadow ${tone}`}>
+        <div className="text-sm opacity-95">{label}</div>
+        <div className="mt-1 text-2xl font-bold">{formatNumber(value)}</div>
+        {hint ? (
+            <div className="mt-1 text-[11px] opacity-90">{hint}</div>
+        ) : null}
+    </div>
+)
 
 const canAccess = (userAuthority: string[], authority: string[]) => {
     if (authority.length === 0) {
@@ -107,60 +73,68 @@ const canAccess = (userAuthority: string[], authority: string[]) => {
     return authority.some((code) => userAuthority.includes(code))
 }
 
-const HomeKpiCard = ({
-    title,
-    value,
-    helper,
-    loading,
-    tone = 'indigo',
-}: HomeKpiCardProps) => (
-    <Card
-        bodyClass="p-4"
-        className={`border-l-4 ${kpiToneClass[tone]} border-gray-200 dark:border-gray-600`}
-    >
-        <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {title}
-        </div>
-        <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            {loading ? (
-                <Skeleton height={28} width={60} />
-            ) : (
-                numberFormatter.format(value)
-            )}
-        </div>
-        <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {helper}
-        </div>
-    </Card>
-)
+const THEME_BAR_COLORS: Record<string, string> = {
+    red: '#dc2626',
+    orange: '#ea580c',
+    amber: '#d97706',
+    yellow: '#ca8a04',
+    lime: '#65a30d',
+    green: '#16a34a',
+    emerald: '#059669',
+    teal: '#0d9488',
+    cyan: '#0891b2',
+    sky: '#0284c7',
+    blue: '#2563eb',
+    indigo: '#4f46e5',
+    violet: '#7c3aed',
+    purple: '#9333ea',
+    fuchsia: '#c026d3',
+    pink: '#db2777',
+    rose: '#e11d48',
+}
 
 const Home = () => {
     const navigate = useNavigate()
-    const { pageTitleTheme, textTheme } = useThemeClass()
+    const { themeColor } = useConfig()
+    const userName = useAppSelector((state) => state.auth.user.userName)
     const clinicName =
         useAppSelector((state) => state.clinic.current?.name) || 'Dentura'
-    const userName = useAppSelector((state) => state.auth.user.userName) || ''
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
 
     const canReadPatients = canAccess(userAuthority, [PATIENTS_READ])
+    const canWritePatients = useAuthority(userAuthority, [PATIENTS_WRITE])
     const canReadAgenda = canAccess(userAuthority, [AGENDA_READ])
+    const canWriteAgenda = useAuthority(userAuthority, [AGENDA_WRITE])
+    const canReadCatalog = canAccess(userAuthority, [CATALOG_READ])
 
-    const [kpiLoading, setKpiLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
     const [patientKpis, setPatientKpis] = useState<PatientKpis | null>(null)
-    const [todayAppointments, setTodayAppointments] = useState(0)
-    const [upcomingAppointments, setUpcomingAppointments] = useState(0)
-
-    const visible = shortcuts.filter((item) =>
-        canAccess(userAuthority, item.authority),
-    )
+    const [appointmentsYear, setAppointmentsYear] = useState<Appointment[]>([])
+    const [todayCount, setTodayCount] = useState(0)
+    const [weekCount, setWeekCount] = useState(0)
 
     const loadDashboard = useCallback(async () => {
         if (!canReadPatients && !canReadAgenda) {
+            setLoading(false)
+            setPatientKpis(null)
+            setAppointmentsYear([])
+            setTodayCount(0)
+            setWeekCount(0)
+            setError('')
             return
         }
-        setKpiLoading(true)
+
+        setLoading(true)
+        setError('')
         try {
+            const yearStart = dayjs().subtract(11, 'month').startOf('month')
+            const yearEnd = dayjs().endOf('month')
+            const todayStart = dayjs().startOf('day')
+            const todayEnd = dayjs().endOf('day')
+            const weekEnd = dayjs().add(7, 'day').endOf('day')
+
             const tasks: Promise<void>[] = []
 
             if (canReadPatients) {
@@ -172,34 +146,46 @@ const Home = () => {
                         setPatientKpis(response.data)
                     }),
                 )
+            } else {
+                setPatientKpis(null)
             }
 
             if (canReadAgenda) {
-                const start = dayjs().startOf('day')
-                const end = dayjs().endOf('day')
-                const weekEnd = dayjs().add(7, 'day').endOf('day')
                 tasks.push(
                     Promise.all([
                         apiGetAppointments(
-                            start.toISOString(),
-                            end.toISOString(),
+                            yearStart.toISOString(),
+                            yearEnd.toISOString(),
                         ),
                         apiGetAppointments(
-                            start.toISOString(),
+                            todayStart.toISOString(),
+                            todayEnd.toISOString(),
+                        ),
+                        apiGetAppointments(
+                            todayStart.toISOString(),
                             weekEnd.toISOString(),
                         ),
-                    ]).then(([today, week]) => {
-                        setTodayAppointments(today.data.length)
-                        setUpcomingAppointments(week.data.length)
+                    ]).then(([year, today, week]) => {
+                        setAppointmentsYear(year.data)
+                        setTodayCount(today.data.length)
+                        setWeekCount(week.data.length)
                     }),
                 )
+            } else {
+                setAppointmentsYear([])
+                setTodayCount(0)
+                setWeekCount(0)
             }
 
             await Promise.all(tasks)
         } catch {
-            // Keep shortcuts usable even if indicators fail.
+            setError('No se pudo cargar el panel de inicio')
+            setPatientKpis(null)
+            setAppointmentsYear([])
+            setTodayCount(0)
+            setWeekCount(0)
         } finally {
-            setKpiLoading(false)
+            setLoading(false)
         }
     }, [canReadAgenda, canReadPatients])
 
@@ -207,128 +193,408 @@ const Home = () => {
         loadDashboard()
     }, [loadDashboard])
 
-    const greeting = userName
-        ? `Hola, ${userName}`
-        : 'Panel operativo de la clínica'
+    const monthlyBuckets = useMemo(() => {
+        const months = Array.from({ length: 12 }, (_, index) =>
+            dayjs().subtract(11 - index, 'month').startOf('month'),
+        )
+        return months.map((month) => {
+            const key = month.format('YYYY-MM')
+            const total = appointmentsYear.filter(
+                (appointment) =>
+                    dayjs(appointment.startAt).format('YYYY-MM') === key,
+            ).length
+            return {
+                label: month.format('MMM YY'),
+                total,
+            }
+        })
+    }, [appointmentsYear])
+
+    const monthlyLabels = useMemo(
+        () => monthlyBuckets.map((month) => month.label),
+        [monthlyBuckets],
+    )
+    const monthlySeries = useMemo(
+        () => [
+            {
+                name: 'Citas',
+                data: monthlyBuckets.map((month) => month.total),
+            },
+        ],
+        [monthlyBuckets],
+    )
+    const hasMonthlyData = useMemo(
+        () => monthlyBuckets.some((month) => month.total > 0),
+        [monthlyBuckets],
+    )
+
+    const statusDistribution = useMemo(() => {
+        const counts = new Map<AppointmentStatus, number>()
+        for (const appointment of appointmentsYear) {
+            counts.set(
+                appointment.status,
+                (counts.get(appointment.status) || 0) + 1,
+            )
+        }
+        const total = appointmentsYear.length || 1
+        return statusOptions
+            .map((option) => {
+                const value = option.value as AppointmentStatus
+                const count = counts.get(value) || 0
+                return {
+                    label: option.label,
+                    total: count,
+                    porcentaje: (count / total) * 100,
+                    color: STATUS_CHART_COLORS[value],
+                }
+            })
+            .filter((item) => item.total > 0)
+    }, [appointmentsYear])
+
+    const statusValues = statusDistribution.map((item) => item.total)
+    const hasStatusData = statusValues.length > 0
+
+    const primaryBarColor = THEME_BAR_COLORS[themeColor] || COLORS[0]
+
+    const barOptions = useMemo<ApexOptions>(
+        () => ({
+            colors: [primaryBarColor],
+            plotOptions: {
+                bar: {
+                    columnWidth: '45%',
+                    borderRadius: 4,
+                },
+            },
+            yaxis: {
+                labels: {
+                    formatter: (val) => `${Math.round(val)}`,
+                },
+            },
+            tooltip: {
+                y: {
+                    formatter: (val) => `${val}`,
+                },
+            },
+        }),
+        [primaryBarColor],
+    )
+
+    const donutOptions = useMemo<ApexOptions>(
+        () => ({
+            labels: statusDistribution.map((item) => item.label),
+            colors: statusDistribution.map((item) => item.color),
+            legend: { show: false },
+        }),
+        [statusDistribution],
+    )
+
+    const sinDatos =
+        !loading &&
+        !error &&
+        (patientKpis?.totalPatients ?? 0) === 0 &&
+        appointmentsYear.length === 0
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <Spinner size={40} />
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <AdaptableCard>
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
+                    {error}
+                </div>
+            </AdaptableCard>
+        )
+    }
 
     return (
-        <div>
-            <div className="mb-6">
-                <div className="rounded-2xl p-5 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/80 border border-gray-200 dark:border-gray-600 shadow-sm">
-                    <div className="lg:flex items-start justify-between gap-4">
-                        <div>
-                            <IconText
-                                className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                                icon={
-                                    <HiOutlineHome
-                                        className={`text-xl ${textTheme}`}
+        <div className="space-y-6">
+            {sinDatos ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="font-semibold">
+                        Aún no hay actividad registrada en esta clínica.
+                    </p>
+                    <p className="mt-1 text-amber-800 dark:text-amber-200">
+                        Registra un paciente o crea una cita para empezar a ver
+                        métricas aquí.
+                    </p>
+                </div>
+            ) : null}
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+                <div className="space-y-6 lg:col-span-1">
+                    <AdaptableCard>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                            {userName
+                                ? `Bienvenido, ${userName}`
+                                : 'Bienvenido'}
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            Resumen operativo de {clinicName} con datos en
+                            tiempo real.
+                        </p>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                            {canReadPatients ? (
+                                <>
+                                    <KpiTile
+                                        label="Pacientes"
+                                        value={patientKpis?.totalPatients ?? 0}
+                                        tone="bg-gradient-to-br from-indigo-500 to-indigo-600"
                                     />
-                                }
-                            >
-                                {clinicName}
-                            </IconText>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 max-w-3xl">
-                                {greeting}. Accesos rápidos y resumen del día
-                                para priorizar recepción, agenda y seguimiento.
+                                    <KpiTile
+                                        label="Nuevos mes"
+                                        value={
+                                            patientKpis?.newPatientsThisMonth ??
+                                            0
+                                        }
+                                        tone="bg-gradient-to-br from-sky-500 to-sky-600"
+                                    />
+                                </>
+                            ) : null}
+                            {canReadAgenda ? (
+                                <>
+                                    <KpiTile
+                                        label="Citas hoy"
+                                        value={todayCount}
+                                        tone="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                                    />
+                                    <KpiTile
+                                        label="Próx. 7 días"
+                                        value={weekCount}
+                                        hint="Incluye hoy"
+                                        tone="bg-gradient-to-br from-amber-500 to-amber-600"
+                                    />
+                                </>
+                            ) : null}
+                            {canReadPatients && !canReadAgenda ? (
+                                <>
+                                    <KpiTile
+                                        label="Con cita"
+                                        value={
+                                            patientKpis?.patientsWithUpcomingAppointment ??
+                                            0
+                                        }
+                                        hint={`En ${patientKpis?.upcomingDays ?? 7} días`}
+                                        tone="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                                    />
+                                    <KpiTile
+                                        label="Inactivos"
+                                        value={
+                                            patientKpis?.inactivePatients ?? 0
+                                        }
+                                        hint={`${patientKpis?.inactivityDays ?? 90} días`}
+                                        tone="bg-gradient-to-br from-slate-500 to-slate-600"
+                                    />
+                                </>
+                            ) : null}
+                        </div>
+                    </AdaptableCard>
+
+                    <AdaptableCard>
+                        <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                            Operación hoy
+                        </h4>
+                        <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            {canReadAgenda ? (
+                                <>
+                                    <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-700/40">
+                                        <span>Citas del día</span>
+                                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                            {formatNumber(todayCount)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-700/40">
+                                        <span>Próximos 7 días</span>
+                                        <span className="font-semibold text-amber-700 dark:text-amber-300">
+                                            {formatNumber(weekCount)}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : null}
+                            {canReadPatients ? (
+                                <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-700/40">
+                                    <span>Pacientes inactivos</span>
+                                    <span className="font-semibold text-amber-700 dark:text-amber-300">
+                                        {formatNumber(
+                                            patientKpis?.inactivePatients ?? 0,
+                                        )}
+                                    </span>
+                                </div>
+                            ) : null}
+                            {!canReadPatients && !canReadAgenda ? (
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    Sin indicadores para tu rol.
+                                </p>
+                            ) : null}
+                        </div>
+                    </AdaptableCard>
+
+                    <AdaptableCard>
+                        <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                            Acciones rápidas
+                        </h4>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {canWriteAgenda ? (
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    icon={<HiOutlineCalendar />}
+                                    onClick={() => navigate('/agenda')}
+                                >
+                                    Nueva cita
+                                </Button>
+                            ) : null}
+                            {canWritePatients ? (
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    color="emerald-600"
+                                    icon={<HiOutlineUserAdd />}
+                                    onClick={() => navigate('/pacientes/nuevo')}
+                                >
+                                    Nuevo paciente
+                                </Button>
+                            ) : null}
+                            {canReadPatients ? (
+                                <Button
+                                    size="sm"
+                                    variant="solid"
+                                    color="sky-600"
+                                    icon={<HiOutlineUserGroup />}
+                                    onClick={() => navigate('/pacientes')}
+                                >
+                                    Pacientes
+                                </Button>
+                            ) : null}
+                            {canReadCatalog ? (
+                                <Button
+                                    size="sm"
+                                    variant="default"
+                                    icon={<HiOutlineClipboardList />}
+                                    onClick={() => navigate('/tratamientos')}
+                                >
+                                    Tratamientos
+                                </Button>
+                            ) : null}
+                            {canReadAgenda && !canWriteAgenda ? (
+                                <Button
+                                    size="sm"
+                                    variant="default"
+                                    icon={<HiOutlinePlus />}
+                                    onClick={() => navigate('/agenda')}
+                                >
+                                    Ver agenda
+                                </Button>
+                            ) : null}
+                        </div>
+                    </AdaptableCard>
+                </div>
+
+                <div className="space-y-6 lg:col-span-3">
+                    <AdaptableCard>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                                    Actividad (últimos 12 meses)
+                                </h4>
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Citas registradas en la agenda por mes
+                                </p>
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {dayjs().format('D MMM YYYY, HH:mm')}
+                            </div>
+                        </div>
+                        <div className="mt-4">
+                            {!canReadAgenda ? (
+                                <p className="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    Necesitas permiso de agenda para ver este
+                                    gráfico.
+                                </p>
+                            ) : hasMonthlyData ? (
+                                <Chart
+                                    type="bar"
+                                    series={monthlySeries}
+                                    xAxis={monthlyLabels}
+                                    height={288}
+                                    customOptions={barOptions}
+                                />
+                            ) : (
+                                <p className="py-16 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    Todavía no hay citas mensuales para
+                                    graficar.
+                                </p>
+                            )}
+                        </div>
+                    </AdaptableCard>
+
+                    <AdaptableCard>
+                        <div>
+                            <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                                Distribución por estado de cita
+                            </h4>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Basada en las citas de los últimos 12 meses
                             </p>
                         </div>
-                        <div className="mt-3 lg:mt-0 flex flex-wrap gap-2">
-                            <Tag className="border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
-                                {dayjs().format('dddd D MMM YYYY')}
-                            </Tag>
-                        </div>
-                    </div>
+                        {!canReadAgenda ? (
+                            <p className="mt-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                                Necesitas permiso de agenda para ver esta
+                                distribución.
+                            </p>
+                        ) : hasStatusData ? (
+                            <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-2">
+                                <Chart
+                                    type="donut"
+                                    series={statusValues}
+                                    height={256}
+                                    customOptions={donutOptions}
+                                    donutTitle="Total"
+                                    donutText={String(
+                                        statusValues.reduce(
+                                            (sum, value) => sum + value,
+                                            0,
+                                        ),
+                                    )}
+                                />
+                                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                                    {statusDistribution.map((item) => (
+                                        <li
+                                            key={item.label}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <span
+                                                className="inline-block h-3 w-3 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                }}
+                                            />
+                                            <span className="font-medium text-gray-800 dark:text-gray-100">
+                                                {item.label}
+                                            </span>
+                                            <span>
+                                                {formatPercent(item.porcentaje)}
+                                            </span>
+                                            <span className="text-gray-400 dark:text-gray-500">
+                                                ({formatNumber(item.total)})
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : (
+                            <p className="mt-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                                Crea citas en la agenda para ver la
+                                distribución por estado.
+                            </p>
+                        )}
+                    </AdaptableCard>
                 </div>
-            </div>
-
-            {(canReadPatients || canReadAgenda) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                    {canReadPatients && (
-                        <>
-                            <HomeKpiCard
-                                title="Pacientes totales"
-                                value={patientKpis?.totalPatients ?? 0}
-                                helper="Base de la clínica"
-                                loading={kpiLoading}
-                                tone="sky"
-                            />
-                            <HomeKpiCard
-                                title="Nuevos este mes"
-                                value={patientKpis?.newPatientsThisMonth ?? 0}
-                                helper="Altas del mes en curso"
-                                loading={kpiLoading}
-                                tone="indigo"
-                            />
-                        </>
-                    )}
-                    {canReadAgenda && (
-                        <>
-                            <HomeKpiCard
-                                title="Citas de hoy"
-                                value={todayAppointments}
-                                helper="Agenda del día"
-                                loading={kpiLoading}
-                                tone="emerald"
-                            />
-                            <HomeKpiCard
-                                title="Próximos 7 días"
-                                value={upcomingAppointments}
-                                helper="Citas programadas"
-                                loading={kpiLoading}
-                                tone="amber"
-                            />
-                        </>
-                    )}
-                    {canReadPatients && !canReadAgenda && (
-                        <>
-                            <HomeKpiCard
-                                title="Con cita próxima"
-                                value={
-                                    patientKpis?.patientsWithUpcomingAppointment ??
-                                    0
-                                }
-                                helper={`En ${patientKpis?.upcomingDays ?? 7} días`}
-                                loading={kpiLoading}
-                            />
-                            <HomeKpiCard
-                                title="Pacientes inactivos"
-                                value={patientKpis?.inactivePatients ?? 0}
-                                helper={`Sin citas en ${patientKpis?.inactivityDays ?? 90} días`}
-                                loading={kpiLoading}
-                            />
-                        </>
-                    )}
-                </div>
-            )}
-
-            <div className="mb-3">
-                <h5 className={`mb-1 ${pageTitleTheme}`}>Accesos rápidos</h5>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Entra a los módulos disponibles según tus permisos.
-                </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {visible.map((item) => (
-                    <Card
-                        key={item.path}
-                        clickable
-                        className="hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600"
-                        bodyClass="p-5"
-                        onClick={() => navigate(item.path)}
-                    >
-                        <div
-                            className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg ${shortcutAccent[item.accent]}`}
-                        >
-                            {item.icon}
-                        </div>
-                        <div className="mb-1 font-semibold text-base text-gray-900 dark:text-gray-100">
-                            {item.title}
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {item.description}
-                        </p>
-                    </Card>
-                ))}
             </div>
         </div>
     )

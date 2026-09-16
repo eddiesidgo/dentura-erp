@@ -7,18 +7,18 @@ import {
     HiOutlineEye,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
-import AdaptableCard from '@/components/shared/AdaptableCard'
-import IconText from '@/components/shared/IconText'
+import IconTile from '@/components/shared/IconTile'
+import PageHeader from '@/components/shared/PageHeader'
 import ReportPreviewModal from '@/components/reports/ReportPreviewModal'
 import type { ReportPreviewKind } from '@/components/reports/ReportPreviewModal'
 import {
     Button,
+    Card,
     DatePicker,
     Select,
 } from '@/components/ui'
 import { workStatusOptions } from '@/views/patients/works.constants'
 import type { ReportParams } from '@/services/ReportService'
-import useThemeClass from '@/utils/hooks/useThemeClass'
 
 type StatusOption = { value: string; label: string }
 
@@ -34,7 +34,6 @@ type PreviewState = {
 }
 
 const ReportList = () => {
-    const { pageTitleTheme } = useThemeClass()
     const [listStatus, setListStatus] = useState('')
     const [listFrom, setListFrom] = useState<Date | null>(null)
     const [listTo, setListTo] = useState<Date | null>(null)
@@ -73,32 +72,33 @@ const ReportList = () => {
     return (
         <>
             <div className="flex flex-col gap-4">
-                <AdaptableCard bodyClass="p-5">
-                    <IconText
-                        className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                        icon={<HiOutlineDocumentText className="text-xl" />}
-                    >
-                        Reportes e impresión
-                    </IconText>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Genera el documento, revísalo en pantalla y descárgalo como PDF.
-                        Configura el logo en el panel de identidad (ícono de engranaje).
-                    </p>
-                </AdaptableCard>
+                <PageHeader
+                    title="Reportes e impresión"
+                    subtitle="Reportes"
+                    info="Genera el documento, revísalo en pantalla y descárgalo como PDF. Configura el logo en el panel de identidad (ícono de engranaje)."
+                />
 
-                <AdaptableCard bodyClass="p-5">
-                    <IconText
-                        className="mb-4 text-base font-semibold"
-                        icon={<HiOutlineClipboardList className="text-lg text-sky-600" />}
-                    >
-                        Listado de trabajos
-                    </IconText>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <Card
+                    bordered
+                    className="border-slate-200/90 shadow-none dark:border-slate-700"
+                    bodyClass="p-5"
+                >
+                    <div className="mb-4 flex items-center gap-3">
+                        <IconTile accent="sky" size="sm">
+                            <HiOutlineClipboardList />
+                        </IconTile>
+                        <h6 className="mb-0 font-semibold text-slate-800 dark:text-slate-100">
+                            Listado de trabajos
+                        </h6>
+                    </div>
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                         Detalle de trabajos por estado y rango de fechas.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Estado</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Estado
+                            </label>
                             <Select
                                 options={statusFilterOptions}
                                 value={statusFilterOptions.filter(
@@ -112,7 +112,9 @@ const ReportList = () => {
                             />
                         </div>
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Desde</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Desde
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha inicio"
@@ -121,7 +123,9 @@ const ReportList = () => {
                             />
                         </div>
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Hasta</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Hasta
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha fin"
@@ -143,21 +147,29 @@ const ReportList = () => {
                     >
                         Ver reporte
                     </Button>
-                </AdaptableCard>
+                </Card>
 
-                <AdaptableCard bodyClass="p-5">
-                    <IconText
-                        className="mb-4 text-base font-semibold"
-                        icon={<HiOutlineDocumentText className="text-lg text-emerald-600" />}
-                    >
-                        Resumen por estado
-                    </IconText>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <Card
+                    bordered
+                    className="border-slate-200/90 shadow-none dark:border-slate-700"
+                    bodyClass="p-5"
+                >
+                    <div className="mb-4 flex items-center gap-3">
+                        <IconTile accent="emerald" size="sm">
+                            <HiOutlineDocumentText />
+                        </IconTile>
+                        <h6 className="mb-0 font-semibold text-slate-800 dark:text-slate-100">
+                            Resumen por estado
+                        </h6>
+                    </div>
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                         Totales agrupados: pendiente, terminado y no aceptado.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 max-w-2xl">
+                    <div className="mb-4 grid max-w-2xl grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Desde</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Desde
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha inicio"
@@ -166,7 +178,9 @@ const ReportList = () => {
                             />
                         </div>
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Hasta</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Hasta
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha fin"
@@ -188,21 +202,29 @@ const ReportList = () => {
                     >
                         Ver reporte
                     </Button>
-                </AdaptableCard>
+                </Card>
 
-                <AdaptableCard bodyClass="p-5">
-                    <IconText
-                        className="mb-4 text-base font-semibold"
-                        icon={<HiOutlineCash className="text-lg text-amber-600" />}
-                    >
-                        Resumen de pagos
-                    </IconText>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <Card
+                    bordered
+                    className="border-slate-200/90 shadow-none dark:border-slate-700"
+                    bodyClass="p-5"
+                >
+                    <div className="mb-4 flex items-center gap-3">
+                        <IconTile accent="amber" size="sm">
+                            <HiOutlineCash />
+                        </IconTile>
+                        <h6 className="mb-0 font-semibold text-slate-800 dark:text-slate-100">
+                            Resumen de pagos
+                        </h6>
+                    </div>
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                         Totales por método de pago en el rango de fechas.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 max-w-2xl">
+                    <div className="mb-4 grid max-w-2xl grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Desde</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Desde
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha inicio"
@@ -211,7 +233,9 @@ const ReportList = () => {
                             />
                         </div>
                         <div>
-                            <div className="mb-1.5 text-sm font-semibold">Hasta</div>
+                            <label className="mb-1 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                Hasta
+                            </label>
                             <DatePicker
                                 inputFormat="DD/MM/YYYY"
                                 placeholder="Fecha fin"
@@ -233,16 +257,22 @@ const ReportList = () => {
                     >
                         Ver reporte
                     </Button>
-                </AdaptableCard>
+                </Card>
 
-                <AdaptableCard bodyClass="p-5">
-                    <IconText
-                        className="mb-4 text-base font-semibold"
-                        icon={<HiOutlineUserGroup className="text-lg text-violet-600" />}
-                    >
-                        Pacientes por fuente de referidos
-                    </IconText>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <Card
+                    bordered
+                    className="border-slate-200/90 shadow-none dark:border-slate-700"
+                    bodyClass="p-5"
+                >
+                    <div className="mb-4 flex items-center gap-3">
+                        <IconTile accent="violet" size="sm">
+                            <HiOutlineUserGroup />
+                        </IconTile>
+                        <h6 className="mb-0 font-semibold text-slate-800 dark:text-slate-100">
+                            Pacientes por fuente de referidos
+                        </h6>
+                    </div>
+                    <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                         Conteo de pacientes por origen de referido, incluyendo sin fuente.
                     </p>
                     <Button
@@ -257,16 +287,22 @@ const ReportList = () => {
                     >
                         Ver reporte
                     </Button>
-                </AdaptableCard>
+                </Card>
 
-                <AdaptableCard bodyClass="p-5">
-                    <h6 className="font-semibold mb-1">Documentos por paciente</h6>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Card
+                    bordered
+                    className="border-dashed border-slate-200/90 shadow-none dark:border-slate-700"
+                    bodyClass="p-5"
+                >
+                    <h6 className="mb-1 font-semibold text-slate-800 dark:text-slate-100">
+                        Documentos por paciente
+                    </h6>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         Cotización desde <strong>Plan de tratamiento</strong>, recibo
                         desde <strong>Pagos</strong> y receta desde{' '}
                         <strong>Recetas</strong>.
                     </p>
-                </AdaptableCard>
+                </Card>
             </div>
 
             {preview && (

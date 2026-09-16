@@ -4,7 +4,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DataTable from '@/components/shared/DataTable'
 import FormDrawer from '@/components/shared/FormDrawer'
 import FormNumericInput from '@/components/shared/FormNumericInput'
-import IconText from '@/components/shared/IconText'
+import PageHeader from '@/components/shared/PageHeader'
 import TableRowActions from '@/components/shared/TableRowActions'
 import {
     Button,
@@ -63,7 +63,7 @@ const emptyForm: TreatmentForm = {
 }
 
 const TreatmentList = () => {
-    const { pageTitleTheme, textTheme } = useThemeClass()
+    const { textTheme } = useThemeClass()
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
@@ -285,28 +285,18 @@ const TreatmentList = () => {
 
     return (
         <>
-            <AdaptableCard className="h-full" bodyClass="h-full p-5">
-                <div className="lg:flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <IconText
-                            className={`text-lg font-semibold mb-1 ${pageTitleTheme}`}
-                            icon={
-                                <HiOutlineClipboardList className="text-xl" />
-                            }
-                        >
-                            Catálogo de tratamientos
-                        </IconText>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Completa precios de tu clínica. El plan del paciente
-                            usa este catálogo.
-                        </p>
-                        {total > 0 && (
-                            <Tag className="mt-3 border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
-                                {total} ítem{total === 1 ? '' : 's'}
-                            </Tag>
-                        )}
-                    </div>
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-2 mt-3 lg:mt-0">
+            <PageHeader
+                title="Tratamientos"
+                subtitle="Catálogo"
+                info="Completa precios de tu clínica. El plan del paciente usa este catálogo."
+                chips={
+                    total > 0
+                        ? [`${total} ítem${total === 1 ? '' : 's'}`]
+                        : undefined
+                }
+            />
+            <AdaptableCard className="h-full" bodyClass="h-full p-0">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end gap-2 mb-5">
                         <Segment
                             size="sm"
                             value={[tableData.activeFilter]}
@@ -343,7 +333,6 @@ const TreatmentList = () => {
                                 Nuevo
                             </Button>
                         )}
-                    </div>
                 </div>
                 {!loading && treatments.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">

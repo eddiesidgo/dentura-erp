@@ -38,6 +38,7 @@ import { departmentOptions, sexOptions } from '../constants'
 import type { PatientPayload } from '@/@types/patient'
 import type { ReferralSource } from '@/@types/referral'
 import PatientFormSection from './PatientFormSection'
+import PatientFormStepper from './PatientFormStepper'
 import PatientProfileHeader from './PatientProfileHeader'
 import PatientWorks from './PatientWorks'
 import PatientOdontogram from './PatientOdontogram'
@@ -82,6 +83,24 @@ const validationSchema = Yup.object().shape({
     lastName: Yup.string().required('El apellido es obligatorio'),
     email: Yup.string().email('Correo inválido'),
 })
+
+const FORM_STEPS = [
+    {
+        id: 'personal',
+        title: 'Datos personales',
+        description: 'Identificación y datos básicos',
+    },
+    {
+        id: 'contact',
+        title: 'Contacto',
+        description: 'Teléfonos, correo y domicilio',
+    },
+    {
+        id: 'clinical',
+        title: 'Fiscal y notas',
+        description: 'Documentos y observaciones clínicas',
+    },
+] as const
 
 const emptyValues: FormModel = {
     recordNumber: '',
@@ -205,61 +224,63 @@ const PatientForm = () => {
         <Loading loading={loading}>
             {showChartTabs ? (
                 <Tabs defaultValue="datos" variant="pill">
-                    <AdaptableCard className="mb-4" bodyClass="p-3">
-                        <Tabs.TabList>
-                            <Tabs.TabNav value="datos" icon={<HiOutlineUser />}>
-                                Datos del paciente
-                            </Tabs.TabNav>
-                            {canReadWorks && (
-                                <Tabs.TabNav
-                                    value="trabajos"
-                                    icon={<HiOutlineClipboardList />}
-                                >
-                                    Plan de tratamiento
+                    <div className="sticky top-0 z-20 mb-4 -mx-1 px-1 py-1 backdrop-blur-sm bg-gray-100/90 dark:bg-gray-900/90">
+                        <AdaptableCard bodyClass="p-3">
+                            <Tabs.TabList className="flex-wrap">
+                                <Tabs.TabNav value="datos" icon={<HiOutlineUser />}>
+                                    Datos del paciente
                                 </Tabs.TabNav>
-                            )}
-                            {canReadOdontogram && (
-                                <Tabs.TabNav
-                                    value="odontograma"
-                                    icon={<HiOutlineHeart />}
-                                >
-                                    Odontograma
-                                </Tabs.TabNav>
-                            )}
-                            {canReadPhotos && (
-                                <Tabs.TabNav
-                                    value="fotos"
-                                    icon={<HiOutlinePhotograph />}
-                                >
-                                    Fotos
-                                </Tabs.TabNav>
-                            )}
-                            {canReadPrescriptions && (
-                                <Tabs.TabNav
-                                    value="recetas"
-                                    icon={<HiOutlineDocumentText />}
-                                >
-                                    Recetas
-                                </Tabs.TabNav>
-                            )}
-                            {canReadPayments && (
-                                <Tabs.TabNav
-                                    value="pagos"
-                                    icon={<HiOutlineCash />}
-                                >
-                                    Pagos
-                                </Tabs.TabNav>
-                            )}
-                            {canReadReferrals && (
-                                <Tabs.TabNav
-                                    value="referidos"
-                                    icon={<HiOutlineShare />}
-                                >
-                                    Referidos
-                                </Tabs.TabNav>
-                            )}
-                        </Tabs.TabList>
-                    </AdaptableCard>
+                                {canReadWorks && (
+                                    <Tabs.TabNav
+                                        value="trabajos"
+                                        icon={<HiOutlineClipboardList />}
+                                    >
+                                        Plan de tratamiento
+                                    </Tabs.TabNav>
+                                )}
+                                {canReadOdontogram && (
+                                    <Tabs.TabNav
+                                        value="odontograma"
+                                        icon={<HiOutlineHeart />}
+                                    >
+                                        Odontograma
+                                    </Tabs.TabNav>
+                                )}
+                                {canReadPhotos && (
+                                    <Tabs.TabNav
+                                        value="fotos"
+                                        icon={<HiOutlinePhotograph />}
+                                    >
+                                        Fotos
+                                    </Tabs.TabNav>
+                                )}
+                                {canReadPrescriptions && (
+                                    <Tabs.TabNav
+                                        value="recetas"
+                                        icon={<HiOutlineDocumentText />}
+                                    >
+                                        Recetas
+                                    </Tabs.TabNav>
+                                )}
+                                {canReadPayments && (
+                                    <Tabs.TabNav
+                                        value="pagos"
+                                        icon={<HiOutlineCash />}
+                                    >
+                                        Pagos
+                                    </Tabs.TabNav>
+                                )}
+                                {canReadReferrals && (
+                                    <Tabs.TabNav
+                                        value="referidos"
+                                        icon={<HiOutlineShare />}
+                                    >
+                                        Referidos
+                                    </Tabs.TabNav>
+                                )}
+                            </Tabs.TabList>
+                        </AdaptableCard>
+                    </div>
                     <Tabs.TabContent value="datos">
                         <PatientDataForm
                             isEdit
@@ -354,6 +375,7 @@ const PatientDataForm = ({
         useAppSelector((state) => state.auth.user.authority) || []
     const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
     const [referralSources, setReferralSources] = useState<ReferralSource[]>([])
+    const [step, setStep] = useState(0)
 
     useEffect(() => {
         if (!canReadReferrals) {
@@ -382,6 +404,8 @@ const PatientDataForm = ({
         value: source.id,
         label: `${source.name}${source.type ? ` · ${source.type}` : ''}`,
     }))
+
+    const isLastStep = step === FORM_STEPS.length - 1
 
     return (
         <Formik
@@ -421,294 +445,378 @@ const PatientDataForm = ({
                 }
             }}
         >
-            {({ values, touched, errors, isSubmitting, setFieldValue }) => (
-                <Form>
-                    {showProfile && (
-                        <PatientProfileHeader
-                            values={values}
-                            showBack={showBack}
-                        />
-                    )}
-                    <FormContainer>
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
-                            <PatientFormSection
-                                title="Datos personales"
-                                icon={<HiOutlineUser />}
-                                accent="sky"
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                                    <FormItem
-                                        label="Expediente"
-                                        extra={
-                                            isEdit
-                                                ? undefined
-                                                : 'Se asigna al guardar si lo dejas vacío'
-                                        }
-                                    >
-                                        <Field
-                                            type="text"
-                                            name="recordNumber"
-                                            placeholder="P-000001"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Sexo">
-                                        <Select
-                                            placeholder="Seleccionar"
-                                            options={sexOptions}
-                                            value={sexOptions.filter(
-                                                (option) =>
-                                                    option.value === values.sex,
-                                            )}
-                                            onChange={(option) =>
-                                                setFieldValue(
-                                                    'sex',
-                                                    option?.value || '',
-                                                )
-                                            }
-                                        />
-                                    </FormItem>
-                                    <FormItem
-                                        asterisk
-                                        label="Nombres"
-                                        invalid={Boolean(
-                                            errors.firstName &&
-                                                touched.firstName,
-                                        )}
-                                        errorMessage={errors.firstName}
-                                    >
-                                        <Field
-                                            type="text"
-                                            name="firstName"
-                                            placeholder="Nombres"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem
-                                        asterisk
-                                        label="Apellidos"
-                                        invalid={Boolean(
-                                            errors.lastName && touched.lastName,
-                                        )}
-                                        errorMessage={errors.lastName}
-                                    >
-                                        <Field
-                                            type="text"
-                                            name="lastName"
-                                            placeholder="Apellidos"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Fecha de nacimiento">
-                                        <DatePicker
-                                            inputFormat="DD/MM/YYYY"
-                                            placeholder="DD/MM/YYYY"
-                                            value={
-                                                values.dateOfBirth
-                                                    ? dayjs(
-                                                          values.dateOfBirth,
-                                                      ).toDate()
-                                                    : null
-                                            }
-                                            onChange={(date) =>
-                                                setFieldValue(
-                                                    'dateOfBirth',
-                                                    date
-                                                        ? dayjs(date).format(
-                                                              'YYYY-MM-DD',
-                                                          )
-                                                        : '',
-                                                )
-                                            }
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Ocupación">
-                                        <Field
-                                            type="text"
-                                            name="occupation"
-                                            placeholder="Ocupación"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                </div>
-                            </PatientFormSection>
+            {({
+                values,
+                touched,
+                errors,
+                isSubmitting,
+                setFieldValue,
+                setFieldTouched,
+                validateForm,
+                submitForm,
+            }) => {
+                const goNext = async () => {
+                    if (step === 0) {
+                        await setFieldTouched('firstName', true)
+                        await setFieldTouched('lastName', true)
+                        const nextErrors = await validateForm()
+                        if (nextErrors.firstName || nextErrors.lastName) {
+                            toast.push(
+                                <Notification
+                                    type="warning"
+                                    title="Completa los datos obligatorios"
+                                >
+                                    Nombre y apellido son necesarios para
+                                    continuar.
+                                </Notification>,
+                            )
+                            return
+                        }
+                    }
+                    setStep((current) =>
+                        Math.min(current + 1, FORM_STEPS.length - 1),
+                    )
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                }
 
-                            <PatientFormSection
-                                title="Contacto"
-                                icon={<HiOutlinePhone />}
-                                accent="emerald"
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                                    <FormItem label="Celular">
-                                        <Field
-                                            type="text"
-                                            name="mobile"
-                                            placeholder="7777-0000"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Teléfono">
-                                        <Field
-                                            type="text"
-                                            name="phone"
-                                            placeholder="2222-0000"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem
-                                        label="Correo"
-                                        invalid={Boolean(
-                                            errors.email && touched.email,
-                                        )}
-                                        errorMessage={errors.email}
-                                    >
-                                        <Field
-                                            type="email"
-                                            name="email"
-                                            placeholder="correo@ejemplo.com"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Referido por">
-                                        <Field
-                                            type="text"
-                                            name="referredBy"
-                                            placeholder="Quién lo refirió"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    {canReadReferrals && (
+                const goBack = () => {
+                    setStep((current) => Math.max(current - 1, 0))
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                }
+
+                return (
+                    <Form>
+                        {showProfile && (
+                            <PatientProfileHeader
+                                values={values}
+                                showBack={showBack}
+                            />
+                        )}
+
+                        <PatientFormStepper
+                            steps={[...FORM_STEPS]}
+                            current={step}
+                            onStepChange={(index) => {
+                                if (index <= step) {
+                                    setStep(index)
+                                    window.scrollTo({
+                                        top: 0,
+                                        behavior: 'smooth',
+                                    })
+                                }
+                            }}
+                        />
+
+                        <FormContainer>
+                            {step === 0 ? (
+                                <PatientFormSection
+                                    title="Datos personales"
+                                    icon={<HiOutlineUser />}
+                                    accent="sky"
+                                >
+                                    <div className="grid grid-cols-1 gap-x-5 md:grid-cols-2">
                                         <FormItem
-                                            label="Fuente de referido"
-                                            className="md:col-span-2"
+                                            label="Expediente"
+                                            extra={
+                                                isEdit
+                                                    ? undefined
+                                                    : 'Se asigna al guardar si lo dejas vacío'
+                                            }
                                         >
+                                            <Field
+                                                type="text"
+                                                name="recordNumber"
+                                                placeholder="P-000001"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Sexo">
                                             <Select
-                                                isClearable
-                                                placeholder="Seleccionar fuente"
-                                                options={referralSourceOptions}
-                                                value={referralSourceOptions.filter(
+                                                placeholder="Seleccionar"
+                                                options={sexOptions}
+                                                value={sexOptions.filter(
                                                     (option) =>
                                                         option.value ===
-                                                        values.referralSourceId,
+                                                        values.sex,
                                                 )}
                                                 onChange={(option) =>
                                                     setFieldValue(
-                                                        'referralSourceId',
-                                                        option?.value ?? null,
+                                                        'sex',
+                                                        option?.value || '',
                                                     )
                                                 }
                                             />
                                         </FormItem>
-                                    )}
-                                    <FormItem
-                                        label="Dirección"
-                                        className="md:col-span-2"
-                                    >
-                                        <Field
-                                            type="text"
-                                            name="address"
-                                            placeholder="Colonia, calle, número"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Municipio / ciudad">
-                                        <Field
-                                            type="text"
-                                            name="city"
-                                            placeholder="San Salvador"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-                                    <FormItem label="Departamento">
-                                        <Select
-                                            isClearable
-                                            placeholder="Seleccionar"
-                                            options={departmentOptions}
-                                            value={departmentOptions.filter(
-                                                (option) =>
-                                                    option.value ===
-                                                    values.department,
+                                        <FormItem
+                                            asterisk
+                                            label="Nombres"
+                                            invalid={Boolean(
+                                                errors.firstName &&
+                                                    touched.firstName,
                                             )}
-                                            onChange={(option) =>
-                                                setFieldValue(
-                                                    'department',
-                                                    option?.value || '',
-                                                )
-                                            }
-                                        />
-                                    </FormItem>
-                                </div>
-                            </PatientFormSection>
-                        </div>
+                                            errorMessage={errors.firstName}
+                                        >
+                                            <Field
+                                                type="text"
+                                                name="firstName"
+                                                placeholder="Nombres"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem
+                                            asterisk
+                                            label="Apellidos"
+                                            invalid={Boolean(
+                                                errors.lastName &&
+                                                    touched.lastName,
+                                            )}
+                                            errorMessage={errors.lastName}
+                                        >
+                                            <Field
+                                                type="text"
+                                                name="lastName"
+                                                placeholder="Apellidos"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Fecha de nacimiento">
+                                            <DatePicker
+                                                inputFormat="DD/MM/YYYY"
+                                                placeholder="DD/MM/YYYY"
+                                                value={
+                                                    values.dateOfBirth
+                                                        ? dayjs(
+                                                              values.dateOfBirth,
+                                                          ).toDate()
+                                                        : null
+                                                }
+                                                onChange={(date) =>
+                                                    setFieldValue(
+                                                        'dateOfBirth',
+                                                        date
+                                                            ? dayjs(date).format(
+                                                                  'YYYY-MM-DD',
+                                                              )
+                                                            : '',
+                                                    )
+                                                }
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Ocupación">
+                                            <Field
+                                                type="text"
+                                                name="occupation"
+                                                placeholder="Ocupación"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                    </div>
+                                </PatientFormSection>
+                            ) : null}
 
-                        <PatientFormSection
-                            className="mb-4"
-                            title="Datos fiscales y notas clínicas"
-                            icon={<HiOutlineDocumentText />}
-                            accent="amber"
+                            {step === 1 ? (
+                                <PatientFormSection
+                                    title="Contacto"
+                                    icon={<HiOutlinePhone />}
+                                    accent="emerald"
+                                >
+                                    <div className="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+                                        <FormItem label="Celular">
+                                            <Field
+                                                type="text"
+                                                name="mobile"
+                                                placeholder="7777-0000"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Teléfono">
+                                            <Field
+                                                type="text"
+                                                name="phone"
+                                                placeholder="2222-0000"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem
+                                            label="Correo"
+                                            invalid={Boolean(
+                                                errors.email && touched.email,
+                                            )}
+                                            errorMessage={errors.email}
+                                        >
+                                            <Field
+                                                type="email"
+                                                name="email"
+                                                placeholder="correo@ejemplo.com"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Referido por">
+                                            <Field
+                                                type="text"
+                                                name="referredBy"
+                                                placeholder="Quién lo refirió"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        {canReadReferrals && (
+                                            <FormItem
+                                                label="Fuente de referido"
+                                                className="md:col-span-2"
+                                            >
+                                                <Select
+                                                    isClearable
+                                                    placeholder="Seleccionar fuente"
+                                                    options={
+                                                        referralSourceOptions
+                                                    }
+                                                    value={referralSourceOptions.filter(
+                                                        (option) =>
+                                                            option.value ===
+                                                            values.referralSourceId,
+                                                    )}
+                                                    onChange={(option) =>
+                                                        setFieldValue(
+                                                            'referralSourceId',
+                                                            option?.value ??
+                                                                null,
+                                                        )
+                                                    }
+                                                />
+                                            </FormItem>
+                                        )}
+                                        <FormItem
+                                            label="Dirección"
+                                            className="md:col-span-2"
+                                        >
+                                            <Field
+                                                type="text"
+                                                name="address"
+                                                placeholder="Colonia, calle, número"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Municipio / ciudad">
+                                            <Field
+                                                type="text"
+                                                name="city"
+                                                placeholder="San Salvador"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="Departamento">
+                                            <Select
+                                                isClearable
+                                                placeholder="Seleccionar"
+                                                options={departmentOptions}
+                                                value={departmentOptions.filter(
+                                                    (option) =>
+                                                        option.value ===
+                                                        values.department,
+                                                )}
+                                                onChange={(option) =>
+                                                    setFieldValue(
+                                                        'department',
+                                                        option?.value || '',
+                                                    )
+                                                }
+                                            />
+                                        </FormItem>
+                                    </div>
+                                </PatientFormSection>
+                            ) : null}
+
+                            {step === 2 ? (
+                                <PatientFormSection
+                                    title="Datos fiscales y notas clínicas"
+                                    icon={<HiOutlineDocumentText />}
+                                    accent="amber"
+                                >
+                                    <div className="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+                                        <FormItem label="DUI">
+                                            <Field
+                                                type="text"
+                                                name="dui"
+                                                placeholder="00000000-0"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem label="NIT">
+                                            <Field
+                                                type="text"
+                                                name="nit"
+                                                placeholder="0000-000000-000-0"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem
+                                            label="Alergias"
+                                            className="md:col-span-2"
+                                        >
+                                            <Field
+                                                textArea
+                                                name="allergies"
+                                                placeholder="Alergias conocidas"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                        <FormItem
+                                            label="Notas"
+                                            className="md:col-span-2"
+                                        >
+                                            <Field
+                                                textArea
+                                                name="notes"
+                                                placeholder="Observaciones de la ficha"
+                                                component={Input}
+                                            />
+                                        </FormItem>
+                                    </div>
+                                </PatientFormSection>
+                            ) : null}
+                        </FormContainer>
+
+                        <StickyFooter
+                            className="flex items-center justify-between gap-3 py-4"
+                            stickyClass="border-t bg-white/95 dark:bg-gray-800/95 backdrop-blur border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                                <FormItem label="DUI">
-                                    <Field
-                                        type="text"
-                                        name="dui"
-                                        placeholder="00000000-0"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem label="NIT">
-                                    <Field
-                                        type="text"
-                                        name="nit"
-                                        placeholder="0000-000000-000-0"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    label="Alergias"
-                                    className="md:col-span-2"
-                                >
-                                    <Field
-                                        textArea
-                                        name="allergies"
-                                        placeholder="Alergias conocidas"
-                                        component={Input}
-                                    />
-                                </FormItem>
-                                <FormItem
-                                    label="Notas"
-                                    className="md:col-span-2"
-                                >
-                                    <Field
-                                        textArea
-                                        name="notes"
-                                        placeholder="Observaciones de la ficha"
-                                        component={Input}
-                                    />
-                                </FormItem>
+                            <Button
+                                type="button"
+                                onClick={() => navigate('/pacientes')}
+                            >
+                                Cancelar
+                            </Button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {step > 0 ? (
+                                    <Button type="button" onClick={goBack}>
+                                        Atrás
+                                    </Button>
+                                ) : null}
+                                {!isLastStep ? (
+                                    <Button
+                                        type="button"
+                                        variant="solid"
+                                        onClick={goNext}
+                                    >
+                                        Continuar
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="solid"
+                                        loading={isSubmitting}
+                                        type="button"
+                                        onClick={() => submitForm()}
+                                    >
+                                        {isEdit
+                                            ? 'Guardar cambios'
+                                            : 'Crear paciente'}
+                                    </Button>
+                                )}
                             </div>
-                        </PatientFormSection>
-                    </FormContainer>
-                    <StickyFooter
-                        className="flex items-center justify-between py-4"
-                        stickyClass="border-t bg-white/95 dark:bg-gray-800/95 backdrop-blur border-gray-200 dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
-                    >
-                        <Button
-                            type="button"
-                            onClick={() => navigate('/pacientes')}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={isSubmitting}
-                            type="submit"
-                        >
-                            {isEdit ? 'Guardar cambios' : 'Crear paciente'}
-                        </Button>
-                    </StickyFooter>
-                </Form>
-            )}
+                        </StickyFooter>
+                    </Form>
+                )
+            }}
         </Formik>
     )
 }
