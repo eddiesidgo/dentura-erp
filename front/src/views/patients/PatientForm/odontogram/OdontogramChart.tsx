@@ -13,11 +13,9 @@ import ToothSvg from './ToothSvg'
 type OdontogramChartProps = {
     dentition: Dentition
     entriesByTooth: Map<string, OdontogramEntry[]>
-    canWrite: boolean
     paintMode: boolean
     onSurfaceClick: (tooth: string, surface: ToothSurface) => void
     onToothClick: (tooth: string) => void
-    onInspectTooth?: (tooth: string) => void
 }
 
 const ArchRow = ({
@@ -25,23 +23,25 @@ const ArchRow = ({
     label,
     midlineGapIndex,
     entriesByTooth,
-    canWrite,
     paintMode,
     onSurfaceClick,
     onToothClick,
-    onInspectTooth,
 }: {
     teeth: readonly string[]
     label: string
     midlineGapIndex: number
-} & Omit<OdontogramChartProps, 'dentition'>) => (
+    entriesByTooth: Map<string, OdontogramEntry[]>
+    paintMode: boolean
+    onSurfaceClick: (tooth: string, surface: ToothSurface) => void
+    onToothClick: (tooth: string) => void
+}) => (
     <div>
         <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </span>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                Derecha del paciente ← → Izquierda
+                Derecha del paciente ← → Izquierda · clic = ampliar
             </span>
         </div>
         <div className="flex flex-wrap items-end justify-center gap-x-0.5 gap-y-2 sm:gap-x-1">
@@ -57,15 +57,10 @@ const ArchRow = ({
                         paint={resolveToothPaint(
                             entriesByTooth.get(tooth) || [],
                         )}
-                        interactive={
-                            canWrite ||
-                            (entriesByTooth.get(tooth)?.length || 0) > 0
-                        }
+                        interactive
                         paintMode={paintMode}
-                        showInspect={Boolean(onInspectTooth)}
                         onSurfaceClick={onSurfaceClick}
                         onToothClick={onToothClick}
-                        onInspect={onInspectTooth}
                     />
                 </div>
             ))}
@@ -119,11 +114,9 @@ const OdontogramLegend = () => (
 const OdontogramChart = ({
     dentition,
     entriesByTooth,
-    canWrite,
     paintMode,
     onSurfaceClick,
     onToothClick,
-    onInspectTooth,
 }: OdontogramChartProps) => {
     const { upper, lower, midlineGapIndex } = getArchTeeth(dentition)
 
@@ -141,11 +134,9 @@ const OdontogramChart = ({
                 label="Arcada superior"
                 midlineGapIndex={midlineGapIndex}
                 entriesByTooth={entriesByTooth}
-                canWrite={canWrite}
                 paintMode={paintMode}
                 onSurfaceClick={onSurfaceClick}
                 onToothClick={onToothClick}
-                onInspectTooth={onInspectTooth}
             />
             <div className="my-3 flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-200 dark:bg-slate-600" />
@@ -159,11 +150,9 @@ const OdontogramChart = ({
                 label="Arcada inferior"
                 midlineGapIndex={midlineGapIndex}
                 entriesByTooth={entriesByTooth}
-                canWrite={canWrite}
                 paintMode={paintMode}
                 onSurfaceClick={onSurfaceClick}
                 onToothClick={onToothClick}
-                onInspectTooth={onInspectTooth}
             />
             <OdontogramLegend />
         </div>

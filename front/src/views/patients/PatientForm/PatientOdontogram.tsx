@@ -294,6 +294,23 @@ const PatientOdontogram = ({
             void paintEntry(tooth, surface)
             return
         }
+        // Sin convención: el clic entra a la vista ampliada de la pieza
+        setLabTooth(tooth)
+    }
+
+    const handleToothClick = (tooth: string) => {
+        if (canWrite && activeCondition) {
+            void paintEntry(tooth)
+            return
+        }
+        setLabTooth(tooth)
+    }
+
+    const handleLabSurfaceClick = (tooth: string, surface: ToothSurface) => {
+        if (canWrite && activeCondition) {
+            void paintEntry(tooth, surface)
+            return
+        }
         const existing = findEntryForSurface(
             entriesByTooth.get(tooth) || [],
             surface,
@@ -307,19 +324,9 @@ const PatientOdontogram = ({
         }
     }
 
-    const handleToothClick = (tooth: string) => {
+    const handleLabToothClick = (tooth: string) => {
         if (canWrite && activeCondition) {
             void paintEntry(tooth)
-            return
-        }
-        const toothEntries = entriesByTooth.get(tooth) || []
-        const whole = findWholeToothEntry(toothEntries)
-        if (whole) {
-            openEdit(whole)
-            return
-        }
-        if (toothEntries[0]) {
-            openEdit(toothEntries[0])
             return
         }
         if (canWrite) {
@@ -396,9 +403,9 @@ const PatientOdontogram = ({
                             </IconText>
                         )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Hover sobre una cara muestra M/O/D/B/L. Icono de lupa
-                            abre el laboratorio del diente. Con convención:
-                            pinta/actualiza; sin ella, clic edita o crea.
+                            Clic en un diente para abrirlo en grande. Con una
+                            convención seleccionada, el clic pinta esa cara.
+                            Hover muestra M/O/D/B/L.
                         </p>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-2 lg:mt-0">
@@ -443,11 +450,9 @@ const PatientOdontogram = ({
                 <OdontogramChart
                     dentition={dentition}
                     entriesByTooth={entriesByTooth}
-                    canWrite={canWrite}
                     paintMode={Boolean(activeCondition)}
                     onSurfaceClick={handleSurfaceClick}
                     onToothClick={handleToothClick}
-                    onInspectTooth={setLabTooth}
                 />
 
                 <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 mt-4">
@@ -534,8 +539,8 @@ const PatientOdontogram = ({
                 canWrite={canWrite}
                 paintMode={Boolean(activeCondition)}
                 onClose={() => setLabTooth(null)}
-                onSurfaceClick={handleSurfaceClick}
-                onToothClick={handleToothClick}
+                onSurfaceClick={handleLabSurfaceClick}
+                onToothClick={handleLabToothClick}
             />
 
             <FormDrawer

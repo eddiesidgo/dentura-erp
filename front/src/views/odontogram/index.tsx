@@ -136,7 +136,7 @@ const OdontogramPage = () => {
                 }
                 info={
                     patientId && patientName
-                        ? 'Vista dedicada con convenciones, dentición y laboratorio por pieza.'
+                        ? 'Vista dedicada con convenciones, dentición y detalle por pieza.'
                         : 'Selecciona un paciente para abrir su odontograma clínico.'
                 }
             />
@@ -187,7 +187,7 @@ const OdontogramPage = () => {
                     <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
                         Elige un paciente arriba. Luego verás el chart completo,
                         convenciones, dentición temporal/permanente y el
-                        laboratorio por diente.
+                        detalle ampliado de cada pieza.
                     </p>
                 </AdaptableCard>
             )}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import classNames from 'classnames'
-import { HiOutlineSearchCircle } from 'react-icons/hi'
 import {
     ENAMEL_FILL,
     ENAMEL_STROKE,
@@ -21,10 +20,8 @@ type ToothSvgProps = {
     interactive?: boolean
     paintMode?: boolean
     size?: ToothSvgSize
-    showInspect?: boolean
     onSurfaceClick?: (tooth: string, surface: ToothSurface) => void
     onToothClick?: (tooth: string) => void
-    onInspect?: (tooth: string) => void
 }
 
 const fillFor = (paint: SurfacePaint | null) =>
@@ -105,10 +102,8 @@ const ToothSvg = ({
     interactive = true,
     paintMode = false,
     size = 'md',
-    showInspect = false,
     onSurfaceClick,
     onToothClick,
-    onInspect,
 }: ToothSvgProps) => {
     const [hovered, setHovered] = useState<ToothSurface | null>(null)
     const kind = getToothKind(tooth)
@@ -300,7 +295,7 @@ const ToothSvg = ({
                 )}
             </svg>
 
-            <div className="flex items-center gap-1">
+            <div className="flex flex-col items-center gap-0.5">
                 <span
                     className={classNames(
                         'font-semibold tabular-nums text-slate-600 group-hover:text-sky-700 dark:text-slate-300 dark:group-hover:text-sky-300',
@@ -309,19 +304,6 @@ const ToothSvg = ({
                 >
                     {tooth}
                 </span>
-                {showInspect && onInspect && (
-                    <button
-                        type="button"
-                        title="Ver diente en laboratorio"
-                        className="rounded p-0.5 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-500/20"
-                        onClick={(event) => {
-                            event.stopPropagation()
-                            onInspect(tooth)
-                        }}
-                    >
-                        <HiOutlineSearchCircle className="text-base" />
-                    </button>
-                )}
             </div>
         </div>
     )

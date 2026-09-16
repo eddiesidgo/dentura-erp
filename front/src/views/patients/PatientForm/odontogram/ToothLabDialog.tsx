@@ -48,7 +48,7 @@ const ToothLabDialog = ({
                 <div className="px-1 pb-2">
                     <div className="mb-4">
                         <h4 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
-                            Laboratorio · Pieza {tooth}
+                            Pieza {tooth}
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Vista ampliada para trabajar cara por cara. El hover
