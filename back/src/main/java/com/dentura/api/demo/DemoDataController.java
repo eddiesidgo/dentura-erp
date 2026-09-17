@@ -23,7 +23,7 @@ public class DemoDataController {
 		return Map.of(
 				"seedEnabled", demoDataSeeder.isEnabled(),
 				"hint", demoDataSeeder.isEnabled()
-						? "POST /api/demo/seed como super_admin para cargar pacientes DEMO-00x"
+						? "POST /api/demo/seed como super_admin (pacientes DEMO + fotos/scans/smile)"
 						: "Arranca el API con DENTURA_DEMO_SEED_ENABLED=true para habilitar el seed manual");
 	}
 

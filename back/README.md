@@ -81,14 +81,20 @@ El front React usa proxy Vite `/api` → `8080` y `VITE_ENABLE_MOCK=false`.
 
 Odontograma, pagos y recetas **no** aparecen en el sidebar: están como pestañas dentro de la ficha del paciente (`/pacientes/:id`). En el menú lateral solo está **Referencias** (catálogo de fuentes).
 
-Para cargar pacientes DEMO (idempotente, no se duplica):
+Para cargar pacientes DEMO (idempotente; también crea fotos, scans STL y diseños de sonrisa):
 
 ```bash
 # 1) Arrancar API con el flag (en otra terminal)
 export DENTURA_DEMO_SEED_ENABLED=true
 cd back && ./mvnw spring-boot:run
 
-# 2) Login y seed
+# 2) Seed (script o curl)
+./scripts/seed-demo.sh
+```
+
+Equivale a:
+
+```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/sign-in \
   -H 'Content-Type: application/json' \
   -d '{"userName":"admin","password":"123Qwe"}' | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])')
@@ -97,7 +103,7 @@ curl -s -X POST http://localhost:8080/api/demo/seed \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 ```
 
-Luego en el front: **Pacientes** → busca `DEMO-001` → abre la ficha y usa las pestañas Odontograma / Fotos / Recetas / Pagos / Referidos.
+Luego en el front: **Pacientes** → busca `DEMO-001` → pestañas Odontograma / Fotos / **Diseño 3D** / Recetas / Pagos / Referidos.
 
 ## Build JAR
 

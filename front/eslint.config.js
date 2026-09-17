@@ -97,5 +97,12 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['**/smile/ScanViewer.tsx', '**/smile/SmileDesignerCanvas.tsx'],
+    rules: {
+      // R3F / Three.js use non-DOM props on intrinsic elements.
+      'react/no-unknown-property': 'off',
+    },
+  },
   prettier,
 )

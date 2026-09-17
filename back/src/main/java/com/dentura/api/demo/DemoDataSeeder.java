@@ -1,6 +1,7 @@
 package com.dentura.api.demo;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -31,6 +32,8 @@ import com.dentura.api.payment.Payment;
 import com.dentura.api.payment.PaymentAllocation;
 import com.dentura.api.payment.PaymentAllocationRepository;
 import com.dentura.api.payment.PaymentRepository;
+import com.dentura.api.photo.PatientPhoto;
+import com.dentura.api.photo.PatientPhotoRepository;
 import com.dentura.api.prescription.Prescription;
 import com.dentura.api.prescription.PrescriptionRepository;
 import com.dentura.api.prescription.PrescriptionTemplate;
@@ -39,6 +42,15 @@ import com.dentura.api.referral.OutboundReferral;
 import com.dentura.api.referral.OutboundReferralRepository;
 import com.dentura.api.referral.ReferralSource;
 import com.dentura.api.referral.ReferralSourceRepository;
+import com.dentura.api.scan.PatientScan;
+import com.dentura.api.scan.PatientScanRepository;
+import com.dentura.api.smile.SmileDesign;
+import com.dentura.api.smile.SmileDesignRepository;
+import com.dentura.api.smile.SmileSuggestionEngine;
+import com.dentura.api.smile.dto.SmileSuggestRequest;
+import com.dentura.api.storage.PatientFileStorage;
+import com.dentura.api.storage.PatientFileStorage.StoredFile;
+import com.dentura.api.storage.StorageKind;
 import com.dentura.api.treatment.Treatment;
 import com.dentura.api.treatment.TreatmentRepository;
 import com.dentura.api.work.Work;
@@ -48,7 +60,13 @@ import com.dentura.api.work.WorkRepository;
 public class DemoDataSeeder {
 
 	public static final String DEMO_PREFIX = "DEMO-";
+	private static final String DEMO_SCAN_CAPTION = "DEMO scan arco superior";
 	private static final ZoneId ZONE = ZoneId.of("America/El_Salvador");
+
+	/** Minimal valid JPEG (1x1). */
+	private static final byte[] DEMO_JPEG = new byte[] {
+			(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xD9
+	};
 
 	private final boolean enabled;
 	private final ClinicAccess clinicAccess;
@@ -66,6 +84,11 @@ public class DemoDataSeeder {
 	private final OutboundReferralRepository outboundReferralRepository;
 	private final MedicationRepository medicationRepository;
 	private final MedicationSeeder medicationSeeder;
+	private final PatientPhotoRepository photoRepository;
+	private final PatientScanRepository scanRepository;
+	private final SmileDesignRepository smileDesignRepository;
+	private final PatientFileStorage fileStorage;
+	private final SmileSuggestionEngine suggestionEngine;
 
 	public DemoDataSeeder(
 			@Value("${dentura.demo.seed-enabled:false}") boolean enabled,
@@ -83,7 +106,12 @@ public class DemoDataSeeder {
 			ReferralSourceRepository referralSourceRepository,
 			OutboundReferralRepository outboundReferralRepository,
 			MedicationRepository medicationRepository,
-			MedicationSeeder medicationSeeder) {
+			MedicationSeeder medicationSeeder,
+			PatientPhotoRepository photoRepository,
+			PatientScanRepository scanRepository,
+			SmileDesignRepository smileDesignRepository,
+			PatientFileStorage fileStorage,
+			SmileSuggestionEngine suggestionEngine) {
 		this.enabled = enabled;
 		this.clinicAccess = clinicAccess;
 		this.patientRepository = patientRepository;
@@ -100,6 +128,11 @@ public class DemoDataSeeder {
 		this.outboundReferralRepository = outboundReferralRepository;
 		this.medicationRepository = medicationRepository;
 		this.medicationSeeder = medicationSeeder;
+		this.photoRepository = photoRepository;
+		this.scanRepository = scanRepository;
+		this.smileDesignRepository = smileDesignRepository;
+		this.fileStorage = fileStorage;
+		this.suggestionEngine = suggestionEngine;
 	}
 
 	public boolean isEnabled() {
@@ -117,10 +150,36 @@ public class DemoDataSeeder {
 		Long clinicId = clinicAccess.requireClinicId();
 		medicationSeeder.ensureClinicCatalog(clinicId);
 
-		if (patientRepository.existsByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "001")) {
-			return DemoSeedResult.alreadyPresent(clinicId);
+		boolean coreCreated = false;
+		if (!patientRepository.existsByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "001")) {
+			seedCoreDemo(clinicId);
+			coreCreated = true;
 		}
 
+		Map<String, Object> smileCounts = ensureSmileDemoData(clinicId);
+		Map<String, Object> details = new LinkedHashMap<>();
+		if (coreCreated) {
+			details.put("core", "CREATED");
+			details.put("patients", 3);
+			details.put("appointments", 3);
+			details.put("works", 5);
+			details.put("odontogramEntries", 4);
+			details.put("payments", 1);
+			details.put("prescriptions", 2);
+			details.put("referralSources", 2);
+			details.put("outboundReferrals", 2);
+		} else {
+			details.put("core", "ALREADY_PRESENT");
+			details.put(
+					"message",
+					"Pacientes DEMO-00x ya existían; se aseguró data de fotos/scans/smile.");
+		}
+		details.putAll(smileCounts);
+		details.put("recordNumbers", List.of(DEMO_PREFIX + "001", DEMO_PREFIX + "002", DEMO_PREFIX + "003"));
+		return DemoSeedResult.created(clinicId, details);
+	}
+
+	private void seedCoreDemo(Long clinicId) {
 		ReferralSource sourceDoctor = saveSource(clinicId, "Dr. Carlos Mendoza", "PERSON", "2250-1001");
 		ReferralSource sourceClinic = saveSource(clinicId, "Clínica Sonrisa SV", "CLINIC", "2250-2002");
 
@@ -212,18 +271,206 @@ public class DemoDataSeeder {
 
 		saveOutbound(clinicId, luis.getId(), "Endodoncia", "Dr. Pérez Endodoncia", "Evaluar 48", OutboundReferral.SENT);
 		saveOutbound(clinicId, maria.getId(), "Ortodoncia", "Centro Ortodoncia SV", "Apiñamiento leve", OutboundReferral.DRAFT);
+	}
+
+	/**
+	 * Idempotent: photos/scans/smile designs for DEMO patients if missing.
+	 */
+	private Map<String, Object> ensureSmileDemoData(Long clinicId) {
+		Patient ana = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "001")
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta DEMO-001"));
+		Patient luis = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "002")
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta DEMO-002"));
+		Patient maria = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "003")
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta DEMO-003"));
+
+		int photos = 0;
+		int scans = 0;
+		int designs = 0;
+
+		if (photoRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, ana.getId()).isEmpty()) {
+			saveDemoPhoto(clinicId, ana.getId(), PatientPhoto.CLINICAL, "demo-ana-smile.jpg", "Foto clínica DEMO");
+			photos++;
+		}
+		if (photoRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, luis.getId()).isEmpty()) {
+			saveDemoPhoto(clinicId, luis.getId(), PatientPhoto.BEFORE_AFTER, "demo-luis-before.jpg", "Antes DEMO");
+			photos++;
+		}
+
+		PatientScan anaScan = findDemoScan(clinicId, ana.getId());
+		if (anaScan == null) {
+			anaScan = saveDemoScan(clinicId, ana.getId(), PatientScan.UPPER, "demo-ana-upper.stl", DEMO_SCAN_CAPTION);
+			scans++;
+		}
+		if (findDemoScan(clinicId, luis.getId()) == null) {
+			saveDemoScan(clinicId, luis.getId(), PatientScan.FULL_ARCH, "demo-luis-full.stl", "DEMO scan arco completo");
+			scans++;
+		}
+		if (findDemoScan(clinicId, maria.getId()) == null) {
+			saveDemoScan(clinicId, maria.getId(), PatientScan.LOWER, "demo-maria-lower.stl", "DEMO scan arco inferior");
+			scans++;
+		}
+
+		if (smileDesignRepository.findByClinicIdAndPatientIdOrderByUpdatedAtDesc(clinicId, ana.getId()).isEmpty()) {
+			String ovalJson = suggestionEngine.suggest(new SmileSuggestRequest("OVAL", 52.0, 10.5, 0.0));
+			SmileDesign draft = saveSmileDesign(
+					clinicId,
+					ana.getId(),
+					anaScan.getId(),
+					"Diseño DEMO ovalado",
+					SmileDesign.DRAFT,
+					ovalJson,
+					"Borrador sugerido (rules-v1)");
+			designs++;
+
+			String hollywoodJson = suggestionEngine.suggest(new SmileSuggestRequest("HOLLYWOOD", 54.0, 11.2, 0.1));
+			SmileDesign exported = saveSmileDesign(
+					clinicId,
+					ana.getId(),
+					anaScan.getId(),
+					"Diseño DEMO Hollywood (exportado)",
+					SmileDesign.EXPORTED,
+					hollywoodJson,
+					"Incluye STL de exportación de prueba");
+			attachDemoExport(exported);
+			designs++;
+		}
+
+		if (smileDesignRepository.findByClinicIdAndPatientIdOrderByUpdatedAtDesc(clinicId, maria.getId()).isEmpty()) {
+			String squareJson = suggestionEngine.suggest(new SmileSuggestRequest("SQUARE", 50.0, 10.0, -0.1));
+			saveSmileDesign(
+					clinicId,
+					maria.getId(),
+					null,
+					"Diseño DEMO cuadrado",
+					SmileDesign.DRAFT,
+					squareJson,
+					"Sin scan vinculado");
+			designs++;
+		}
 
 		Map<String, Object> counts = new LinkedHashMap<>();
-		counts.put("patients", 3);
-		counts.put("appointments", 3);
-		counts.put("works", 5);
-		counts.put("odontogramEntries", 4);
-		counts.put("payments", 1);
-		counts.put("prescriptions", 2);
-		counts.put("referralSources", 2);
-		counts.put("outboundReferrals", 2);
-		counts.put("recordNumbers", List.of(DEMO_PREFIX + "001", DEMO_PREFIX + "002", DEMO_PREFIX + "003"));
-		return DemoSeedResult.created(clinicId, counts);
+		counts.put("photosCreated", photos);
+		counts.put("scansCreated", scans);
+		counts.put("smileDesignsCreated", designs);
+		return counts;
+	}
+
+	private PatientScan findDemoScan(Long clinicId, Long patientId) {
+		return scanRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, patientId).stream()
+				.filter(scan -> scan.getCaption() != null && scan.getCaption().startsWith("DEMO"))
+				.findFirst()
+				.orElse(null);
+	}
+
+	private void saveDemoPhoto(Long clinicId, Long patientId, String category, String fileName, String caption) {
+		StoredFile stored = fileStorage.saveBytes(
+				clinicId,
+				patientId,
+				category,
+				fileName,
+				"image/jpeg",
+				DEMO_JPEG,
+				StorageKind.IMAGE);
+		PatientPhoto photo = new PatientPhoto();
+		photo.setClinicId(clinicId);
+		photo.setPatientId(patientId);
+		photo.setCategory(category);
+		photo.setFileName(stored.originalFileName());
+		photo.setContentType(stored.contentType());
+		photo.setSizeBytes(stored.sizeBytes());
+		photo.setRelativePath(stored.relativePath());
+		photo.setCaption(caption);
+		photo.setTakenAt(Instant.now().minusSeconds(86400));
+		photoRepository.save(photo);
+	}
+
+	private PatientScan saveDemoScan(
+			Long clinicId,
+			Long patientId,
+			String arch,
+			String fileName,
+			String caption) {
+		byte[] stl = demoStlAscii(arch);
+		StoredFile stored = fileStorage.saveBytes(
+				clinicId,
+				patientId,
+				"SCANS_" + arch,
+				fileName,
+				"model/stl",
+				stl,
+				StorageKind.MESH);
+		PatientScan scan = new PatientScan();
+		scan.setClinicId(clinicId);
+		scan.setPatientId(patientId);
+		scan.setArch(arch);
+		scan.setFileName(stored.originalFileName());
+		scan.setContentType(stored.contentType());
+		scan.setSizeBytes(stored.sizeBytes());
+		scan.setRelativePath(stored.relativePath());
+		scan.setCaption(caption);
+		return scanRepository.save(scan);
+	}
+
+	private SmileDesign saveSmileDesign(
+			Long clinicId,
+			Long patientId,
+			Long scanId,
+			String name,
+			String status,
+			String designJson,
+			String notes) {
+		SmileDesign design = new SmileDesign();
+		design.setClinicId(clinicId);
+		design.setPatientId(patientId);
+		design.setScanId(scanId);
+		design.setName(name);
+		design.setStatus(status);
+		design.setDesignJson(designJson);
+		design.setNotes(notes);
+		design.setVersion(1);
+		return smileDesignRepository.save(design);
+	}
+
+	private void attachDemoExport(SmileDesign design) {
+		byte[] stl = demoStlAscii("EXPORT");
+		StoredFile stored = fileStorage.saveBytes(
+				design.getClinicId(),
+				design.getPatientId(),
+				"SMILE_EXPORT",
+				"demo-smile-export.stl",
+				"model/stl",
+				stl,
+				StorageKind.DESIGN_EXPORT);
+		design.setExportRelativePath(stored.relativePath());
+		design.setExportFileName(stored.originalFileName());
+		design.setExportContentType(stored.contentType());
+		design.setExportSizeBytes(stored.sizeBytes());
+		design.setStatus(SmileDesign.EXPORTED);
+		design.setVersion(design.getVersion() + 1);
+		smileDesignRepository.save(design);
+	}
+
+	private static byte[] demoStlAscii(String label) {
+		String stl = """
+				solid dentura_demo_%s
+				  facet normal 0 0 1
+				    outer loop
+				      vertex 0 0 0
+				      vertex 8 0 0
+				      vertex 0 6 0
+				    endloop
+				  endfacet
+				  facet normal 0 0 1
+				    outer loop
+				      vertex 8 0 0
+				      vertex 8 6 0
+				      vertex 0 6 0
+				    endloop
+				  endfacet
+				endsolid dentura_demo_%s
+				""".formatted(label, label);
+		return stl.getBytes(StandardCharsets.US_ASCII);
 	}
 
 	private ReferralSource saveSource(Long clinicId, String name, String type, String phone) {
@@ -449,17 +696,6 @@ public class DemoDataSeeder {
 	public record DemoSeedResult(String status, Long clinicId, Map<String, Object> details) {
 		static DemoSeedResult created(Long clinicId, Map<String, Object> details) {
 			return new DemoSeedResult("CREATED", clinicId, details);
-		}
-
-		static DemoSeedResult alreadyPresent(Long clinicId) {
-			return new DemoSeedResult(
-					"ALREADY_PRESENT",
-					clinicId,
-					Map.of(
-							"message",
-							"Ya existen pacientes DEMO-00x en esta clínica. No se duplicó data.",
-							"hint",
-							"Abre Pacientes y busca DEMO-001"));
 		}
 	}
 }

@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import {
     HiOutlineCash,
     HiOutlineClipboardList,
+    HiOutlineCube,
     HiOutlineDocumentText,
     HiOutlineHeart,
     HiOutlinePhone,
@@ -43,6 +44,7 @@ import PatientProfileHeader from './PatientProfileHeader'
 import PatientWorks from './PatientWorks'
 import PatientOdontogram from './PatientOdontogram'
 import PatientPhotos from './PatientPhotos'
+import PatientScans from './smile/PatientScans'
 import PatientPrescriptions from './PatientPrescriptions'
 import PatientPayments from './PatientPayments'
 import PatientReferrals from './PatientReferrals'
@@ -52,6 +54,8 @@ import {
     PHOTOS_READ,
     PRESCRIPTIONS_READ,
     REFERRALS_READ,
+    SCANS_READ,
+    SMILE_DESIGN_READ,
     WORKS_READ,
 } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
@@ -153,6 +157,10 @@ const PatientForm = () => {
     const canReadWorks = useAuthority(userAuthority, [WORKS_READ])
     const canReadOdontogram = useAuthority(userAuthority, [ODONTOGRAM_READ])
     const canReadPhotos = useAuthority(userAuthority, [PHOTOS_READ])
+    const canReadScans = useAuthority(userAuthority, [
+        SCANS_READ,
+        SMILE_DESIGN_READ,
+    ])
     const canReadPrescriptions = useAuthority(userAuthority, [
         PRESCRIPTIONS_READ,
     ])
@@ -163,6 +171,7 @@ const PatientForm = () => {
         (canReadWorks ||
             canReadOdontogram ||
             canReadPhotos ||
+            canReadScans ||
             canReadPrescriptions ||
             canReadPayments ||
             canReadReferrals)
@@ -254,6 +263,14 @@ const PatientForm = () => {
                                         Fotos
                                     </Tabs.TabNav>
                                 )}
+                                {canReadScans && (
+                                    <Tabs.TabNav
+                                        value="scans"
+                                        icon={<HiOutlineCube />}
+                                    >
+                                        Diseño 3D
+                                    </Tabs.TabNav>
+                                )}
                                 {canReadPrescriptions && (
                                     <Tabs.TabNav
                                         value="recetas"
@@ -314,6 +331,15 @@ const PatientForm = () => {
                                 showBack={false}
                             />
                             <PatientPhotos patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadScans && (
+                        <Tabs.TabContent value="scans">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientScans patientId={Number(patientId)} />
                         </Tabs.TabContent>
                     )}
                     {canReadPrescriptions && (

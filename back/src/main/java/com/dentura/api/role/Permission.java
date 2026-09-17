@@ -34,6 +34,12 @@ public class Permission {
 	public static final String PHOTOS_READ = "photos.read";
 	public static final String PHOTOS_WRITE = "photos.write";
 	public static final String PHOTOS_DELETE = "photos.delete";
+	public static final String SCANS_READ = "scans.read";
+	public static final String SCANS_WRITE = "scans.write";
+	public static final String SCANS_DELETE = "scans.delete";
+	public static final String SMILE_DESIGN_READ = "smiledesign.read";
+	public static final String SMILE_DESIGN_WRITE = "smiledesign.write";
+	public static final String SMILE_DESIGN_DELETE = "smiledesign.delete";
 	public static final String PRESCRIPTIONS_READ = "prescriptions.read";
 	public static final String PRESCRIPTIONS_WRITE = "prescriptions.write";
 	public static final String PRESCRIPTIONS_DELETE = "prescriptions.delete";

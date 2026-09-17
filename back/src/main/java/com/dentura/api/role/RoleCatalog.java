@@ -43,6 +43,12 @@ public class RoleCatalog {
 		ensurePermission(Permission.PHOTOS_READ, "Ver fotos", "Consulta la galería clínica del paciente");
 		ensurePermission(Permission.PHOTOS_WRITE, "Subir fotos", "Sube fotos y radiografías del paciente");
 		ensurePermission(Permission.PHOTOS_DELETE, "Eliminar fotos", "Elimina fotos de la galería clínica");
+		ensurePermission(Permission.SCANS_READ, "Ver scans 3D", "Consulta scans STL/PLY del paciente");
+		ensurePermission(Permission.SCANS_WRITE, "Subir scans 3D", "Sube scans dentales del paciente");
+		ensurePermission(Permission.SCANS_DELETE, "Eliminar scans 3D", "Elimina scans dentales del paciente");
+		ensurePermission(Permission.SMILE_DESIGN_READ, "Ver diseño de sonrisa", "Consulta diseños 3D de sonrisa");
+		ensurePermission(Permission.SMILE_DESIGN_WRITE, "Editar diseño de sonrisa", "Crea y exporta diseños 3D");
+		ensurePermission(Permission.SMILE_DESIGN_DELETE, "Eliminar diseño de sonrisa", "Elimina diseños 3D");
 		ensurePermission(Permission.PRESCRIPTIONS_READ, "Ver recetas", "Consulta recetas e historial");
 		ensurePermission(Permission.PRESCRIPTIONS_WRITE, "Emitir recetas", "Crea y actualiza recetas médicas");
 		ensurePermission(Permission.PRESCRIPTIONS_DELETE, "Eliminar recetas", "Elimina recetas del historial");
@@ -88,6 +94,8 @@ public class RoleCatalog {
 		permissionRepository.findByCode(Permission.PAYMENTS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PHOTOS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PHOTOS_WRITE).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.SCANS_READ).ifPresent(receptionPerms::add);
+		permissionRepository.findByCode(Permission.SMILE_DESIGN_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PRESCRIPTIONS_READ).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.PRESCRIPTIONS_WRITE).ifPresent(receptionPerms::add);
 		permissionRepository.findByCode(Permission.REFERRALS_READ).ifPresent(receptionPerms::add);
