@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.dentura.api.audit.AuditService;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.ledger.LedgerService;
 import com.dentura.api.patient.Patient;
 import com.dentura.api.patient.PatientRepository;
 import com.dentura.api.payment.PaymentAllocationRepository;
@@ -45,6 +47,8 @@ public class WorkService {
 	private final PaymentAllocationRepository paymentAllocationRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
+	private final AuditService auditService;
+	private final LedgerService ledgerService;
 
 	public WorkService(
 			WorkRepository workRepository,
@@ -52,13 +56,17 @@ public class WorkService {
 			TreatmentRepository treatmentRepository,
 			PaymentAllocationRepository paymentAllocationRepository,
 			ClinicAccess clinicAccess,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			AuditService auditService,
+			LedgerService ledgerService) {
 		this.workRepository = workRepository;
 		this.patientRepository = patientRepository;
 		this.treatmentRepository = treatmentRepository;
 		this.paymentAllocationRepository = paymentAllocationRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
+		this.auditService = auditService;
+		this.ledgerService = ledgerService;
 	}
 
 	@Transactional(readOnly = true)
@@ -156,7 +164,10 @@ public class WorkService {
 		Work work = new Work();
 		work.setClinicId(clinicAccess.requireClinicId());
 		apply(work, request, patient, treatment);
-		return WorkResponse.from(workRepository.save(work), treatment, patient);
+		work = workRepository.save(work);
+		ledgerService.ensureWorkCharge(work, treatment.getCode() + " — " + treatment.getName());
+		auditService.log("CREATE", "work", work.getId(), treatment.getCode());
+		return WorkResponse.from(work, treatment, patient);
 	}
 
 	@Transactional
@@ -166,7 +177,10 @@ public class WorkService {
 		Patient patient = requirePatient(request.patientId());
 		Treatment treatment = requireTreatment(request.treatmentId());
 		apply(work, request, patient, treatment);
-		return WorkResponse.from(workRepository.save(work), treatment, patient);
+		work = workRepository.save(work);
+		ledgerService.ensureWorkCharge(work, treatment.getCode() + " — " + treatment.getName());
+		auditService.log("UPDATE", "work", work.getId(), treatment.getCode());
+		return WorkResponse.from(work, treatment, patient);
 	}
 
 	@Transactional
@@ -178,6 +192,7 @@ public class WorkService {
 					HttpStatus.BAD_REQUEST,
 					"No se puede eliminar: hay pagos asignados a este trabajo");
 		}
+		auditService.log("DELETE", "work", work.getId(), null);
 		workRepository.delete(work);
 	}
 

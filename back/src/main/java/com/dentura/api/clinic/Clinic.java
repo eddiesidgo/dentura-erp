@@ -70,6 +70,16 @@ public class Clinic {
 	@Column(nullable = false)
 	private boolean active = true;
 
+	@Column(name = "reminder_hours_before", nullable = false)
+	private int reminderHoursBefore = 24;
+
+	@Column(name = "reminder_message_template", length = 2000)
+	private String reminderMessageTemplate =
+			"Hola {patientName}, le recordamos su cita el {date} a las {time} en {clinicName}. Confirme su asistencia.";
+
+	@Column(name = "reminder_default_country_code", nullable = false, length = 8)
+	private String reminderDefaultCountryCode = "503";
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -222,6 +232,30 @@ public class Clinic {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public int getReminderHoursBefore() {
+		return reminderHoursBefore;
+	}
+
+	public void setReminderHoursBefore(int reminderHoursBefore) {
+		this.reminderHoursBefore = reminderHoursBefore;
+	}
+
+	public String getReminderMessageTemplate() {
+		return reminderMessageTemplate;
+	}
+
+	public void setReminderMessageTemplate(String reminderMessageTemplate) {
+		this.reminderMessageTemplate = reminderMessageTemplate;
+	}
+
+	public String getReminderDefaultCountryCode() {
+		return reminderDefaultCountryCode;
+	}
+
+	public void setReminderDefaultCountryCode(String reminderDefaultCountryCode) {
+		this.reminderDefaultCountryCode = reminderDefaultCountryCode;
 	}
 
 	public Instant getCreatedAt() {

@@ -13,6 +13,8 @@ type PatientTableProps = {
     data: Patient[]
     loading: boolean
     query: string
+    canCreate?: boolean
+    canDelete?: boolean
     pagingData: {
         total: number
         pageIndex: number
@@ -29,6 +31,8 @@ const PatientTable = ({
     data,
     loading,
     query,
+    canCreate = false,
+    canDelete = false,
     pagingData,
     onPaginationChange,
     onSelectChange,
@@ -129,13 +133,17 @@ const PatientTable = ({
                             onView={() =>
                                 navigate(`/pacientes/${patient.id}`)
                             }
-                            onDelete={() => onDelete(patient)}
+                            onDelete={
+                                canDelete
+                                    ? () => onDelete(patient)
+                                    : undefined
+                            }
                         />
                     )
                 },
             },
         ],
-        [navigate, onDelete],
+        [navigate, onDelete, canDelete],
     )
 
     if (!loading && data.length === 0) {
@@ -151,7 +159,7 @@ const PatientTable = ({
                         ? 'Prueba con otro nombre, expediente o DUI.'
                         : 'Crea la primera ficha para empezar a agendar citas y planes de tratamiento.'}
                 </p>
-                {!query && (
+                {!query && canCreate && (
                     <Button variant="solid" size="sm" onClick={onCreate}>
                         Nuevo paciente
                     </Button>

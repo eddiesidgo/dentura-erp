@@ -20,6 +20,7 @@ export type ClinicUserRoles = {
     id: number
     userName: string
     email: string
+    active: boolean
     roleIds: number[]
 }
 
@@ -85,5 +86,33 @@ export async function apiAssignUserRoles(userId: number, roleIds: number[]) {
         url: `/roles/users/${userId}`,
         method: 'put',
         data: { roleIds },
+    })
+}
+
+export async function apiCreateClinicUser(data: {
+    userName: string
+    email: string
+    password: string
+    roleIds: number[]
+}) {
+    return ApiService.fetchData<ClinicUserRoles>({
+        url: '/clinic-users',
+        method: 'post',
+        data,
+    })
+}
+
+export async function apiUpdateClinicUser(
+    id: number,
+    data: {
+        roleIds?: number[]
+        active?: boolean
+        password?: string
+    },
+) {
+    return ApiService.fetchData<ClinicUserRoles>({
+        url: `/clinic-users/${id}`,
+        method: 'put',
+        data,
     })
 }

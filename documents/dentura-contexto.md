@@ -38,14 +38,21 @@ Clínicas dentales en El Salvador (y similares) que:
 
 ### Explícitamente fuera de alcance (sigue)
 
-- Morosos
-- **Cuenta corriente / libro de cargos-abonos-ajustes** (sigue fuera; los pagos son cobros simples, no contabilidad de cargos/abonos)
 - Facturación electrónica completa (DTE) — solo datos fiscales en ficha por ahora
+- Portal público del paciente (ver `documents/portal-deferred.md`)
+
+### Implementado adicionalmente (roadmap endurecimiento)
+
+- RBAC/auditoría, reset de contraseña on-prem, `clinic.manage`
+- Agenda multi-doctor / multi-sala + recordatorios WhatsApp `wa.me` (sin API Meta)
+- Cuenta corriente / morosos (ledger interno, sin DTE)
+- Periodontograma básico + consentimientos
+- Backup (`/api/backup`, `scripts/backup.sh`) e inventario mínimo
 
 ### Backlog (diferido)
 
-- **Recordatorios de citas** (WhatsApp / email): diferidos mientras el producto es ERP local sin integraciones de mensajería
-- Instalador Windows, backup, licencia offline (fase comercial)
+- Portal paciente / auto-agendar (solo si se reorienta el producto)
+- Instalador Windows formal y licencia offline avanzada
 - DTE, sync cloud
 
 ### Sobre “facturas” (hallazgo GestOdon)

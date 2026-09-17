@@ -7,13 +7,15 @@ import AdaptableCard from '@/components/shared/AdaptableCard'
 import CalendarView from '@/components/shared/CalendarView'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import PageHeader from '@/components/shared/PageHeader'
-import { Button, Notification, Tag, toast } from '@/components/ui'
+import { Button, Notification, Select, Tag, toast } from '@/components/ui'
 import AuthorityCheck from '@/components/shared/AuthorityCheck'
 import { HiPlusCircle } from 'react-icons/hi'
 import {
     apiCreateAppointment,
     apiDeleteAppointment,
     apiGetAppointments,
+    apiGetProviders,
+    apiGetRooms,
     apiUpdateAppointment,
 } from '@/services/AppointmentService'
 import { getApiErrorMessage } from '@/services/PatientService'
@@ -27,7 +29,12 @@ import AppointmentDrawer, {
     type AppointmentForm,
 } from './AppointmentDrawer'
 import { statusColor, statusOptions, statusTagClass } from '../constants'
-import type { Appointment, AppointmentStatus } from '@/@types/appointment'
+import type {
+    Appointment,
+    AppointmentStatus,
+    Provider,
+    Room,
+} from '@/@types/appointment'
 
 const emptyForm: AppointmentForm = {
     start: null,
@@ -35,9 +42,21 @@ const emptyForm: AppointmentForm = {
     status: 'SCHEDULED',
     reason: '',
     notes: '',
+    roomId: null,
 }
 
 const toIso = (date: Date) => date.toISOString()
+
+const shortName = (name?: string | null) => {
+    if (!name) {
+        return ''
+    }
+    const parts = name.trim().split(/\s+/)
+    if (parts.length === 1) {
+        return parts[0]
+    }
+    return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`
+}
 
 const AgendaCalendar = () => {
     const navigate = useNavigate()
@@ -52,6 +71,8 @@ const AgendaCalendar = () => {
             title: string
             start: string
             end: string
+            backgroundColor?: string
+            borderColor?: string
             extendedProps: { eventColor: string; appointment: Appointment }
         }[]
     >([])
@@ -60,30 +81,76 @@ const AgendaCalendar = () => {
     const [form, setForm] = useState<AppointmentForm>(emptyForm)
     const [saving, setSaving] = useState(false)
     const [toDelete, setToDelete] = useState<AppointmentForm | null>(null)
+    const [providers, setProviders] = useState<Provider[]>([])
+    const [rooms, setRooms] = useState<Room[]>([])
+    const [filterProviderId, setFilterProviderId] = useState<number | undefined>()
+    const [filterRoomId, setFilterRoomId] = useState<number | undefined>()
 
-    const load = useCallback(async (from: string, to: string) => {
-        try {
-            const { data } = await apiGetAppointments(from, to)
-            setEvents(
-                data.map((appointment) => ({
-                    id: String(appointment.id),
-                    title: appointment.patientName,
-                    start: appointment.startAt,
-                    end: appointment.endAt,
-                    extendedProps: {
-                        eventColor: statusColor[appointment.status],
-                        appointment,
-                    },
-                })),
-            )
-        } catch (error) {
-            toast.push(
-                <Notification type="danger" title="No se pudo cargar la agenda">
-                    {getApiErrorMessage(error, 'Error al obtener las citas')}
-                </Notification>,
-            )
+    useEffect(() => {
+        let cancelled = false
+        const loadFilters = async () => {
+            try {
+                const [providersRes, roomsRes] = await Promise.all([
+                    apiGetProviders(true),
+                    apiGetRooms(true),
+                ])
+                if (!cancelled) {
+                    setProviders(providersRes.data)
+                    setRooms(roomsRes.data)
+                }
+            } catch {
+                if (!cancelled) {
+                    setProviders([])
+                    setRooms([])
+                }
+            }
         }
-    }, [])
+        loadFilters()
+        return () => {
+            cancelled = true
+        }
+    }, [clinicId])
+
+    const load = useCallback(
+        async (from: string, to: string) => {
+            try {
+                const { data } = await apiGetAppointments(from, to, {
+                    providerId: filterProviderId,
+                    roomId: filterRoomId,
+                })
+                setEvents(
+                    data.map((appointment) => {
+                        const providerLabel = shortName(appointment.providerName)
+                        const title = providerLabel
+                            ? `${appointment.patientName} · ${providerLabel}`
+                            : appointment.patientName
+                        return {
+                            id: String(appointment.id),
+                            title,
+                            start: appointment.startAt,
+                            end: appointment.endAt,
+                            backgroundColor:
+                                appointment.providerColor || undefined,
+                            borderColor:
+                                appointment.providerColor || undefined,
+                            extendedProps: {
+                                // CalendarView espera claves tipo "blue", no hex
+                                eventColor: statusColor[appointment.status],
+                                appointment,
+                            },
+                        }
+                    }),
+                )
+            } catch (error) {
+                toast.push(
+                    <Notification type="danger" title="No se pudo cargar la agenda">
+                        {getApiErrorMessage(error, 'Error al obtener las citas')}
+                    </Notification>,
+                )
+            }
+        },
+        [filterProviderId, filterRoomId],
+    )
 
     useEffect(() => {
         if (range) {
@@ -105,6 +172,10 @@ const AgendaCalendar = () => {
             ...emptyForm,
             start: startDate,
             end: endDate,
+            providerId:
+                filterProviderId ||
+                (providers.length === 1 ? providers[0].id : undefined),
+            roomId: filterRoomId ?? null,
         })
         setDialogOpen(true)
     }
@@ -121,6 +192,8 @@ const AgendaCalendar = () => {
         setForm({
             id: appointment.id,
             patientId: appointment.patientId,
+            providerId: appointment.providerId,
+            roomId: appointment.roomId,
             start: new Date(appointment.startAt),
             end: new Date(appointment.endAt),
             status: appointment.status,
@@ -141,6 +214,8 @@ const AgendaCalendar = () => {
         try {
             await apiUpdateAppointment(appointment.id, {
                 patientId: appointment.patientId,
+                providerId: appointment.providerId,
+                roomId: appointment.roomId,
                 startAt: toIso(info.event.start),
                 endAt: toIso(info.event.end),
                 status: appointment.status,
@@ -159,13 +234,15 @@ const AgendaCalendar = () => {
     }
 
     const save = async () => {
-        if (!form.patientId || !form.start || !form.end) {
+        if (!form.patientId || !form.providerId || !form.start || !form.end) {
             return
         }
         setSaving(true)
         try {
             const payload = {
                 patientId: form.patientId,
+                providerId: form.providerId,
+                roomId: form.roomId ?? null,
                 startAt: toIso(form.start),
                 endAt: toIso(form.end),
                 status: form.status,
@@ -220,6 +297,22 @@ const AgendaCalendar = () => {
         return counts
     }, [events])
 
+    const providerFilterOptions = [
+        { value: 0, label: 'Todos los profesionales' },
+        ...providers.map((provider) => ({
+            value: provider.id,
+            label: provider.name,
+        })),
+    ]
+
+    const roomFilterOptions = [
+        { value: 0, label: 'Todas las salas' },
+        ...rooms.map((room) => ({
+            value: room.id,
+            label: room.name,
+        })),
+    ]
+
     return (
         <>
             <PageHeader
@@ -228,6 +321,13 @@ const AgendaCalendar = () => {
                 info="Selecciona un horario para crear o abre una cita para editarla. Arrastra para reprogramar."
                 extra={
                     <div className="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant="plain"
+                            onClick={() => navigate('/recordatorios')}
+                        >
+                            Recordatorios
+                        </Button>
                         <Button
                             size="sm"
                             variant="plain"
@@ -252,6 +352,35 @@ const AgendaCalendar = () => {
                 }
             />
             <AdaptableCard bodyClass="p-0">
+                <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <Select
+                        options={providerFilterOptions}
+                        value={providerFilterOptions.filter(
+                            (option) =>
+                                option.value === (filterProviderId || 0),
+                        )}
+                        onChange={(option) =>
+                            setFilterProviderId(
+                                option?.value && option.value > 0
+                                    ? option.value
+                                    : undefined,
+                            )
+                        }
+                    />
+                    <Select
+                        options={roomFilterOptions}
+                        value={roomFilterOptions.filter(
+                            (option) => option.value === (filterRoomId || 0),
+                        )}
+                        onChange={(option) =>
+                            setFilterRoomId(
+                                option?.value && option.value > 0
+                                    ? option.value
+                                    : undefined,
+                            )
+                        }
+                    />
+                </div>
                 <div className="mb-5 flex flex-wrap gap-2">
                     {statusOptions.map((option) => (
                         <Tag

@@ -14,6 +14,12 @@ import {
 	apiGetPatientKpis,
     getApiErrorMessage,
 } from '@/services/PatientService'
+import {
+    PATIENTS_DELETE,
+    PATIENTS_WRITE,
+} from '@/constants/roles.constant'
+import { useAppSelector } from '@/store'
+import useAuthority from '@/utils/hooks/useAuthority'
 import type { OnSortParam } from '@/components/shared/DataTable'
 import type { Patient, PatientKpis } from '@/@types/patient'
 
@@ -28,6 +34,10 @@ const numberFormatter = new Intl.NumberFormat('es-SV')
 
 const PatientList = () => {
     const navigate = useNavigate()
+    const userAuthority =
+        useAppSelector((state) => state.auth.user.authority) || []
+    const canWrite = useAuthority(userAuthority, [PATIENTS_WRITE])
+    const canDelete = useAuthority(userAuthority, [PATIENTS_DELETE])
     const [patients, setPatients] = useState<Patient[]>([])
     const [loading, setLoading] = useState(false)
 	const [kpiLoading, setKpiLoading] = useState(false)
@@ -98,8 +108,15 @@ const PatientList = () => {
 		fetchKpis()
 	}, [fetchKpis])
 
+    const handleCreate = () => {
+        if (!canWrite) {
+            return
+        }
+        navigate('/pacientes/nuevo')
+    }
+
     const handleConfirmDelete = async () => {
-        if (!toDelete) {
+        if (!toDelete || !canDelete) {
             return
         }
         setDeleting(true)
@@ -193,6 +210,7 @@ const PatientList = () => {
 						</p>
 					</div>
 					<PatientTableTools
+						canCreate={canWrite}
 						onSearch={(query) =>
 							setTableData((prev) => ({
 								...prev,
@@ -200,13 +218,15 @@ const PatientList = () => {
 								pageIndex: 1,
 							}))
 						}
-						onCreate={() => navigate('/pacientes/nuevo')}
+						onCreate={handleCreate}
 					/>
 				</div>
 				<PatientTable
 					data={patients}
 					loading={loading}
 					query={tableData.query}
+					canCreate={canWrite}
+					canDelete={canDelete}
 					pagingData={{
 						total,
 						pageIndex: tableData.pageIndex,
@@ -230,7 +250,7 @@ const PatientList = () => {
 						}))
 					}
 					onDelete={setToDelete}
-					onCreate={() => navigate('/pacientes/nuevo')}
+					onCreate={handleCreate}
 				/>
 			</AdaptableCard>
             <ConfirmDialog

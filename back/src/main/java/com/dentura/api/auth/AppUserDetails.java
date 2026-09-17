@@ -65,7 +65,7 @@ public class AppUserDetails implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return true;
+		return user.isActive();
 	}
 
 	public static List<String> authorityNames(User user) {

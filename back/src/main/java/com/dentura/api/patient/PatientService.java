@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.dentura.api.audit.AuditService;
 import com.dentura.api.clinic.ClinicAccess;
 import com.dentura.api.appointment.Appointment;
 import com.dentura.api.appointment.AppointmentRepository;
@@ -38,18 +39,21 @@ public class PatientService {
 	private final ReferralSourceRepository referralSourceRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
+	private final AuditService auditService;
 
 	public PatientService(
 			PatientRepository patientRepository,
 			AppointmentRepository appointmentRepository,
 			ReferralSourceRepository referralSourceRepository,
 			ClinicAccess clinicAccess,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			AuditService auditService) {
 		this.patientRepository = patientRepository;
 		this.appointmentRepository = appointmentRepository;
 		this.referralSourceRepository = referralSourceRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
+		this.auditService = auditService;
 	}
 
 	@Transactional(readOnly = true)
@@ -129,6 +133,7 @@ public class PatientService {
 			patient.setRecordNumber(String.format("P-%06d", patient.getId()));
 			patient = patientRepository.save(patient);
 		}
+		auditService.log("CREATE", "patient", patient.getId(), patient.getRecordNumber());
 		return PatientResponse.from(patient);
 	}
 
@@ -142,13 +147,16 @@ public class PatientService {
 		if (patient.getRecordNumber() == null) {
 			patient.setRecordNumber(String.format("P-%06d", patient.getId()));
 		}
-		return PatientResponse.from(patientRepository.save(patient));
+		patient = patientRepository.save(patient);
+		auditService.log("UPDATE", "patient", patient.getId(), patient.getRecordNumber());
+		return PatientResponse.from(patient);
 	}
 
 	@Transactional
 	public void delete(Long id) {
 		permissionService.require(Permission.PATIENTS_DELETE);
 		Patient patient = findOrThrow(id);
+		auditService.log("DELETE", "patient", patient.getId(), patient.getRecordNumber());
 		patientRepository.delete(patient);
 	}
 

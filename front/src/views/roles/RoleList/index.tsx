@@ -10,17 +10,20 @@ import {
     Input,
     Notification,
     Select,
+    Switcher,
     Tag,
     toast,
 } from '@/components/ui'
 import { getApiErrorMessage } from '@/services/PatientService'
 import {
     apiAssignUserRoles,
+    apiCreateClinicUser,
     apiCreateRole,
     apiDeleteRole,
     apiGetPermissions,
     apiGetRoleUsers,
     apiGetRoles,
+    apiUpdateClinicUser,
     apiUpdateRole,
     type ClinicUserRoles,
     type Permission,
@@ -39,6 +42,13 @@ type RoleForm = {
     permissionIds: number[]
 }
 
+type UserForm = {
+    userName: string
+    email: string
+    password: string
+    roleIds: number[]
+}
+
 const slugify = (value: string) =>
     value
         .trim()
@@ -55,6 +65,13 @@ const emptyForm: RoleForm = {
     permissionIds: [],
 }
 
+const emptyUserForm: UserForm = {
+    userName: '',
+    email: '',
+    password: '',
+    roleIds: [],
+}
+
 const RoleList = () => {
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
     const [permissions, setPermissions] = useState<Permission[]>([])
@@ -62,8 +79,11 @@ const RoleList = () => {
     const [users, setUsers] = useState<ClinicUserRoles[]>([])
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState<RoleForm>(emptyForm)
+    const [userForm, setUserForm] = useState<UserForm>(emptyUserForm)
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [userDialogOpen, setUserDialogOpen] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [savingUser, setSavingUser] = useState(false)
     const [toDelete, setToDelete] = useState<Role | null>(null)
 
     const load = useCallback(async () => {
@@ -176,6 +196,56 @@ const RoleList = () => {
         }
     }
 
+    const toggleActive = async (user: ClinicUserRoles) => {
+        try {
+            const updated = await apiUpdateClinicUser(user.id, {
+                active: !user.active,
+                roleIds: user.roleIds,
+            })
+            setUsers((prev) =>
+                prev.map((item) =>
+                    item.id === user.id ? updated.data : item,
+                ),
+            )
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="No se pudo actualizar">
+                    {getApiErrorMessage(error, 'Error al cambiar el estado')}
+                </Notification>,
+            )
+        }
+    }
+
+    const saveUser = async () => {
+        if (
+            !userForm.userName.trim() ||
+            !userForm.email.trim() ||
+            !userForm.password.trim()
+        ) {
+            return
+        }
+        setSavingUser(true)
+        try {
+            await apiCreateClinicUser({
+                userName: userForm.userName.trim(),
+                email: userForm.email.trim(),
+                password: userForm.password,
+                roleIds: userForm.roleIds,
+            })
+            setUserDialogOpen(false)
+            setUserForm(emptyUserForm)
+            await load()
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="No se pudo crear">
+                    {getApiErrorMessage(error, 'Error al crear el usuario')}
+                </Notification>,
+            )
+        } finally {
+            setSavingUser(false)
+        }
+    }
+
     const roleOptions: RoleOption[] = roles.map((role) => ({
         label: role.name,
         value: role.id,
@@ -267,25 +337,51 @@ const RoleList = () => {
             </AdaptableCard>
 
             <AdaptableCard bodyClass="p-0">
-                <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-slate-100">
-                    Usuarios de la clínica
-                </h3>
-                <p className="text-sm mb-4">
-                    Asigna uno o varios roles. Solo usuarios de esta clínica.
-                    El usuario debe volver a iniciar sesión para ver menús
-                    nuevos.
-                </p>
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
+                            Usuarios de la clínica
+                        </h3>
+                        <p className="text-sm">
+                            Crea usuarios, asigna roles y desactiva accesos.
+                            El usuario debe volver a iniciar sesión para ver
+                            menús nuevos.
+                        </p>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="solid"
+                        icon={<HiPlusCircle />}
+                        onClick={() => {
+                            setUserForm(emptyUserForm)
+                            setUserDialogOpen(true)
+                        }}
+                    >
+                        Nuevo usuario
+                    </Button>
+                </div>
                 <div className="flex flex-col gap-4">
                     {users.map((user) => (
                         <div
                             key={user.id}
-                            className="grid md:grid-cols-3 gap-3 items-center"
+                            className="grid md:grid-cols-[1fr_2fr_auto] gap-3 items-center"
                         >
                             <div>
-                                <div className="font-semibold">{user.userName}</div>
+                                <div className="font-semibold flex items-center gap-2">
+                                    {user.userName}
+                                    <Tag
+                                        className={
+                                            user.active
+                                                ? 'border-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100'
+                                                : 'border-0 bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-100'
+                                        }
+                                    >
+                                        {user.active ? 'Activo' : 'Inactivo'}
+                                    </Tag>
+                                </div>
                                 <div className="text-xs opacity-70">{user.email}</div>
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
                                 <Select<RoleOption, true>
                                     isMulti
                                     size="sm"
@@ -300,6 +396,13 @@ const RoleList = () => {
                                             (opts || []).map((option) => option.value),
                                         )
                                     }
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 justify-end">
+                                <span className="text-xs opacity-70">Activo</span>
+                                <Switcher
+                                    checked={user.active}
+                                    onChange={() => toggleActive(user)}
                                 />
                             </div>
                         </div>
@@ -379,6 +482,69 @@ const RoleList = () => {
                             ))}
                         </Checkbox.Group>
                     </div>
+                </div>
+            </FormDrawer>
+
+            <FormDrawer
+                isOpen={userDialogOpen}
+                accent="sky"
+                icon={<HiOutlineKey />}
+                title="Nuevo usuario"
+                saving={savingUser}
+                saveDisabled={
+                    !userForm.userName.trim() ||
+                    !userForm.email.trim() ||
+                    userForm.password.length < 6
+                }
+                onClose={() => setUserDialogOpen(false)}
+                onSave={saveUser}
+            >
+                <div className="flex flex-col gap-3">
+                    <Input
+                        placeholder="Usuario"
+                        value={userForm.userName}
+                        onChange={(e) =>
+                            setUserForm((prev) => ({
+                                ...prev,
+                                userName: e.target.value,
+                            }))
+                        }
+                    />
+                    <Input
+                        placeholder="Correo"
+                        value={userForm.email}
+                        onChange={(e) =>
+                            setUserForm((prev) => ({
+                                ...prev,
+                                email: e.target.value,
+                            }))
+                        }
+                    />
+                    <Input
+                        type="password"
+                        placeholder="Contraseña (mín. 6)"
+                        value={userForm.password}
+                        onChange={(e) =>
+                            setUserForm((prev) => ({
+                                ...prev,
+                                password: e.target.value,
+                            }))
+                        }
+                    />
+                    <Select<RoleOption, true>
+                        isMulti
+                        placeholder="Roles"
+                        options={roleOptions}
+                        value={roleOptions.filter((option) =>
+                            userForm.roleIds.includes(option.value),
+                        )}
+                        onChange={(opts) =>
+                            setUserForm((prev) => ({
+                                ...prev,
+                                roleIds: (opts || []).map((option) => option.value),
+                            }))
+                        }
+                    />
                 </div>
             </FormDrawer>
 

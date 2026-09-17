@@ -29,6 +29,15 @@ npm run start:ui-dev      # JAR + Vite (auto) + UI en http://localhost:5173
 Con el front todavía no embebido en el JAR, `npm start` abre `http://127.0.0.1:8080/` (API).  
 `start:ui-dev` levanta Vite en `front/` si aún no está corriendo (o reutiliza uno existente).
 
+## Producción on-prem (recomendado)
+
+1. En `front/`: `npm run build`
+2. Copiar `front/dist/*` a `back/src/main/resources/static/` (o al `target/classes/static` antes del package)
+3. En `back/`: `mvn -DskipTests package`
+4. En `desktop/`: `npm start` con `DENTURA_UI_URL=http://127.0.0.1:8080/` para servir la UI desde el JAR
+
+Backup: `scripts/backup.sh` o `POST /api/backup/export` (ver `BackupController`).
+
 ## Variables
 
 | Variable | Default | Uso |

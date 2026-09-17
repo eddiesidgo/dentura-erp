@@ -20,14 +20,20 @@ type ForgotPasswordFormSchema = {
     email: string
 }
 
+type ForgotPasswordApiResponse = {
+    success?: boolean
+    resetPath?: string | null
+}
+
 const validationSchema = Yup.object().shape({
-    email: Yup.string().required('Please enter your email'),
+    email: Yup.string().required('Ingresa tu correo o usuario'),
 })
 
 const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
     const { disableSubmit = false, className, signInUrl = '/sign-in' } = props
 
     const [emailSent, setEmailSent] = useState(false)
+    const [resetPath, setResetPath] = useState<string | null>(null)
 
     const [message, setMessage] = useTimeOutMessage()
 
@@ -38,10 +44,12 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
         setSubmitting(true)
         try {
             const resp = await apiForgotPassword(values)
-            if (resp.data) {
-                setSubmitting(false)
+            const data = resp.data as ForgotPasswordApiResponse
+            if (data) {
+                setResetPath(data.resetPath || null)
                 setEmailSent(true)
             }
+            setSubmitting(false)
         } catch (errors) {
             setMessage(
                 (errors as AxiosError<{ message: string }>)?.response?.data
@@ -56,18 +64,26 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
             <div className="mb-6">
                 {emailSent ? (
                     <>
-                        <h3 className="mb-1">Check your email</h3>
+                        <h3 className="mb-1">Solicitud recibida</h3>
                         <p>
-                            We have sent a password recovery instruction to your
-                            email
+                            Si la cuenta existe, puedes restablecer la
+                            contraseña con el enlace generado.
                         </p>
+                        {resetPath ? (
+                            <p className="mt-3 text-sm">
+                                Enlace de restablecimiento:{' '}
+                                <ActionLink to={resetPath}>
+                                    {resetPath}
+                                </ActionLink>
+                            </p>
+                        ) : null}
                     </>
                 ) : (
                     <>
-                        <h3 className="mb-1">Forgot Password</h3>
+                        <h3 className="mb-1">Recuperar contraseña</h3>
                         <p>
-                            Please enter your email address to receive a
-                            verification code
+                            Ingresa tu correo o usuario para generar un enlace
+                            de restablecimiento.
                         </p>
                     </>
                 )}
@@ -79,7 +95,7 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
             )}
             <Formik
                 initialValues={{
-                    email: 'admin@mail.com',
+                    email: '',
                 }}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting }) => {
@@ -95,14 +111,16 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
                         <FormContainer>
                             <div className={emailSent ? 'hidden' : ''}>
                                 <FormItem
-                                    invalid={errors.email && touched.email}
+                                    invalid={
+                                        !!(errors.email && touched.email)
+                                    }
                                     errorMessage={errors.email}
                                 >
                                     <Field
-                                        type="email"
-                                        autoComplete="off"
+                                        type="text"
+                                        autoComplete="username"
                                         name="email"
-                                        placeholder="Email"
+                                        placeholder="Correo o usuario"
                                         component={Input}
                                     />
                                 </FormItem>
@@ -113,11 +131,15 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
                                 variant="solid"
                                 type="submit"
                             >
-                                {emailSent ? 'Resend Email' : 'Send Email'}
+                                {emailSent
+                                    ? 'Solicitar de nuevo'
+                                    : 'Continuar'}
                             </Button>
                             <div className="mt-4 text-center">
-                                <span>Back to </span>
-                                <ActionLink to={signInUrl}>Sign in</ActionLink>
+                                <span>Volver a </span>
+                                <ActionLink to={signInUrl}>
+                                    iniciar sesión
+                                </ActionLink>
                             </div>
                         </FormContainer>
                     </Form>

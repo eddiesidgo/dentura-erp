@@ -3,20 +3,22 @@ import Input from '@/components/ui/Input'
 import Upload from '@/components/ui/Upload'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { SUPER_ADMIN } from '@/constants/roles.constant'
+import { SUPER_ADMIN, CLINIC_MANAGE } from '@/constants/roles.constant'
 import { apiUploadClinicLogo } from '@/services/ClinicService'
 import { setCurrentClinic, useAppDispatch, useAppSelector } from '@/store'
 import useThemeClass from '@/utils/hooks/useThemeClass'
+import useAuthority from '@/utils/hooks/useAuthority'
 import type { ClinicIdentity } from '@/@types/clinic'
 
 const IdentityFields = () => {
     const dispatch = useAppDispatch()
     const clinic = useAppSelector((state) => state.clinic.current)
     const authority = useAppSelector((state) => state.auth.user.authority) || []
+    const canManage = useAuthority(authority, [SUPER_ADMIN, CLINIC_MANAGE])
     const { pageTitleTheme } = useThemeClass()
     const [uploadingLogo, setUploadingLogo] = useState(false)
 
-    if (!authority.includes(SUPER_ADMIN) || !clinic) {
+    if (!canManage || !clinic) {
         return clinic?.name ? (
             <div>
                 <h6 className={`mb-1 ${pageTitleTheme}`}>Clínica</h6>

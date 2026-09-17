@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dentura.api.auth.dto.AuthResponse;
 import com.dentura.api.auth.dto.ForgotPasswordRequest;
+import com.dentura.api.auth.dto.ForgotPasswordResponse;
 import com.dentura.api.auth.dto.ResetPasswordRequest;
 import com.dentura.api.auth.dto.SignInRequest;
 import com.dentura.api.auth.dto.SignUpRequest;
@@ -41,14 +42,13 @@ public class AuthController {
 	}
 
 	@PostMapping("/forgot-password")
-	public ResponseEntity<Boolean> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-		// MVP: acknowledge request (email flow later).
-		return ResponseEntity.ok(true);
+	public ForgotPasswordResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+		return authService.forgotPassword(request);
 	}
 
 	@PostMapping("/reset-password")
 	public ResponseEntity<Boolean> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-		// MVP: acknowledge request (token-based reset later).
+		authService.resetPassword(request);
 		return ResponseEntity.ok(true);
 	}
 }

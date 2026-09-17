@@ -2,19 +2,21 @@ import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { SUPER_ADMIN } from '@/constants/roles.constant'
+import { SUPER_ADMIN, CLINIC_MANAGE } from '@/constants/roles.constant'
 import { apiUpdateCurrentClinic } from '@/services/ClinicService'
 import { setCurrentClinic, useAppDispatch, useAppSelector } from '@/store'
 import { applyClinicTheme } from '@/utils/applyClinicTheme'
+import useAuthority from '@/utils/hooks/useAuthority'
 
 const SaveIdentityButton = () => {
     const dispatch = useAppDispatch()
     const theme = useAppSelector((state) => state.theme)
     const clinic = useAppSelector((state) => state.clinic.current)
     const authority = useAppSelector((state) => state.auth.user.authority) || []
+    const canManage = useAuthority(authority, [SUPER_ADMIN, CLINIC_MANAGE])
     const [saving, setSaving] = useState(false)
 
-    if (!authority.includes(SUPER_ADMIN) || !clinic) {
+    if (!canManage || !clinic) {
         return null
     }
 

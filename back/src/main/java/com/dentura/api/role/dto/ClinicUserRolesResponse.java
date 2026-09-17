@@ -6,5 +6,6 @@ public record ClinicUserRolesResponse(
 		Long id,
 		String userName,
 		String email,
+		boolean active,
 		List<Long> roleIds) {
 }

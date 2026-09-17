@@ -34,6 +34,7 @@ dentura:
   jwt:
     secret: ${DENTURA_JWT_SECRET:change-me-in-production-use-a-long-random-secret-key-at-least-256-bits}
     expiration-ms: ${DENTURA_JWT_EXPIRATION_MS:86400000}
+  public-signup-enabled: ${DENTURA_PUBLIC_SIGNUP:false}
   seed:
     admin-username: ${DENTURA_SEED_ADMIN_USER:admin}
     admin-password: ${DENTURA_SEED_ADMIN_PASSWORD:123Qwe}

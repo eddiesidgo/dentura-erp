@@ -19,6 +19,9 @@ import com.dentura.api.clinic.dto.CreateClinicRequest;
 import com.dentura.api.clinic.dto.UpdateClinicRequest;
 import com.dentura.api.domain.User;
 import com.dentura.api.medication.MedicationSeeder;
+import com.dentura.api.provider.Provider;
+import com.dentura.api.provider.ProviderRepository;
+import com.dentura.api.role.Permission;
 import com.dentura.api.role.PermissionService;
 import com.dentura.api.role.RoleCatalog;
 import com.dentura.api.treatment.TreatmentSeeder;
@@ -36,6 +39,7 @@ public class ClinicService {
 	private final TreatmentSeeder treatmentSeeder;
 	private final MedicationSeeder medicationSeeder;
 	private final ClinicLogoStorage clinicLogoStorage;
+	private final ProviderRepository providerRepository;
 
 	public ClinicService(
 			ClinicRepository clinicRepository,
@@ -45,7 +49,8 @@ public class ClinicService {
 			PermissionService permissionService,
 			TreatmentSeeder treatmentSeeder,
 			MedicationSeeder medicationSeeder,
-			ClinicLogoStorage clinicLogoStorage) {
+			ClinicLogoStorage clinicLogoStorage,
+			ProviderRepository providerRepository) {
 		this.clinicRepository = clinicRepository;
 		this.clinicAccess = clinicAccess;
 		this.jwtService = jwtService;
@@ -54,6 +59,7 @@ public class ClinicService {
 		this.treatmentSeeder = treatmentSeeder;
 		this.medicationSeeder = medicationSeeder;
 		this.clinicLogoStorage = clinicLogoStorage;
+		this.providerRepository = providerRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -88,12 +94,25 @@ public class ClinicService {
 		roleCatalog.ensureClinicRoles(saved.getId());
 		treatmentSeeder.ensureClinicCatalog(saved.getId());
 		medicationSeeder.ensureClinicCatalog(saved.getId());
+		ensureDefaultProvider(saved.getId());
 		return ClinicIdentityResponse.from(saved);
+	}
+
+	private void ensureDefaultProvider(Long clinicId) {
+		if (providerRepository.findFirstByClinicIdAndName(clinicId, "General").isPresent()) {
+			return;
+		}
+		Provider provider = new Provider();
+		provider.setClinicId(clinicId);
+		provider.setName("General");
+		provider.setColor("#3B82F6");
+		provider.setActive(true);
+		providerRepository.save(provider);
 	}
 
 	@Transactional
 	public ClinicIdentityResponse updateCurrent(UpdateClinicRequest request) {
-		clinicAccess.requireSuperAdmin();
+		permissionService.require(Permission.CLINIC_MANAGE);
 		Clinic clinic = requireById(clinicAccess.requireClinicId());
 		clinic.setName(request.name().trim());
 		clinic.setLogoUrl(blankToNull(request.logoUrl()));
@@ -126,7 +145,7 @@ public class ClinicService {
 
 	@Transactional
 	public ClinicIdentityResponse uploadLogo(MultipartFile file) {
-		clinicAccess.requireSuperAdmin();
+		permissionService.require(Permission.CLINIC_MANAGE);
 		Clinic clinic = requireById(clinicAccess.requireClinicId());
 		clinicLogoStorage.save(clinic.getId(), file);
 		clinic.setLogoUrl(clinicLogoStorage.logoApiPath(clinic.getId()));

@@ -35,7 +35,7 @@ const ToothMesh = ({
     tooth: ToothTransform
     selected: boolean
     meshRef?: RefObject<THREE.Mesh | null>
-    onSelect: (tooth: string) => void
+    onSelect: (tooth: string, pivot: THREE.Vector3) => void
 }) => {
     const geometry = useMemo(
         () => createToothGeometry(tooth.shape || 'OVAL'),
@@ -52,8 +52,12 @@ const ToothMesh = ({
             scale={tooth.scale}
             userData={{ toothId: tooth.tooth, kind: 'tooth' }}
             onClick={(event: ThreeEvent<MouseEvent>) => {
+                // Ignore the synthetic clicks that make up a double-click.
+                if (event.detail > 1) {
+                    return
+                }
                 event.stopPropagation()
-                onSelect(tooth.tooth)
+                onSelect(tooth.tooth, event.point.clone())
             }}
             onPointerDown={(event: ThreeEvent<PointerEvent>) => {
                 event.stopPropagation()
@@ -150,7 +154,7 @@ const SelectedGizmo = ({
     )
 }
 
-/** Double-click cycles tooth hits under the cursor (front → back layers). */
+/** Double-click cycles teeth under the cursor, ignoring the scan shell. */
 const LayerPickController = ({
     selectedId,
     dragging,
@@ -164,29 +168,75 @@ const LayerPickController = ({
 }) => {
     const { camera, gl, scene } = useThree()
     const pointer = useRef(new THREE.Vector2())
-    const raycaster = useMemo(() => new THREE.Raycaster(), [])
+    const raycaster = useMemo(() => {
+        const rc = new THREE.Raycaster()
+        // Dental scans are dense; keep tooth picks reliable.
+        rc.params.Mesh = { threshold: 0.15 }
+        return rc
+    }, [])
+    const selectedIdRef = useRef(selectedId)
+    selectedIdRef.current = selectedId
 
     useEffect(() => {
         const el = gl.domElement
 
+        const listToothMeshes = () => {
+            const meshes: THREE.Mesh[] = []
+            scene.traverse((obj) => {
+                if (
+                    obj instanceof THREE.Mesh &&
+                    typeof obj.userData?.toothId === 'string'
+                ) {
+                    meshes.push(obj)
+                }
+            })
+            return meshes
+        }
+
         const collectToothIds = (clientX: number, clientY: number) => {
             const rect = el.getBoundingClientRect()
-            pointer.current.x =
-                ((clientX - rect.left) / rect.width) * 2 - 1
-            pointer.current.y =
-                -((clientY - rect.top) / rect.height) * 2 + 1
+            pointer.current.x = ((clientX - rect.left) / rect.width) * 2 - 1
+            pointer.current.y = -((clientY - rect.top) / rect.height) * 2 + 1
             raycaster.setFromCamera(pointer.current, camera)
-            const hits = raycaster.intersectObjects(scene.children, true)
+
+            const toothMeshes = listToothMeshes()
+            // 1) Direct hits on teeth only (scan is excluded on purpose).
+            const hits = raycaster.intersectObjects(toothMeshes, false)
             const toothIds: string[] = []
             for (const hit of hits) {
-                let obj: THREE.Object3D | null = hit.object
-                while (obj) {
-                    const id = obj.userData?.toothId as string | undefined
-                    if (id && !toothIds.includes(id)) {
-                        toothIds.push(id)
-                        break
-                    }
-                    obj = obj.parent
+                const id = hit.object.userData?.toothId as string | undefined
+                if (id && !toothIds.includes(id)) {
+                    toothIds.push(id)
+                }
+            }
+            if (toothIds.length > 0) {
+                return toothIds
+            }
+
+            // 2) Fallback: teeth near the ray (buried inside the scan volume).
+            const ray = raycaster.ray
+            const nearby: { id: string; along: number; lateral: number }[] = []
+            const center = new THREE.Vector3()
+            const closest = new THREE.Vector3()
+            for (const mesh of toothMeshes) {
+                const id = mesh.userData.toothId as string
+                const box = new THREE.Box3().setFromObject(mesh)
+                box.getCenter(center)
+                const sphere = new THREE.Sphere()
+                box.getBoundingSphere(sphere)
+                ray.closestPointToPoint(center, closest)
+                const lateral = closest.distanceTo(center)
+                const along = closest.distanceTo(ray.origin)
+                // Allow a generous radius so teeth inside the gingiva/scan still count.
+                const threshold = Math.max(sphere.radius * 2.5, 1.25)
+                if (lateral <= threshold) {
+                    nearby.push({ id, along, lateral })
+                }
+            }
+            nearby.sort((a, b) => a.along - b.along || a.lateral - b.lateral)
+            for (const item of nearby) {
+                if (!toothIds.includes(item.id)) {
+                    toothIds.push(item.id)
                 }
             }
             return toothIds
@@ -197,35 +247,24 @@ const LayerPickController = ({
                 return
             }
             event.preventDefault()
+            event.stopPropagation()
             const toothIds = collectToothIds(event.clientX, event.clientY)
             if (toothIds.length === 0) {
-                onSelectTooth(null)
                 return
             }
-            const currentIndex = selectedId
-                ? toothIds.indexOf(selectedId)
-                : -1
+            const current = selectedIdRef.current
+            const currentIndex = current ? toothIds.indexOf(current) : -1
             const nextId =
                 toothIds[(currentIndex + 1) % toothIds.length] ?? toothIds[0]
             onSelectTooth(nextId)
-            // Frame the newly picked tooth so it is not lost inside the scan.
             onFocusRequest()
         }
 
-        el.addEventListener('dblclick', onDblClick)
+        el.addEventListener('dblclick', onDblClick, true)
         return () => {
-            el.removeEventListener('dblclick', onDblClick)
+            el.removeEventListener('dblclick', onDblClick, true)
         }
-    }, [
-        camera,
-        dragging,
-        gl.domElement,
-        onFocusRequest,
-        onSelectTooth,
-        raycaster,
-        scene,
-        selectedId,
-    ])
+    }, [camera, dragging, gl.domElement, onFocusRequest, onSelectTooth, raycaster, scene])
 
     return null
 }
@@ -403,6 +442,66 @@ const MiddleMousePanController = ({ enabled }: { enabled: boolean }) => {
     return null
 }
 
+/** Smoothly moves the orbit pivot so zoom/rotate happen around the clicked element. */
+const OrbitPivotController = ({
+    pivotRef,
+    nonce,
+}: {
+    pivotRef: RefObject<THREE.Vector3>
+    nonce: number
+}) => {
+    const { controls } = useThree()
+    const anim = useRef<{
+        active: boolean
+        t: number
+        from: THREE.Vector3
+        to: THREE.Vector3
+    } | null>(null)
+
+    useEffect(() => {
+        if (!nonce) {
+            return
+        }
+        const orbit = controls as unknown as {
+            target?: THREE.Vector3
+            update?: () => void
+        } | null
+        if (!orbit?.target) {
+            return
+        }
+        anim.current = {
+            active: true,
+            t: 0,
+            from: orbit.target.clone(),
+            to: pivotRef.current.clone(),
+        }
+    }, [controls, nonce, pivotRef])
+
+    useFrame((_, delta) => {
+        const state = anim.current
+        if (!state?.active) {
+            return
+        }
+        const orbit = controls as unknown as {
+            target?: THREE.Vector3
+            update?: () => void
+        } | null
+        if (!orbit?.target) {
+            state.active = false
+            return
+        }
+        state.t = Math.min(1, state.t + delta * 4)
+        const k = 1 - Math.pow(1 - state.t, 3)
+        orbit.target.lerpVectors(state.from, state.to, k)
+        orbit.update?.()
+        if (state.t >= 1) {
+            state.active = false
+        }
+    })
+
+    return null
+}
+
 const SceneContent = ({
     document,
     scanGeometry,
@@ -415,11 +514,18 @@ const SceneContent = ({
 }: Omit<SmileDesignerCanvasProps, 'className'>) => {
     const selectedRef = useRef<THREE.Mesh | null>(null)
     const orbitRef = useRef<THREE.Object3D & { enabled?: boolean }>(null)
+    const pivotRef = useRef(new THREE.Vector3())
     const [dragging, setDragging] = useState(false)
     const [gizmoReady, setGizmoReady] = useState(0)
     const [localFocus, setLocalFocus] = useState(0)
+    const [pivotNonce, setPivotNonce] = useState(0)
     const selectedId = document.selectedTooth
     const combinedFocus = focusNonce + localFocus
+
+    const setOrbitPivot = (point: THREE.Vector3) => {
+        pivotRef.current.copy(point)
+        setPivotNonce((n) => n + 1)
+    }
 
     useEffect(() => {
         setGizmoReady((n) => n + 1)
@@ -430,6 +536,24 @@ const SceneContent = ({
             orbitRef.current.enabled = !dragging
         }
     }, [dragging])
+
+    // When selection changes from layer pick / external UI, pivot to the mesh center.
+    useEffect(() => {
+        if (!selectedId || gizmoReady === 0) {
+            return
+        }
+        const id = window.setTimeout(() => {
+            const mesh = selectedRef.current
+            if (!mesh) {
+                return
+            }
+            const center = new THREE.Box3()
+                .setFromObject(mesh)
+                .getCenter(new THREE.Vector3())
+            setOrbitPivot(center)
+        }, 0)
+        return () => window.clearTimeout(id)
+    }, [selectedId, gizmoReady])
 
     return (
         <>
@@ -443,10 +567,13 @@ const SceneContent = ({
                             geometry={scanGeometry}
                             userData={{ kind: 'scan' }}
                             onClick={(event) => {
-                                event.stopPropagation()
-                                if (!dragging) {
-                                    onSelectTooth(null)
+                                // Don't deselect on the 2nd click of a double-click.
+                                if (event.detail > 1 || dragging) {
+                                    return
                                 }
+                                event.stopPropagation()
+                                onSelectTooth(null)
+                                setOrbitPivot(event.point.clone())
                             }}
                         >
                             <meshStandardMaterial
@@ -469,7 +596,10 @@ const SceneContent = ({
                             }
                             selected={selectedId === tooth.tooth}
                             tooth={tooth}
-                            onSelect={onSelectTooth}
+                            onSelect={(id, pivot) => {
+                                onSelectTooth(id)
+                                setOrbitPivot(pivot)
+                            }}
                         />
                     ))}
                 </group>
@@ -492,6 +622,7 @@ const SceneContent = ({
                 onSelectTooth={onSelectTooth}
             />
             <FocusController nonce={combinedFocus} targetRef={selectedRef} />
+            <OrbitPivotController nonce={pivotNonce} pivotRef={pivotRef} />
             <MiddleMousePanController enabled={!dragging} />
             <OrbitControls
                 ref={orbitRef}
@@ -500,6 +631,7 @@ const SceneContent = ({
                 enablePan={false}
                 enableZoom
                 enabled={!dragging}
+                zoomToCursor
                 mouseButtons={{
                     LEFT: THREE.MOUSE.ROTATE,
                     MIDDLE: THREE.MOUSE.PAN,

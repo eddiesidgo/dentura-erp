@@ -51,6 +51,9 @@ public class User {
 	@Column(name = "clinic_id")
 	private Long clinicId;
 
+	@Column(nullable = false)
+	private boolean active = true;
+
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(
 			name = "user_roles",
@@ -141,6 +144,14 @@ public class User {
 
 	public void setClinicId(Long clinicId) {
 		this.clinicId = clinicId;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
 	public Set<Role> getRoles() {

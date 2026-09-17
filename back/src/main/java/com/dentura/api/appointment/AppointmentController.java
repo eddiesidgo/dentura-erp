@@ -33,8 +33,10 @@ public class AppointmentController {
 	@GetMapping
 	public List<AppointmentResponse> list(
 			@RequestParam Instant from,
-			@RequestParam Instant to) {
-		return appointmentService.list(from, to);
+			@RequestParam Instant to,
+			@RequestParam(required = false) Long providerId,
+			@RequestParam(required = false) Long roomId) {
+		return appointmentService.list(from, to, providerId, roomId);
 	}
 
 	@GetMapping("/{id}")

@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record AppointmentRequest(
 		@NotNull(message = "El paciente es obligatorio") Long patientId,
+		Long providerId,
+		Long roomId,
 		@NotNull(message = "La hora de inicio es obligatoria") Instant startAt,
 		@NotNull(message = "La hora de fin es obligatoria") Instant endAt,
 		String status,

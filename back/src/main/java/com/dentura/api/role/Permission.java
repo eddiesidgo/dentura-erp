@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 public class Permission {
 
 	public static final String ROLES_MANAGE = "roles.manage";
+	public static final String CLINIC_MANAGE = "clinic.manage";
+	public static final String AUDIT_READ = "audit.read";
 	public static final String PATIENTS_READ = "patients.read";
 	public static final String PATIENTS_WRITE = "patients.write";
 	public static final String PATIENTS_DELETE = "patients.delete";

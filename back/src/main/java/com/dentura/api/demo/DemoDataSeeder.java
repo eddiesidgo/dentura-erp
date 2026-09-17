@@ -19,6 +19,16 @@ import org.springframework.web.server.ResponseStatusException;
 import com.dentura.api.appointment.Appointment;
 import com.dentura.api.appointment.AppointmentRepository;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.consent.ConsentTemplate;
+import com.dentura.api.consent.ConsentTemplateRepository;
+import com.dentura.api.consent.PatientConsent;
+import com.dentura.api.consent.PatientConsentRepository;
+import com.dentura.api.inventory.InventoryItem;
+import com.dentura.api.inventory.InventoryItemRepository;
+import com.dentura.api.inventory.InventoryMovement;
+import com.dentura.api.inventory.InventoryMovementRepository;
+import com.dentura.api.ledger.LedgerEntry;
+import com.dentura.api.ledger.LedgerEntryRepository;
 import com.dentura.api.medication.Medication;
 import com.dentura.api.medication.MedicationRepository;
 import com.dentura.api.medication.MedicationSeeder;
@@ -32,16 +42,24 @@ import com.dentura.api.payment.Payment;
 import com.dentura.api.payment.PaymentAllocation;
 import com.dentura.api.payment.PaymentAllocationRepository;
 import com.dentura.api.payment.PaymentRepository;
+import com.dentura.api.periodontogram.PeriodontogramEntry;
+import com.dentura.api.periodontogram.PeriodontogramEntryRepository;
 import com.dentura.api.photo.PatientPhoto;
 import com.dentura.api.photo.PatientPhotoRepository;
 import com.dentura.api.prescription.Prescription;
 import com.dentura.api.prescription.PrescriptionRepository;
 import com.dentura.api.prescription.PrescriptionTemplate;
 import com.dentura.api.prescription.PrescriptionTemplateRepository;
+import com.dentura.api.provider.Provider;
+import com.dentura.api.provider.ProviderRepository;
 import com.dentura.api.referral.OutboundReferral;
 import com.dentura.api.referral.OutboundReferralRepository;
 import com.dentura.api.referral.ReferralSource;
 import com.dentura.api.referral.ReferralSourceRepository;
+import com.dentura.api.reminder.ReminderQueueItem;
+import com.dentura.api.reminder.ReminderQueueRepository;
+import com.dentura.api.room.Room;
+import com.dentura.api.room.RoomRepository;
 import com.dentura.api.scan.PatientScan;
 import com.dentura.api.scan.PatientScanRepository;
 import com.dentura.api.smile.SmileDesign;
@@ -89,6 +107,15 @@ public class DemoDataSeeder {
 	private final SmileDesignRepository smileDesignRepository;
 	private final PatientFileStorage fileStorage;
 	private final SmileSuggestionEngine suggestionEngine;
+	private final ProviderRepository providerRepository;
+	private final RoomRepository roomRepository;
+	private final LedgerEntryRepository ledgerEntryRepository;
+	private final InventoryItemRepository inventoryItemRepository;
+	private final InventoryMovementRepository inventoryMovementRepository;
+	private final ConsentTemplateRepository consentTemplateRepository;
+	private final PatientConsentRepository patientConsentRepository;
+	private final PeriodontogramEntryRepository periodontogramEntryRepository;
+	private final ReminderQueueRepository reminderQueueRepository;
 
 	public DemoDataSeeder(
 			@Value("${dentura.demo.seed-enabled:false}") boolean enabled,
@@ -111,7 +138,16 @@ public class DemoDataSeeder {
 			PatientScanRepository scanRepository,
 			SmileDesignRepository smileDesignRepository,
 			PatientFileStorage fileStorage,
-			SmileSuggestionEngine suggestionEngine) {
+			SmileSuggestionEngine suggestionEngine,
+			ProviderRepository providerRepository,
+			RoomRepository roomRepository,
+			LedgerEntryRepository ledgerEntryRepository,
+			InventoryItemRepository inventoryItemRepository,
+			InventoryMovementRepository inventoryMovementRepository,
+			ConsentTemplateRepository consentTemplateRepository,
+			PatientConsentRepository patientConsentRepository,
+			PeriodontogramEntryRepository periodontogramEntryRepository,
+			ReminderQueueRepository reminderQueueRepository) {
 		this.enabled = enabled;
 		this.clinicAccess = clinicAccess;
 		this.patientRepository = patientRepository;
@@ -133,6 +169,15 @@ public class DemoDataSeeder {
 		this.smileDesignRepository = smileDesignRepository;
 		this.fileStorage = fileStorage;
 		this.suggestionEngine = suggestionEngine;
+		this.providerRepository = providerRepository;
+		this.roomRepository = roomRepository;
+		this.ledgerEntryRepository = ledgerEntryRepository;
+		this.inventoryItemRepository = inventoryItemRepository;
+		this.inventoryMovementRepository = inventoryMovementRepository;
+		this.consentTemplateRepository = consentTemplateRepository;
+		this.patientConsentRepository = patientConsentRepository;
+		this.periodontogramEntryRepository = periodontogramEntryRepository;
+		this.reminderQueueRepository = reminderQueueRepository;
 	}
 
 	public boolean isEnabled() {
@@ -157,6 +202,7 @@ public class DemoDataSeeder {
 		}
 
 		Map<String, Object> smileCounts = ensureSmileDemoData(clinicId);
+		Map<String, Object> erpCounts = ensureExtendedErpDemo(clinicId);
 		Map<String, Object> details = new LinkedHashMap<>();
 		if (coreCreated) {
 			details.put("core", "CREATED");
@@ -172,10 +218,19 @@ public class DemoDataSeeder {
 			details.put("core", "ALREADY_PRESENT");
 			details.put(
 					"message",
-					"Pacientes DEMO-00x ya existían; se aseguró data de fotos/scans/smile.");
+					"Pacientes DEMO-00x ya existían; se aseguró data extendida del ERP.");
 		}
 		details.putAll(smileCounts);
-		details.put("recordNumbers", List.of(DEMO_PREFIX + "001", DEMO_PREFIX + "002", DEMO_PREFIX + "003"));
+		details.putAll(erpCounts);
+		details.put(
+				"recordNumbers",
+				List.of(
+						DEMO_PREFIX + "001",
+						DEMO_PREFIX + "002",
+						DEMO_PREFIX + "003",
+						DEMO_PREFIX + "004",
+						DEMO_PREFIX + "005",
+						DEMO_PREFIX + "006"));
 		return DemoSeedResult.created(clinicId, details);
 	}
 
@@ -232,14 +287,47 @@ public class DemoDataSeeder {
 
 		Work anaConsult = saveWork(clinicId, ana.getId(), consult, Work.COMPLETED, 1, consult.getPrice(), "11", null);
 		Work anaResin = saveWork(clinicId, ana.getId(), resin, Work.PENDING, 1, resin.getPrice(), "16", "MOD");
-		saveWork(clinicId, luis.getId(), prophylaxis, Work.PENDING, 1, prophylaxis.getPrice(), null, null);
+		Work luisProf = saveWork(clinicId, luis.getId(), prophylaxis, Work.PENDING, 1, prophylaxis.getPrice(), null, null);
 		saveWork(clinicId, luis.getId(), extraction, Work.REJECTED, 1, extraction.getPrice(), "48", null);
 		saveWork(clinicId, maria.getId(), consult, Work.PENDING, 1, consult.getPrice(), null, "Primera visita");
 
+		ensureWorkCharge(anaConsult, "CONS — Consulta");
+		ensureWorkCharge(anaResin, "RR — Resina");
+		ensureWorkCharge(luisProf, "PROF — Profilaxis");
+
+		Provider general = ensureProvider(clinicId, "General", "#3B82F6");
+		Provider ortodoncia = ensureProvider(clinicId, "Dra. Sofía Ortiz", "#10B981");
+		Room sala1 = ensureRoom(clinicId, "Sala 1");
+		Room sala2 = ensureRoom(clinicId, "Sala 2");
+
 		ZonedDateTime now = ZonedDateTime.now(ZONE);
-		saveAppointment(clinicId, ana.getId(), now.plusDays(1).withHour(9).withMinute(0), 45, Appointment.CONFIRMED, "Control");
-		saveAppointment(clinicId, luis.getId(), now.plusDays(2).withHour(10).withMinute(30), 60, Appointment.SCHEDULED, "Profilaxis");
-		saveAppointment(clinicId, maria.getId(), now.plusDays(3).withHour(15).withMinute(0), 30, Appointment.SCHEDULED, "Consulta");
+		saveAppointment(
+				clinicId,
+				ana.getId(),
+				general.getId(),
+				sala1.getId(),
+				now.plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0),
+				45,
+				Appointment.CONFIRMED,
+				"Control");
+		saveAppointment(
+				clinicId,
+				luis.getId(),
+				ortodoncia.getId(),
+				sala2.getId(),
+				now.plusDays(2).withHour(10).withMinute(30).withSecond(0).withNano(0),
+				60,
+				Appointment.SCHEDULED,
+				"Profilaxis");
+		saveAppointment(
+				clinicId,
+				maria.getId(),
+				general.getId(),
+				sala1.getId(),
+				now.plusDays(3).withHour(15).withMinute(0).withSecond(0).withNano(0),
+				30,
+				Appointment.SCHEDULED,
+				"Consulta");
 
 		saveOdontogram(clinicId, ana.getId(), "16", "MOD", OdontogramEntry.CARIES, OdontogramEntry.PLANNED, anaResin.getId());
 		saveOdontogram(clinicId, ana.getId(), "11", null, OdontogramEntry.FILLING, OdontogramEntry.COMPLETED, anaConsult.getId());
@@ -252,6 +340,7 @@ public class DemoDataSeeder {
 		alloc.setWorkId(anaConsult.getId());
 		alloc.setAmount(anaConsult.getUnitPrice());
 		paymentAllocationRepository.save(alloc);
+		ensurePaymentLedger(anaPayment);
 
 		PrescriptionTemplate amox = saveTemplate(clinicId, "Amoxicilina 500 mg", "1 cápsula", "cada 8 horas", "7 días", "Tomar con alimentos");
 		Medication amoxMed = medicationRepository.findByClinicIdAndCodeIgnoreCase(clinicId, "AMOX500").orElse(null);
@@ -354,6 +443,390 @@ public class DemoDataSeeder {
 		counts.put("scansCreated", scans);
 		counts.put("smileDesignsCreated", designs);
 		return counts;
+	}
+
+	/**
+	 * Idempotent: providers, rooms, extra patients, week agenda, ledger, inventory,
+	 * reminders, periodontogram and consents for full ERP walkthrough.
+	 */
+	private Map<String, Object> ensureExtendedErpDemo(Long clinicId) {
+		Map<String, Object> counts = new LinkedHashMap<>();
+		int patientsCreated = 0;
+		int appointmentsCreated = 0;
+		int ledgerCreated = 0;
+		int inventoryCreated = 0;
+		int remindersCreated = 0;
+		int perioCreated = 0;
+		int consentsCreated = 0;
+
+		Provider general = ensureProvider(clinicId, "General", "#3B82F6");
+		Provider sofia = ensureProvider(clinicId, "Dra. Sofía Ortiz", "#10B981");
+		Provider andres = ensureProvider(clinicId, "Dr. Andrés Castro", "#F59E0B");
+		Room sala1 = ensureRoom(clinicId, "Sala 1");
+		Room sala2 = ensureRoom(clinicId, "Sala 2");
+		Room salaRayos = ensureRoom(clinicId, "Sala Rayos X");
+		counts.put("providers", 3);
+		counts.put("rooms", 3);
+
+		Patient ana = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "001").orElseThrow();
+		Patient luis = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "002").orElseThrow();
+		Patient maria = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "003").orElseThrow();
+
+		Patient carlos = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "004").orElse(null);
+		if (carlos == null) {
+			carlos = savePatient(
+					clinicId,
+					DEMO_PREFIX + "004",
+					"Carlos",
+					"Mejía",
+					"MALE",
+					LocalDate.of(1978, 5, 9),
+					"7012-8899",
+					"carlos.mejia.demo@dentura.local",
+					"DUI-DEMO-004",
+					null,
+					null);
+			patientsCreated++;
+		}
+		Patient elena = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "005").orElse(null);
+		if (elena == null) {
+			elena = savePatient(
+					clinicId,
+					DEMO_PREFIX + "005",
+					"Elena",
+					"García",
+					"FEMALE",
+					LocalDate.of(1995, 12, 1),
+					"7555-2211",
+					"elena.garcia.demo@dentura.local",
+					"DUI-DEMO-005",
+					null,
+					null);
+			patientsCreated++;
+		}
+		Patient pedro = patientRepository.findByClinicIdAndRecordNumber(clinicId, DEMO_PREFIX + "006").orElse(null);
+		if (pedro == null) {
+			pedro = savePatient(
+					clinicId,
+					DEMO_PREFIX + "006",
+					"Pedro",
+					"Vásquez",
+					"MALE",
+					LocalDate.of(1988, 8, 18),
+					"7676-3434",
+					"pedro.vasquez.demo@dentura.local",
+					"DUI-DEMO-006",
+					null,
+					null);
+			patientsCreated++;
+		}
+
+		Treatment consult = requireTreatment(clinicId, "CONS");
+		Treatment prophylaxis = requireTreatment(clinicId, "PROF");
+		Treatment resin = requireTreatment(clinicId, "RR");
+		Treatment extraction = requireTreatment(clinicId, "EXO");
+		setPriceIfZero(consult, "25.00");
+		setPriceIfZero(prophylaxis, "45.00");
+		setPriceIfZero(resin, "60.00");
+		setPriceIfZero(extraction, "80.00");
+
+		if (workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, carlos.getId()).isEmpty()) {
+			Work charge = saveWork(clinicId, carlos.getId(), resin, Work.PENDING, 2, resin.getPrice(), "26", "MOD");
+			ensureWorkCharge(charge, "RR — Resina (moroso demo)");
+			Work unpaid = saveWork(clinicId, carlos.getId(), extraction, Work.PENDING, 1, extraction.getPrice(), "38", null);
+			ensureWorkCharge(unpaid, "EXO — Exodoncia (moroso demo)");
+		}
+		if (workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, elena.getId()).isEmpty()) {
+			Work w = saveWork(clinicId, elena.getId(), prophylaxis, Work.COMPLETED, 1, prophylaxis.getPrice(), null, null);
+			ensureWorkCharge(w, "PROF — Profilaxis");
+			Payment pay = savePayment(clinicId, elena.getId(), prophylaxis.getPrice(), Payment.TRANSFER, "Pago completo DEMO");
+			ensurePaymentLedger(pay);
+		}
+		if (workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, pedro.getId()).isEmpty()) {
+			Work w = saveWork(clinicId, pedro.getId(), consult, Work.PENDING, 1, consult.getPrice(), null, "Valoración ortodoncia");
+			ensureWorkCharge(w, "CONS — Consulta");
+		}
+
+		backfillLedgerForExistingWorks(clinicId, ana.getId());
+		backfillLedgerForExistingWorks(clinicId, luis.getId());
+		backfillLedgerForExistingWorks(clinicId, maria.getId());
+		ledgerCreated += backfillPaymentsLedger(clinicId, ana.getId());
+		ledgerCreated += backfillPaymentsLedger(clinicId, elena.getId());
+
+		if (ledgerEntryRepository.findByClinicIdAndPatientIdOrderByEntryDateAscIdAsc(clinicId, carlos.getId()).stream()
+				.noneMatch(e -> LedgerEntry.ADJUSTMENT.equals(e.getType()))) {
+			LedgerEntry adj = new LedgerEntry();
+			adj.setClinicId(clinicId);
+			adj.setPatientId(carlos.getId());
+			adj.setType(LedgerEntry.ADJUSTMENT);
+			adj.setAmount(new BigDecimal("-10.00"));
+			adj.setDescription("Descuento DEMO por prontopago parcial");
+			adj.setEntryDate(Instant.now().minusSeconds(86400));
+			ledgerEntryRepository.save(adj);
+			ledgerCreated++;
+		}
+
+		ZonedDateTime today = ZonedDateTime.now(ZONE).withSecond(0).withNano(0);
+		String marker = "DEMO semana";
+		boolean hasWeekAgenda = appointmentRepository
+				.findByClinicIdAndStartAtGreaterThanEqualAndStartAtLessThanOrderByStartAtAsc(
+						clinicId,
+						today.minusDays(1).toInstant(),
+						today.plusDays(8).toInstant())
+				.stream()
+				.anyMatch(a -> a.getReason() != null && a.getReason().startsWith(marker));
+
+		if (!hasWeekAgenda) {
+			Appointment[] created = new Appointment[] {
+					saveAppointment(clinicId, ana.getId(), general.getId(), sala1.getId(),
+							today.withHour(9).withMinute(0), 45, Appointment.CONFIRMED, marker + " control Ana"),
+					saveAppointment(clinicId, luis.getId(), sofia.getId(), sala2.getId(),
+							today.withHour(10).withMinute(30), 60, Appointment.SCHEDULED, marker + " profilaxis Luis"),
+					saveAppointment(clinicId, maria.getId(), andres.getId(), sala1.getId(),
+							today.withHour(14).withMinute(0), 30, Appointment.SCHEDULED, marker + " consulta María"),
+					saveAppointment(clinicId, carlos.getId(), general.getId(), salaRayos.getId(),
+							today.plusDays(1).withHour(11).withMinute(0), 40, Appointment.CONFIRMED, marker + " RX Carlos"),
+					saveAppointment(clinicId, elena.getId(), sofia.getId(), sala2.getId(),
+							today.plusDays(1).withHour(16).withMinute(0), 50, Appointment.SCHEDULED, marker + " ortodoncia Elena"),
+					saveAppointment(clinicId, pedro.getId(), andres.getId(), sala1.getId(),
+							today.plusDays(2).withHour(9).withMinute(30), 45, Appointment.SCHEDULED, marker + " valoración Pedro"),
+					saveAppointment(clinicId, ana.getId(), sofia.getId(), sala2.getId(),
+							today.plusDays(3).withHour(12).withMinute(0), 30, Appointment.SCHEDULED, marker + " seguimiento Ana"),
+					saveAppointment(clinicId, luis.getId(), general.getId(), sala1.getId(),
+							today.plusDays(4).withHour(15).withMinute(30), 60, Appointment.SCHEDULED, marker + " limpieza Luis"),
+			};
+			appointmentsCreated = created.length;
+
+			remindersCreated += saveReminderIfMissing(
+					clinicId,
+					created[0],
+					ana,
+					"50378901234",
+					"Hola Ana, te recordamos tu cita DEMO hoy a las 9:00 en Dentura.");
+			remindersCreated += saveReminderIfMissing(
+					clinicId,
+					created[1],
+					luis,
+					"50377885566",
+					"Hola Luis, te recordamos tu cita DEMO hoy a las 10:30 en Dentura.");
+			remindersCreated += saveReminderIfMissing(
+					clinicId,
+					created[3],
+					carlos,
+					"50370128899",
+					"Hola Carlos, te recordamos tu cita DEMO mañana a las 11:00 en Dentura.");
+		}
+
+		if (inventoryItemRepository.findByClinicIdAndSku(clinicId, "DEMO-GLOVES").isEmpty()) {
+			InventoryItem gloves = saveInventoryItem(clinicId, "DEMO-GLOVES", "Guantes de látex M", "caja", "12.00", "5.00");
+			saveInventoryMovement(clinicId, gloves.getId(), InventoryMovement.IN, "20.00", "Compra inicial DEMO");
+			saveInventoryMovement(clinicId, gloves.getId(), InventoryMovement.OUT, "3.00", "Uso clínico DEMO");
+			gloves.setQuantity(new BigDecimal("17.00"));
+			inventoryItemRepository.save(gloves);
+			inventoryCreated++;
+		}
+		if (inventoryItemRepository.findByClinicIdAndSku(clinicId, "DEMO-COMPOSITE").isEmpty()) {
+			InventoryItem composite = saveInventoryItem(clinicId, "DEMO-COMPOSITE", "Resina composite A2", "jeringa", "8.00", "4.00");
+			saveInventoryMovement(clinicId, composite.getId(), InventoryMovement.IN, "10.00", "Stock inicial DEMO");
+			saveInventoryMovement(clinicId, composite.getId(), InventoryMovement.OUT, "7.00", "Consumo DEMO (bajo mínimo)");
+			composite.setQuantity(new BigDecimal("3.00"));
+			inventoryItemRepository.save(composite);
+			inventoryCreated++;
+		}
+		if (inventoryItemRepository.findByClinicIdAndSku(clinicId, "DEMO-ANES").isEmpty()) {
+			InventoryItem anes = saveInventoryItem(clinicId, "DEMO-ANES", "Anestesia lidocaína 2%", "cartucho", "40.00", "15.00");
+			saveInventoryMovement(clinicId, anes.getId(), InventoryMovement.IN, "50.00", "Pedido lab DEMO");
+			saveInventoryMovement(clinicId, anes.getId(), InventoryMovement.ADJUST, "-5.00", "Ajuste inventario DEMO");
+			anes.setQuantity(new BigDecimal("45.00"));
+			inventoryItemRepository.save(anes);
+			inventoryCreated++;
+		}
+
+		ConsentTemplate tpl = consentTemplateRepository
+				.findFirstByClinicIdAndTitle(clinicId, "Consentimiento informado DEMO")
+				.orElseGet(() -> {
+					ConsentTemplate t = new ConsentTemplate();
+					t.setClinicId(clinicId);
+					t.setTitle("Consentimiento informado DEMO");
+					t.setBodyHtml(
+							"<p>Autorizo el tratamiento odontológico propuesto en Dentura (datos de ejemplo).</p>"
+									+ "<p>Entiendo riesgos, alternativas y cuidados posteriores.</p>");
+					t.setActive(true);
+					return consentTemplateRepository.save(t);
+				});
+		if (patientConsentRepository.findByClinicIdAndPatientIdOrderByAcceptedAtDesc(clinicId, ana.getId()).isEmpty()) {
+			PatientConsent consent = new PatientConsent();
+			consent.setClinicId(clinicId);
+			consent.setPatientId(ana.getId());
+			consent.setTemplateId(tpl.getId());
+			consent.setSignerName("Ana López");
+			consent.setAcceptedAt(Instant.now().minusSeconds(7200));
+			consent.setNotes("Firmado en recepción DEMO");
+			patientConsentRepository.save(consent);
+			consentsCreated++;
+		}
+		if (patientConsentRepository.findByClinicIdAndPatientIdOrderByAcceptedAtDesc(clinicId, carlos.getId()).isEmpty()) {
+			PatientConsent consent = new PatientConsent();
+			consent.setClinicId(clinicId);
+			consent.setPatientId(carlos.getId());
+			consent.setTemplateId(tpl.getId());
+			consent.setSignerName("Carlos Mejía");
+			consent.setAcceptedAt(Instant.now().minusSeconds(3600));
+			patientConsentRepository.save(consent);
+			consentsCreated++;
+		}
+
+		if (periodontogramEntryRepository
+				.findByClinicIdAndPatientIdOrderByToothAscRecordedAtDesc(clinicId, luis.getId())
+				.isEmpty()) {
+			perioCreated += savePerio(clinicId, luis.getId(), "16", "{\"pd\":[3,4,3],\"bop\":[false,true,false],\"recession\":[0,1,0]}");
+			perioCreated += savePerio(clinicId, luis.getId(), "26", "{\"pd\":[2,3,2],\"bop\":[false,false,false],\"recession\":[0,0,0]}");
+			perioCreated += savePerio(clinicId, luis.getId(), "36", "{\"pd\":[4,5,4],\"bop\":[true,true,false],\"recession\":[1,1,0]}");
+		}
+
+		counts.put("extraPatientsCreated", patientsCreated);
+		counts.put("weekAppointmentsCreated", appointmentsCreated);
+		counts.put("ledgerExtrasCreated", ledgerCreated);
+		counts.put("inventoryItemsCreated", inventoryCreated);
+		counts.put("remindersCreated", remindersCreated);
+		counts.put("periodontogramCreated", perioCreated);
+		counts.put("consentsCreated", consentsCreated);
+		return counts;
+	}
+
+	private Provider ensureProvider(Long clinicId, String name, String color) {
+		return providerRepository.findFirstByClinicIdAndName(clinicId, name).orElseGet(() -> {
+			Provider provider = new Provider();
+			provider.setClinicId(clinicId);
+			provider.setName(name);
+			provider.setColor(color);
+			provider.setActive(true);
+			return providerRepository.save(provider);
+		});
+	}
+
+	private Room ensureRoom(Long clinicId, String name) {
+		return roomRepository.findFirstByClinicIdAndName(clinicId, name).orElseGet(() -> {
+			Room room = new Room();
+			room.setClinicId(clinicId);
+			room.setName(name);
+			room.setActive(true);
+			return roomRepository.save(room);
+		});
+	}
+
+	private void backfillLedgerForExistingWorks(Long clinicId, Long patientId) {
+		for (Work work : workRepository.findByClinicIdAndPatientIdOrderByCreatedAtDesc(clinicId, patientId)) {
+			if (Work.REJECTED.equals(work.getStatus())) {
+				continue;
+			}
+			ensureWorkCharge(work, "Cargo trabajo #" + work.getId());
+		}
+	}
+
+	private int backfillPaymentsLedger(Long clinicId, Long patientId) {
+		int created = 0;
+		for (Payment payment : paymentRepository.findByClinicIdAndPatientId(clinicId, patientId)) {
+			if (ledgerEntryRepository.findByPaymentIdAndType(payment.getId(), LedgerEntry.PAYMENT).isEmpty()) {
+				ensurePaymentLedger(payment);
+				created++;
+			}
+		}
+		return created;
+	}
+
+	private void ensureWorkCharge(Work work, String description) {
+		if (work == null || work.getId() == null || Work.REJECTED.equals(work.getStatus())) {
+			return;
+		}
+		if (ledgerEntryRepository.existsByWorkIdAndType(work.getId(), LedgerEntry.CHARGE)) {
+			return;
+		}
+		BigDecimal amount = work.getUnitPrice().multiply(BigDecimal.valueOf(work.getQuantity()));
+		if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+			return;
+		}
+		LedgerEntry entry = new LedgerEntry();
+		entry.setClinicId(work.getClinicId());
+		entry.setPatientId(work.getPatientId());
+		entry.setWorkId(work.getId());
+		entry.setType(LedgerEntry.CHARGE);
+		entry.setAmount(amount);
+		entry.setDescription(description);
+		entry.setEntryDate(Instant.now().minusSeconds(7200));
+		ledgerEntryRepository.save(entry);
+	}
+
+	private void ensurePaymentLedger(Payment payment) {
+		if (ledgerEntryRepository.findByPaymentIdAndType(payment.getId(), LedgerEntry.PAYMENT).isPresent()) {
+			return;
+		}
+		LedgerEntry entry = new LedgerEntry();
+		entry.setClinicId(payment.getClinicId());
+		entry.setPatientId(payment.getPatientId());
+		entry.setPaymentId(payment.getId());
+		entry.setType(LedgerEntry.PAYMENT);
+		entry.setAmount(payment.getAmount());
+		entry.setDescription("Pago recibo #" + payment.getReceiptNumber());
+		entry.setEntryDate(payment.getPaidAt() == null ? Instant.now() : payment.getPaidAt());
+		ledgerEntryRepository.save(entry);
+	}
+
+	private InventoryItem saveInventoryItem(
+			Long clinicId,
+			String sku,
+			String name,
+			String unit,
+			String quantity,
+			String minQuantity) {
+		InventoryItem item = new InventoryItem();
+		item.setClinicId(clinicId);
+		item.setSku(sku);
+		item.setName(name);
+		item.setUnit(unit);
+		item.setQuantity(new BigDecimal(quantity));
+		item.setMinQuantity(new BigDecimal(minQuantity));
+		item.setActive(true);
+		return inventoryItemRepository.save(item);
+	}
+
+	private void saveInventoryMovement(Long clinicId, Long itemId, String type, String quantity, String note) {
+		InventoryMovement movement = new InventoryMovement();
+		movement.setClinicId(clinicId);
+		movement.setItemId(itemId);
+		movement.setType(type);
+		movement.setQuantity(new BigDecimal(quantity).abs());
+		movement.setNote(note);
+		inventoryMovementRepository.save(movement);
+	}
+
+	private int saveReminderIfMissing(Long clinicId, Appointment appointment, Patient patient, String phone, String body) {
+		if (reminderQueueRepository.existsByAppointmentId(appointment.getId())) {
+			return 0;
+		}
+		ReminderQueueItem item = new ReminderQueueItem();
+		item.setClinicId(clinicId);
+		item.setAppointmentId(appointment.getId());
+		item.setPatientId(patient.getId());
+		item.setPhoneNormalized(phone);
+		item.setMessageBody(body);
+		item.setWaMeUrl("https://wa.me/" + phone + "?text=" + java.net.URLEncoder.encode(body, StandardCharsets.UTF_8));
+		item.setStatus(ReminderQueueItem.PENDING);
+		item.setScheduledFor(appointment.getStartAt().minusSeconds(3600));
+		reminderQueueRepository.save(item);
+		return 1;
+	}
+
+	private int savePerio(Long clinicId, Long patientId, String tooth, String valuesJson) {
+		PeriodontogramEntry entry = new PeriodontogramEntry();
+		entry.setClinicId(clinicId);
+		entry.setPatientId(patientId);
+		entry.setTooth(tooth);
+		entry.setValuesJson(valuesJson);
+		entry.setNotes("Registro DEMO");
+		entry.setRecordedAt(Instant.now().minusSeconds(86400));
+		periodontogramEntryRepository.save(entry);
+		return 1;
 	}
 
 	private PatientScan findDemoScan(Long clinicId, Long patientId) {
@@ -549,9 +1022,11 @@ public class DemoDataSeeder {
 		return workRepository.save(work);
 	}
 
-	private void saveAppointment(
+	private Appointment saveAppointment(
 			Long clinicId,
 			Long patientId,
+			Long providerId,
+			Long roomId,
 			ZonedDateTime start,
 			int minutes,
 			String status,
@@ -559,11 +1034,13 @@ public class DemoDataSeeder {
 		Appointment appointment = new Appointment();
 		appointment.setClinicId(clinicId);
 		appointment.setPatientId(patientId);
+		appointment.setProviderId(providerId);
+		appointment.setRoomId(roomId);
 		appointment.setStartAt(start.toInstant());
 		appointment.setEndAt(start.plusMinutes(minutes).toInstant());
 		appointment.setStatus(status);
 		appointment.setReason(reason);
-		appointmentRepository.save(appointment);
+		return appointmentRepository.save(appointment);
 	}
 
 	private void saveOdontogram(

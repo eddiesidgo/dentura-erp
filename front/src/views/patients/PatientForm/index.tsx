@@ -43,13 +43,18 @@ import PatientFormStepper from './PatientFormStepper'
 import PatientProfileHeader from './PatientProfileHeader'
 import PatientWorks from './PatientWorks'
 import PatientOdontogram from './PatientOdontogram'
+import PatientPeriodontogram from './PatientPeriodontogram'
+import PatientConsents from './PatientConsents'
 import PatientPhotos from './PatientPhotos'
 import PatientScans from './smile/PatientScans'
 import PatientPrescriptions from './PatientPrescriptions'
 import PatientPayments from './PatientPayments'
+import PatientLedger from './PatientLedger'
 import PatientReferrals from './PatientReferrals'
 import {
     ODONTOGRAM_READ,
+    PATIENTS_READ,
+    PATIENTS_WRITE,
     PAYMENTS_READ,
     PHOTOS_READ,
     PRESCRIPTIONS_READ,
@@ -155,6 +160,7 @@ const PatientForm = () => {
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
     const canReadWorks = useAuthority(userAuthority, [WORKS_READ])
+    const canWritePatient = useAuthority(userAuthority, [PATIENTS_WRITE])
     const canReadOdontogram = useAuthority(userAuthority, [ODONTOGRAM_READ])
     const canReadPhotos = useAuthority(userAuthority, [PHOTOS_READ])
     const canReadScans = useAuthority(userAuthority, [
@@ -166,6 +172,7 @@ const PatientForm = () => {
     ])
     const canReadPayments = useAuthority(userAuthority, [PAYMENTS_READ])
     const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
+    const canReadConsents = useAuthority(userAuthority, [PATIENTS_READ])
     const showChartTabs =
         isEdit &&
         (canReadWorks ||
@@ -174,7 +181,8 @@ const PatientForm = () => {
             canReadScans ||
             canReadPrescriptions ||
             canReadPayments ||
-            canReadReferrals)
+            canReadReferrals ||
+            canReadConsents)
     const [loading, setLoading] = useState(isEdit)
     const [initialValues, setInitialValues] = useState<FormModel>(emptyValues)
 
@@ -255,6 +263,14 @@ const PatientForm = () => {
                                         Odontograma
                                     </Tabs.TabNav>
                                 )}
+                                {canReadOdontogram && (
+                                    <Tabs.TabNav
+                                        value="periodontograma"
+                                        icon={<HiOutlineHeart />}
+                                    >
+                                        Periodontograma
+                                    </Tabs.TabNav>
+                                )}
                                 {canReadPhotos && (
                                     <Tabs.TabNav
                                         value="fotos"
@@ -295,6 +311,14 @@ const PatientForm = () => {
                                         Referidos
                                     </Tabs.TabNav>
                                 )}
+                                {canReadConsents && (
+                                    <Tabs.TabNav
+                                        value="consentimientos"
+                                        icon={<HiOutlineDocumentText />}
+                                    >
+                                        Consentimientos
+                                    </Tabs.TabNav>
+                                )}
                             </Tabs.TabList>
                         </AdaptableCard>
                     </div>
@@ -322,6 +346,17 @@ const PatientForm = () => {
                                 showBack={false}
                             />
                             <PatientOdontogram patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadOdontogram && (
+                        <Tabs.TabContent value="periodontograma">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientPeriodontogram
+                                patientId={Number(patientId)}
+                            />
                         </Tabs.TabContent>
                     )}
                     {canReadPhotos && (
@@ -360,6 +395,7 @@ const PatientForm = () => {
                                 showBack={false}
                             />
                             <PatientPayments patientId={Number(patientId)} />
+                            <PatientLedger patientId={Number(patientId)} />
                         </Tabs.TabContent>
                     )}
                     {canReadReferrals && (
@@ -369,6 +405,15 @@ const PatientForm = () => {
                                 showBack={false}
                             />
                             <PatientReferrals patientId={Number(patientId)} />
+                        </Tabs.TabContent>
+                    )}
+                    {canReadConsents && (
+                        <Tabs.TabContent value="consentimientos">
+                            <PatientProfileHeader
+                                values={initialValues}
+                                showBack={false}
+                            />
+                            <PatientConsents patientId={Number(patientId)} />
                         </Tabs.TabContent>
                     )}
                 </Tabs>
@@ -400,6 +445,7 @@ const PatientDataForm = ({
     const userAuthority =
         useAppSelector((state) => state.auth.user.authority) || []
     const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
+    const canWritePatient = useAuthority(userAuthority, [PATIENTS_WRITE])
     const [referralSources, setReferralSources] = useState<ReferralSource[]>([])
     const [step, setStep] = useState(0)
 
@@ -439,6 +485,10 @@ const PatientDataForm = ({
             initialValues={initialValues}
             validationSchema={validationSchema}
             onSubmit={async (values, { setSubmitting }) => {
+                if (!canWritePatient) {
+                    setSubmitting(false)
+                    return
+                }
                 try {
                     const payload = toPayload(values)
                     if (isEdit && patientId) {
@@ -534,6 +584,10 @@ const PatientDataForm = ({
                         />
 
                         <FormContainer>
+                            <fieldset
+                                disabled={!canWritePatient}
+                                className="min-w-0 border-0 p-0 m-0 contents"
+                            >
                             {step === 0 ? (
                                 <PatientFormSection
                                     title="Datos personales"
@@ -800,6 +854,7 @@ const PatientDataForm = ({
                                     </div>
                                 </PatientFormSection>
                             ) : null}
+                            </fieldset>
                         </FormContainer>
 
                         <StickyFooter
@@ -810,15 +865,15 @@ const PatientDataForm = ({
                                 type="button"
                                 onClick={() => navigate('/pacientes')}
                             >
-                                Cancelar
+                                {canWritePatient ? 'Cancelar' : 'Volver'}
                             </Button>
                             <div className="flex flex-wrap items-center gap-2">
-                                {step > 0 ? (
+                                {canWritePatient && step > 0 ? (
                                     <Button type="button" onClick={goBack}>
                                         Atrás
                                     </Button>
                                 ) : null}
-                                {!isLastStep ? (
+                                {canWritePatient && !isLastStep ? (
                                     <Button
                                         type="button"
                                         variant="solid"
@@ -826,7 +881,8 @@ const PatientDataForm = ({
                                     >
                                         Continuar
                                     </Button>
-                                ) : (
+                                ) : null}
+                                {canWritePatient && isLastStep ? (
                                     <Button
                                         variant="solid"
                                         loading={isSubmitting}
@@ -837,7 +893,7 @@ const PatientDataForm = ({
                                             ? 'Guardar cambios'
                                             : 'Crear paciente'}
                                     </Button>
-                                )}
+                                ) : null}
                             </div>
                         </StickyFooter>
                     </Form>

@@ -20,6 +20,7 @@ import {
     HiOutlineSave,
     HiOutlineTrash,
     HiPlusCircle,
+    HiOutlineSparkles,
 } from 'react-icons/hi'
 import {
     SCANS_DELETE,
@@ -60,6 +61,7 @@ import {
     createToothGeometry,
     emptyDesignDocument,
 } from './toothTemplates'
+import { applyAutoPlaceToDocument } from './autoPlaceTeeth'
 
 const archOptions: { value: ScanArch | ''; label: string }[] = [
     { value: '', label: 'Todos' },
@@ -348,6 +350,36 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
         }
     }
 
+    const autoPlaceOnScan = () => {
+        if (!scanGeometry) {
+            toast.push(
+                <Notification type="warning" title="Sin scan">
+                    Sube o selecciona un scan STL/PLY para auto-colocar.
+                </Notification>,
+            )
+            return
+        }
+        try {
+            const next = applyAutoPlaceToDocument(document, scanGeometry)
+            setDocument(next)
+            setFocusNonce((n) => n + 1)
+            toast.push(
+                <Notification type="success" title="Auto-colocado">
+                    Dientes situados sobre el scan como punto de partida.
+                    Ajústalos con el gizmo.
+                </Notification>,
+            )
+        } catch (error) {
+            toast.push(
+                <Notification type="danger" title="No se pudo auto-colocar">
+                    {error instanceof Error
+                        ? error.message
+                        : 'Error al analizar el scan'}
+                </Notification>,
+            )
+        }
+    }
+
     const saveDesign = async () => {
         if (!canWriteDesign) {
             return
@@ -622,6 +654,14 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
                             <>
                                 <Button
                                     size="sm"
+                                    icon={<HiOutlineSparkles />}
+                                    disabled={!scanGeometry}
+                                    onClick={autoPlaceOnScan}
+                                >
+                                    Auto-colocar
+                                </Button>
+                                <Button
+                                    size="sm"
                                     icon={<HiOutlineLightBulb />}
                                     onClick={applySuggestion}
                                 >
@@ -743,8 +783,9 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
                             Enfocar
                         </Button>
                         <span className="text-xs text-gray-400">
-                            Rueda = zoom · Clic medio + arrastrar = mover (X/Y)
-                            · Click izq. = rotar · Doble clic = capas
+                            Click = pivote ahí (zoom/rota sobre el elemento) ·
+                            Rueda = zoom · Clic medio = mover · Doble clic =
+                            capas
                         </span>
                     </div>
 

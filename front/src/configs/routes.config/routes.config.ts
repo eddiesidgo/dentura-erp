@@ -2,11 +2,13 @@ import { lazy } from 'react'
 import authRoute from './authRoute'
 import {
     AGENDA_READ,
+    AUDIT_READ,
     CATALOG_READ,
     ODONTOGRAM_READ,
     PATIENTS_READ,
     PATIENTS_WRITE,
     PRESCRIPTIONS_READ,
+    PAYMENTS_READ,
     REFERRALS_READ,
     REPORTS_READ,
     ROLES_MANAGE,
@@ -21,6 +23,15 @@ export const protectedRoutes = [
         key: 'home',
         path: '/home',
         component: lazy(() => import('@/views/Home')),
+        authority: [],
+        meta: {
+            header: '',
+        },
+    },
+    {
+        key: 'accessDenied',
+        path: '/access-denied',
+        component: lazy(() => import('@/views/AccessDenied')),
         authority: [],
         meta: {
             header: '',
@@ -49,7 +60,7 @@ export const protectedRoutes = [
         key: 'patients.edit',
         path: '/pacientes/:patientId',
         component: lazy(() => import('@/views/patients/PatientForm')),
-        authority: [PATIENTS_WRITE],
+        authority: [PATIENTS_READ],
         meta: {
             header: 'Ficha de paciente',
             footer: false,
@@ -59,6 +70,15 @@ export const protectedRoutes = [
         key: 'agenda',
         path: '/agenda',
         component: lazy(() => import('@/views/agenda/AgendaCalendar')),
+        authority: [AGENDA_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
+        key: 'reminders',
+        path: '/recordatorios',
+        component: lazy(() => import('@/views/reminders/ReminderList')),
         authority: [AGENDA_READ],
         meta: {
             header: '',
@@ -110,6 +130,17 @@ export const protectedRoutes = [
         },
     },
     {
+        key: 'prescriptionTemplates',
+        path: '/plantillas-receta',
+        component: lazy(
+            () => import('@/views/prescriptions/PrescriptionTemplateList'),
+        ),
+        authority: [PRESCRIPTIONS_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
         key: 'referrals',
         path: '/referencias',
         component: lazy(
@@ -130,10 +161,37 @@ export const protectedRoutes = [
         },
     },
     {
+        key: 'audit',
+        path: '/auditoria',
+        component: lazy(() => import('@/views/audit/AuditList')),
+        authority: [AUDIT_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
         key: 'reports',
         path: '/reportes',
         component: lazy(() => import('@/views/reports/ReportList')),
         authority: [REPORTS_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
+        key: 'morosos',
+        path: '/morosos',
+        component: lazy(() => import('@/views/ledger/MorososList')),
+        authority: [PAYMENTS_READ],
+        meta: {
+            header: '',
+        },
+    },
+    {
+        key: 'inventory',
+        path: '/inventario',
+        component: lazy(() => import('@/views/inventory/InventoryList')),
+        authority: [CATALOG_READ],
         meta: {
             header: '',
         },

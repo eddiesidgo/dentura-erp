@@ -32,11 +32,13 @@ export async function apiSignOut() {
 }
 
 export async function apiForgotPassword(data: ForgotPassword) {
-    return ApiService.fetchData({
-        url: '/forgot-password',
-        method: 'post',
-        data,
-    })
+    return ApiService.fetchData<{ success: boolean; resetPath: string | null }>(
+        {
+            url: '/forgot-password',
+            method: 'post',
+            data,
+        },
+    )
 }
 
 export async function apiResetPassword(data: ResetPassword) {

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${title}">Consentimiento</title>
+    <th:block th:replace="~{reports/fragments :: styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{reports/fragments :: watermark}"></th:block>
+<th:block th:replace="~{reports/fragments :: letterhead}"></th:block>
+
+<div class="patient-box">
+    <div class="patient-label">Paciente</div>
+    <div class="patient-name" th:text="${patientName}">Paciente</div>
+    <div class="patient-meta">
+        Expediente <strong th:text="${recordNumber}">P-001</strong>
+        · Firmante <strong th:text="${signerName}">Nombre</strong>
+        · Aceptado <span th:text="${acceptedAt}">01/01/2026</span>
+    </div>
+</div>
+
+<div class="legal-note" style="margin-top: 16px;" th:utext="${bodyHtml}">
+    Texto del consentimiento
+</div>
+
+<p th:if="${notes != null}" class="legal-note" style="margin-top: 16px;">
+    Notas: <span th:text="${notes}">Notas</span>
+</p>
+
+<th:block th:replace="~{reports/fragments :: footer}"></th:block>
+</body>
+</html>

@@ -95,6 +95,7 @@ public class RoleService {
 						user.getId(),
 						user.getUserName(),
 						user.getEmail(),
+						user.isActive(),
 						user.getRoles().stream()
 								.filter(role -> clinicId.equals(role.getClinicId()))
 								.map(Role::getId)
@@ -129,6 +130,7 @@ public class RoleService {
 				user.getId(),
 				user.getUserName(),
 				user.getEmail(),
+				user.isActive(),
 				assigned.stream().map(Role::getId).toList());
 	}
 

@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.dentura.api.audit.AuditService;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.ledger.LedgerService;
 import com.dentura.api.patient.PatientRepository;
 import com.dentura.api.payment.dto.PatientBalanceResponse;
 import com.dentura.api.payment.dto.PaymentRequest;
@@ -38,6 +40,8 @@ public class PaymentService {
 	private final WorkRepository workRepository;
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
+	private final AuditService auditService;
+	private final LedgerService ledgerService;
 
 	public PaymentService(
 			PaymentRepository paymentRepository,
@@ -46,7 +50,9 @@ public class PaymentService {
 			PatientRepository patientRepository,
 			WorkRepository workRepository,
 			ClinicAccess clinicAccess,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			AuditService auditService,
+			LedgerService ledgerService) {
 		this.paymentRepository = paymentRepository;
 		this.allocationRepository = allocationRepository;
 		this.receiptSequenceRepository = receiptSequenceRepository;
@@ -54,6 +60,8 @@ public class PaymentService {
 		this.workRepository = workRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
+		this.auditService = auditService;
+		this.ledgerService = ledgerService;
 	}
 
 	@Transactional(readOnly = true)
@@ -115,6 +123,8 @@ public class PaymentService {
 		apply(payment, request);
 		payment = paymentRepository.save(payment);
 		List<PaymentAllocation> allocations = saveAllocations(payment.getId(), request.allocations());
+		ledgerService.syncPayment(payment);
+		auditService.log("CREATE", "payment", payment.getId(), String.valueOf(payment.getReceiptNumber()));
 		return PaymentResponse.from(payment, allocations);
 	}
 
@@ -129,6 +139,8 @@ public class PaymentService {
 		payment = paymentRepository.save(payment);
 		allocationRepository.deleteByPaymentId(payment.getId());
 		List<PaymentAllocation> allocations = saveAllocations(payment.getId(), request.allocations());
+		ledgerService.syncPayment(payment);
+		auditService.log("UPDATE", "payment", payment.getId(), String.valueOf(payment.getReceiptNumber()));
 		return PaymentResponse.from(payment, allocations);
 	}
 
@@ -136,6 +148,8 @@ public class PaymentService {
 	public void delete(Long id) {
 		permissionService.require(Permission.PAYMENTS_DELETE);
 		Payment payment = findOrThrow(id);
+		auditService.log("DELETE", "payment", payment.getId(), String.valueOf(payment.getReceiptNumber()));
+		ledgerService.removePayment(payment.getId());
 		allocationRepository.deleteByPaymentId(payment.getId());
 		paymentRepository.delete(payment);
 	}

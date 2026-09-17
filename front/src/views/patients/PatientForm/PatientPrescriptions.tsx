@@ -26,10 +26,15 @@ import {
     apiCreatePrescription,
     apiDeletePrescription,
     apiGetPrescriptions,
+    apiGetPrescriptionTemplates,
     apiUpdatePrescription,
 } from '@/services/PrescriptionService'
 import type { Medication } from '@/@types/medication'
-import type { Prescription, PrescriptionPayload } from '@/@types/prescription'
+import type {
+    Prescription,
+    PrescriptionPayload,
+    PrescriptionTemplate,
+} from '@/@types/prescription'
 
 type PrescriptionForm = {
     id?: number
@@ -63,6 +68,7 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
 
     const [items, setItems] = useState<Prescription[]>([])
     const [medications, setMedications] = useState<Medication[]>([])
+    const [templates, setTemplates] = useState<PrescriptionTemplate[]>([])
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState<PrescriptionForm>(emptyForm)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -100,10 +106,20 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
         }
     }, [])
 
+    const loadTemplates = useCallback(async () => {
+        try {
+            const { data } = await apiGetPrescriptionTemplates()
+            setTemplates(data.filter((item) => item.active))
+        } catch {
+            setTemplates([])
+        }
+    }, [])
+
     useEffect(() => {
         loadPrescriptions()
         loadMedications()
-    }, [loadPrescriptions, loadMedications])
+        loadTemplates()
+    }, [loadPrescriptions, loadMedications, loadTemplates])
 
     const openCreate = () => {
         setForm(emptyForm)
@@ -138,6 +154,22 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
             frequency: medication.frequency ?? '',
             duration: medication.duration ?? '',
             instructions: medication.instructions ?? '',
+        }))
+    }
+
+    const applyTemplate = (templateId?: number) => {
+        const template = templates.find((item) => item.id === templateId)
+        if (!template) {
+            return
+        }
+        setForm((prev) => ({
+            ...prev,
+            medicationId: undefined,
+            drug: template.drug,
+            dose: template.dose ?? '',
+            frequency: template.frequency ?? '',
+            duration: template.duration ?? '',
+            instructions: template.instructions ?? '',
         }))
     }
 
@@ -197,6 +229,11 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
         label: `${medication.code} · ${medication.name}${
             medication.dose ? ` · ${medication.dose}` : ''
         }`,
+    }))
+
+    const templateOptions = templates.map((template) => ({
+        value: template.id,
+        label: `${template.drug}${template.dose ? ` · ${template.dose}` : ''}`,
     }))
 
     return (
@@ -331,6 +368,21 @@ const PatientPrescriptions = ({ patientId }: PatientPrescriptionsProps) => {
                 onSave={savePrescription}
             >
                 <div className="flex flex-col gap-3">
+                    {templates.length > 0 && (
+                        <div>
+                            <div className="mb-1 font-semibold">
+                                Plantilla de receta
+                            </div>
+                            <Select
+                                isClearable
+                                placeholder="Aplicar plantilla"
+                                options={templateOptions}
+                                onChange={(option) =>
+                                    applyTemplate(option?.value)
+                                }
+                            />
+                        </div>
+                    )}
                     {medications.length > 0 && (
                         <div>
                             <div className="mb-1 font-semibold">

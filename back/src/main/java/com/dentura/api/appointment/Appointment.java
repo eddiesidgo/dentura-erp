@@ -31,6 +31,12 @@ public class Appointment {
 	@Column(name = "patient_id", nullable = false)
 	private Long patientId;
 
+	@Column(name = "provider_id", nullable = false)
+	private Long providerId;
+
+	@Column(name = "room_id")
+	private Long roomId;
+
 	@Column(name = "start_at", nullable = false)
 	private Instant startAt;
 
@@ -82,6 +88,22 @@ public class Appointment {
 
 	public void setPatientId(Long patientId) {
 		this.patientId = patientId;
+	}
+
+	public Long getProviderId() {
+		return providerId;
+	}
+
+	public void setProviderId(Long providerId) {
+		this.providerId = providerId;
+	}
+
+	public Long getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(Long roomId) {
+		this.roomId = roomId;
 	}
 
 	public Instant getStartAt() {

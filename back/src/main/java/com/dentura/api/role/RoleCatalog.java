@@ -21,6 +21,10 @@ public class RoleCatalog {
 	public void ensureCatalog() {
 		ensurePermission(Permission.ROLES_MANAGE, "Asignar roles y permisos",
 				"Permite crear roles y asignar permisos a usuarios de la misma clínica");
+		ensurePermission(Permission.CLINIC_MANAGE, "Gestionar clínica",
+				"Permite editar la identidad y logo de la clínica");
+		ensurePermission(Permission.AUDIT_READ, "Ver auditoría",
+				"Consulta el registro de auditoría de la clínica");
 		ensurePermission(Permission.PATIENTS_READ, "Ver pacientes", "Consulta el padrón de pacientes");
 		ensurePermission(Permission.PATIENTS_WRITE, "Editar pacientes", "Crea y actualiza fichas de pacientes");
 		ensurePermission(Permission.PATIENTS_DELETE, "Eliminar pacientes", "Elimina fichas de pacientes");

@@ -24,8 +24,8 @@ type SignInFormSchema = {
 }
 
 const validationSchema = Yup.object().shape({
-    userName: Yup.string().required('Please enter your user name'),
-    password: Yup.string().required('Please enter your password'),
+    userName: Yup.string().required('Ingresa tu usuario'),
+    password: Yup.string().required('Ingresa tu contraseña'),
     rememberMe: Yup.bool(),
 })
 
@@ -66,8 +66,8 @@ const SignInForm = (props: SignInFormProps) => {
             )}
             <Formik
                 initialValues={{
-                    userName: 'admin',
-                    password: '123Qwe',
+                    userName: '',
+                    password: '',
                     rememberMe: true,
                 }}
                 validationSchema={validationSchema}
@@ -83,7 +83,7 @@ const SignInForm = (props: SignInFormProps) => {
                     <Form>
                         <FormContainer>
                             <FormItem
-                                label="User Name"
+                                label="Usuario"
                                 invalid={
                                     (errors.userName &&
                                         touched.userName) as boolean
@@ -92,14 +92,14 @@ const SignInForm = (props: SignInFormProps) => {
                             >
                                 <Field
                                     type="text"
-                                    autoComplete="off"
+                                    autoComplete="username"
                                     name="userName"
-                                    placeholder="User Name"
+                                    placeholder="Usuario"
                                     component={Input}
                                 />
                             </FormItem>
                             <FormItem
-                                label="Password"
+                                label="Contraseña"
                                 invalid={
                                     (errors.password &&
                                         touched.password) as boolean
@@ -107,9 +107,9 @@ const SignInForm = (props: SignInFormProps) => {
                                 errorMessage={errors.password}
                             >
                                 <Field
-                                    autoComplete="off"
+                                    autoComplete="current-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder="Contraseña"
                                     component={PasswordInput}
                                 />
                             </FormItem>
@@ -119,10 +119,10 @@ const SignInForm = (props: SignInFormProps) => {
                                     name="rememberMe"
                                     component={Checkbox}
                                 >
-                                    Remember Me
+                                    Recordarme
                                 </Field>
                                 <ActionLink to={forgotPasswordUrl}>
-                                    Forgot Password?
+                                    ¿Olvidaste tu contraseña?
                                 </ActionLink>
                             </div>
                             <Button
@@ -131,11 +131,15 @@ const SignInForm = (props: SignInFormProps) => {
                                 variant="solid"
                                 type="submit"
                             >
-                                {isSubmitting ? 'Signing in...' : 'Sign In'}
+                                {isSubmitting
+                                    ? 'Ingresando...'
+                                    : 'Iniciar sesión'}
                             </Button>
                             <div className="mt-4 text-center">
-                                <span>{`Don't have an account yet?`} </span>
-                                <ActionLink to={signUpUrl}>Sign up</ActionLink>
+                                <span>¿No tienes cuenta? </span>
+                                <ActionLink to={signUpUrl}>
+                                    Regístrate
+                                </ActionLink>
                             </div>
                         </FormContainer>
                     </Form>

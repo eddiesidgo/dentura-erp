@@ -161,7 +161,7 @@ const CalendarView = (props: CalendarViewProps) => {
                                             ? (eventColors(defaultColorList) ||
                                                   defaultColorList)[
                                                   extendedProps.eventColor
-                                              ].dot
+                                              ]?.dot
                                             : '',
                                     )}
                                 />
