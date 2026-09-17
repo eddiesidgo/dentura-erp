@@ -54,6 +54,7 @@ import type {
 } from '@/@types/smile'
 import ScanViewer from './ScanViewer'
 import SmileDesignerCanvas from './SmileDesignerCanvas'
+import type { GizmoMode } from './SmileDesignerCanvas'
 import { downloadBlob, geometriesToBinaryStl } from './exportStl'
 import {
     createToothGeometry,
@@ -132,6 +133,7 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
         emptyDesignDocument(),
     )
     const [savingDesign, setSavingDesign] = useState(false)
+    const [gizmoMode, setGizmoMode] = useState<GizmoMode>('translate')
     const [designToDelete, setDesignToDelete] = useState<SmileDesign | null>(
         null,
     )
@@ -698,8 +700,41 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
                         </div>
                     </div>
 
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-gray-500">
+                            Herramienta 3D:
+                        </span>
+                        {(
+                            [
+                                { value: 'translate', label: 'Mover' },
+                                { value: 'rotate', label: 'Rotar' },
+                                { value: 'scale', label: 'Escalar' },
+                            ] as { value: GizmoMode; label: string }[]
+                        ).map((tool) => (
+                            <Button
+                                key={tool.value}
+                                size="xs"
+                                variant={
+                                    gizmoMode === tool.value
+                                        ? 'solid'
+                                        : 'plain'
+                                }
+                                disabled={!canWriteDesign}
+                                onClick={() => setGizmoMode(tool.value)}
+                            >
+                                {tool.label}
+                            </Button>
+                        ))}
+                        <span className="text-xs text-gray-400">
+                            Click un diente → arrastra el gizmo. Click el scan
+                            para deseleccionar.
+                        </span>
+                    </div>
+
                     <SmileDesignerCanvas
                         document={document}
+                        editable={canWriteDesign}
+                        gizmoMode={gizmoMode}
                         scanGeometry={scanGeometry}
                         onSelectTooth={(tooth) =>
                             setDocument((prev) => ({
@@ -707,12 +742,16 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
                                 selectedTooth: tooth,
                             }))
                         }
+                        onToothChange={updateTooth}
                     />
 
                     {selectedTooth && canWriteDesign && (
                         <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                             <div className="mb-3 text-sm font-semibold">
-                                Edición del diente {selectedTooth.tooth}
+                                Edición del diente {selectedTooth.tooth}{' '}
+                                <span className="font-normal text-gray-500">
+                                    (también con el gizmo 3D)
+                                </span>
                             </div>
                             <div className="grid gap-3 sm:grid-cols-3">
                                 {(['x', 'y', 'z'] as const).map((axis, index) => (
