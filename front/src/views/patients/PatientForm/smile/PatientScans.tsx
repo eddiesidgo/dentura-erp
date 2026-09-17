@@ -134,6 +134,8 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
     )
     const [savingDesign, setSavingDesign] = useState(false)
     const [gizmoMode, setGizmoMode] = useState<GizmoMode>('translate')
+    const [scanXray, setScanXray] = useState(true)
+    const [focusNonce, setFocusNonce] = useState(0)
     const [designToDelete, setDesignToDelete] = useState<SmileDesign | null>(
         null,
     )
@@ -714,28 +716,45 @@ const PatientScans = ({ patientId }: PatientScansProps) => {
                             <Button
                                 key={tool.value}
                                 size="xs"
+                                disabled={!canWriteDesign}
                                 variant={
                                     gizmoMode === tool.value
                                         ? 'solid'
                                         : 'plain'
                                 }
-                                disabled={!canWriteDesign}
                                 onClick={() => setGizmoMode(tool.value)}
                             >
                                 {tool.label}
                             </Button>
                         ))}
+                        <Button
+                            size="xs"
+                            variant={scanXray ? 'solid' : 'plain'}
+                            onClick={() => setScanXray((v) => !v)}
+                        >
+                            Rayos X
+                        </Button>
+                        <Button
+                            size="xs"
+                            disabled={!document.selectedTooth}
+                            variant="plain"
+                            onClick={() => setFocusNonce((n) => n + 1)}
+                        >
+                            Enfocar
+                        </Button>
                         <span className="text-xs text-gray-400">
-                            Click un diente → arrastra el gizmo. Click el scan
-                            para deseleccionar.
+                            Rueda = zoom · Clic medio + arrastrar = mover (X/Y)
+                            · Click izq. = rotar · Doble clic = capas
                         </span>
                     </div>
 
                     <SmileDesignerCanvas
                         document={document}
                         editable={canWriteDesign}
+                        focusNonce={focusNonce}
                         gizmoMode={gizmoMode}
                         scanGeometry={scanGeometry}
+                        scanOpacity={scanXray ? 0.18 : 0.55}
                         onSelectTooth={(tooth) =>
                             setDocument((prev) => ({
                                 ...prev,
