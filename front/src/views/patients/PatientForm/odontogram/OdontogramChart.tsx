@@ -10,13 +10,56 @@ import {
 import { resolveToothPaint } from './resolveToothPaint'
 import ToothSvg from './ToothSvg'
 
-type OdontogramChartProps = {
+export type OdontogramChartProps = {
     dentition: Dentition
     entriesByTooth: Map<string, OdontogramEntry[]>
     paintMode: boolean
     onSurfaceClick: (tooth: string, surface: ToothSurface) => void
     onToothClick: (tooth: string) => void
 }
+
+export const OdontogramLegend = () => (
+    <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 dark:border-slate-600 sm:grid-cols-2">
+        <div>
+            <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Condiciones
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {Object.entries(CONDITION_COLORS).map(([key, value]) => (
+                    <span
+                        key={key}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                        <span
+                            className="h-2.5 w-2.5 rounded-sm"
+                            style={{ backgroundColor: value.fill }}
+                        />
+                        {value.label}
+                    </span>
+                ))}
+            </div>
+        </div>
+        <div>
+            <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Estado
+            </div>
+            <div className="flex flex-wrap gap-3 text-[11px] text-slate-600 dark:text-slate-300">
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="h-3 w-6 rounded-sm border-2 border-slate-600 bg-slate-100" />
+                    {STATUS_STYLES.EXISTING.label}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="h-3 w-6 rounded-sm border-2 border-dashed border-slate-600 bg-slate-100" />
+                    {STATUS_STYLES.PLANNED.label}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="h-3 w-6 rounded-sm border-2 border-emerald-600 bg-slate-100" />
+                    {STATUS_STYLES.COMPLETED.label}
+                </span>
+            </div>
+        </div>
+    </div>
+)
 
 const ArchRow = ({
     teeth,
@@ -64,49 +107,6 @@ const ArchRow = ({
                     />
                 </div>
             ))}
-        </div>
-    </div>
-)
-
-const OdontogramLegend = () => (
-    <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 dark:border-slate-600 sm:grid-cols-2">
-        <div>
-            <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Condiciones
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {Object.entries(CONDITION_COLORS).map(([key, value]) => (
-                    <span
-                        key={key}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    >
-                        <span
-                            className="h-2.5 w-2.5 rounded-sm"
-                            style={{ backgroundColor: value.fill }}
-                        />
-                        {value.label}
-                    </span>
-                ))}
-            </div>
-        </div>
-        <div>
-            <div className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Estado
-            </div>
-            <div className="flex flex-wrap gap-3 text-[11px] text-slate-600 dark:text-slate-300">
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="h-3 w-6 rounded-sm border-2 border-slate-600 bg-slate-100" />
-                    {STATUS_STYLES.EXISTING.label}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="h-3 w-6 rounded-sm border-2 border-dashed border-slate-600 bg-slate-100" />
-                    {STATUS_STYLES.PLANNED.label}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="h-3 w-6 rounded-sm border-2 border-emerald-600 bg-slate-100" />
-                    {STATUS_STYLES.COMPLETED.label}
-                </span>
-            </div>
         </div>
     </div>
 )

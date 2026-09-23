@@ -66,6 +66,11 @@ const PatientConsents = ({ patientId }: Props) => {
 
     const createTemplate = async () => {
         if (!newTitle.trim()) {
+            toast.push(
+                <Notification type="warning" title="Título requerido">
+                    Indicá un título para la plantilla.
+                </Notification>,
+            )
             return
         }
         setSaving(true)
@@ -77,6 +82,11 @@ const PatientConsents = ({ patientId }: Props) => {
             setNewTitle('')
             setTemplateId(data.id)
             await load()
+            toast.push(
+                <Notification type="success" title="Plantilla creada">
+                    Ya podés registrar consentimientos con esta plantilla.
+                </Notification>,
+            )
         } catch (error) {
             toast.push(
                 <Notification type="danger" title="No se pudo crear plantilla">
@@ -89,7 +99,20 @@ const PatientConsents = ({ patientId }: Props) => {
     }
 
     const register = async () => {
-        if (!templateId || !signerName.trim()) {
+        if (!templateId) {
+            toast.push(
+                <Notification type="warning" title="Plantilla requerida">
+                    Seleccioná o creá una plantilla primero.
+                </Notification>,
+            )
+            return
+        }
+        if (!signerName.trim()) {
+            toast.push(
+                <Notification type="warning" title="Firmante requerido">
+                    Indicá el nombre de quien firma.
+                </Notification>,
+            )
             return
         }
         setSaving(true)
@@ -103,6 +126,11 @@ const PatientConsents = ({ patientId }: Props) => {
             setSignerName('')
             setNotes('')
             await load()
+            toast.push(
+                <Notification type="success" title="Registrado">
+                    Consentimiento guardado.
+                </Notification>,
+            )
         } catch (error) {
             toast.push(
                 <Notification type="danger" title="No se pudo registrar">
@@ -159,7 +187,11 @@ const PatientConsents = ({ patientId }: Props) => {
                         value={newBody}
                         onChange={(e) => setNewBody(e.target.value)}
                     />
-                    <Button loading={saving} onClick={createTemplate}>
+                    <Button
+                        type="button"
+                        loading={saving}
+                        onClick={createTemplate}
+                    >
                         Crear plantilla
                     </Button>
                 </div>
@@ -180,6 +212,7 @@ const PatientConsents = ({ patientId }: Props) => {
                         onChange={(e) => setSignerName(e.target.value)}
                     />
                     <Button
+                        type="button"
                         variant="solid"
                         icon={<HiPlusCircle />}
                         loading={saving}

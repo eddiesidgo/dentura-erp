@@ -35,6 +35,7 @@ import type {
     OdontogramStatus,
 } from '@/@types/odontogram'
 import OdontogramChart from './odontogram/OdontogramChart'
+import MouthChart from './odontogram/MouthChart'
 import OdontogramToolbar from './odontogram/OdontogramToolbar'
 import ToothLabDialog from './odontogram/ToothLabDialog'
 import {
@@ -128,6 +129,7 @@ const PatientOdontogram = ({
     const [toDelete, setToDelete] = useState<OdontogramEntry | null>(null)
     const [labTooth, setLabTooth] = useState<string | null>(null)
     const [dentition, setDentition] = useState<Dentition>('permanent')
+    const [chartView, setChartView] = useState<'arches' | 'mouth'>('arches')
     const [activeCondition, setActiveCondition] =
         useState<OdontogramCondition | null>(null)
     const [activeStatus, setActiveStatus] =
@@ -426,6 +428,19 @@ const PatientOdontogram = ({
                                 Temporal
                             </Segment.Item>
                         </Segment>
+                        <Segment
+                            value={[chartView]}
+                            size="sm"
+                            onChange={(val) => {
+                                const next = Array.isArray(val) ? val[0] : val
+                                if (next === 'arches' || next === 'mouth') {
+                                    setChartView(next)
+                                }
+                            }}
+                        >
+                            <Segment.Item value="arches">Arcadas</Segment.Item>
+                            <Segment.Item value="mouth">Boca</Segment.Item>
+                        </Segment>
                         {canWrite && (
                             <Button
                                 size="sm"
@@ -447,13 +462,23 @@ const PatientOdontogram = ({
                     onStatusChange={setActiveStatus}
                 />
 
-                <OdontogramChart
-                    dentition={dentition}
-                    entriesByTooth={entriesByTooth}
-                    paintMode={Boolean(activeCondition)}
-                    onSurfaceClick={handleSurfaceClick}
-                    onToothClick={handleToothClick}
-                />
+                {chartView === 'arches' ? (
+                    <OdontogramChart
+                        dentition={dentition}
+                        entriesByTooth={entriesByTooth}
+                        paintMode={Boolean(activeCondition)}
+                        onSurfaceClick={handleSurfaceClick}
+                        onToothClick={handleToothClick}
+                    />
+                ) : (
+                    <MouthChart
+                        dentition={dentition}
+                        entriesByTooth={entriesByTooth}
+                        paintMode={Boolean(activeCondition)}
+                        onSurfaceClick={handleSurfaceClick}
+                        onToothClick={handleToothClick}
+                    />
+                )}
 
                 <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 mt-4">
                     <table className="min-w-full text-sm">

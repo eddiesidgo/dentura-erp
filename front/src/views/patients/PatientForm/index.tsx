@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
@@ -46,11 +46,12 @@ import PatientOdontogram from './PatientOdontogram'
 import PatientPeriodontogram from './PatientPeriodontogram'
 import PatientConsents from './PatientConsents'
 import PatientPhotos from './PatientPhotos'
-import PatientScans from './smile/PatientScans'
 import PatientPrescriptions from './PatientPrescriptions'
 import PatientPayments from './PatientPayments'
 import PatientLedger from './PatientLedger'
 import PatientReferrals from './PatientReferrals'
+
+const PatientScans = lazy(() => import('./smile/PatientScans'))
 import {
     ODONTOGRAM_READ,
     PATIENTS_READ,
@@ -374,7 +375,17 @@ const PatientForm = () => {
                                 values={initialValues}
                                 showBack={false}
                             />
-                            <PatientScans patientId={Number(patientId)} />
+                            <Suspense
+                                fallback={
+                                    <div className="flex min-h-[240px] items-center justify-center">
+                                        <Loading loading />
+                                    </div>
+                                }
+                            >
+                                <PatientScans
+                                    patientId={Number(patientId)}
+                                />
+                            </Suspense>
                         </Tabs.TabContent>
                     )}
                     {canReadPrescriptions && (

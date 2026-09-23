@@ -20,6 +20,10 @@ type ToothSvgProps = {
     interactive?: boolean
     paintMode?: boolean
     size?: ToothSvgSize
+    /** Hide FDI caption under the crown (useful in mouth/denture layouts). */
+    showLabel?: boolean
+    /** Remove hover plate background for embedded layouts. */
+    bare?: boolean
     onSurfaceClick?: (tooth: string, surface: ToothSurface) => void
     onToothClick?: (tooth: string) => void
 }
@@ -102,6 +106,8 @@ const ToothSvg = ({
     interactive = true,
     paintMode = false,
     size = 'md',
+    showLabel = true,
+    bare = false,
     onSurfaceClick,
     onToothClick,
 }: ToothSvgProps) => {
@@ -171,9 +177,10 @@ const ToothSvg = ({
         <div
             className={classNames(
                 'group relative flex flex-col items-center gap-0.5 rounded-lg p-0.5 transition',
-                paintMode
-                    ? 'hover:bg-sky-50 dark:hover:bg-sky-500/10'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                !bare &&
+                    (paintMode
+                        ? 'hover:bg-sky-50 dark:hover:bg-sky-500/10'
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'),
             )}
             role="group"
             aria-label={`Diente ${tooth}`}
@@ -295,16 +302,18 @@ const ToothSvg = ({
                 )}
             </svg>
 
-            <div className="flex flex-col items-center gap-0.5">
-                <span
-                    className={classNames(
-                        'font-semibold tabular-nums text-slate-600 group-hover:text-sky-700 dark:text-slate-300 dark:group-hover:text-sky-300',
-                        large ? 'text-base' : 'text-[11px]',
-                    )}
-                >
-                    {tooth}
-                </span>
-            </div>
+            {showLabel ? (
+                <div className="flex flex-col items-center gap-0.5">
+                    <span
+                        className={classNames(
+                            'font-semibold tabular-nums text-slate-600 group-hover:text-sky-700 dark:text-slate-300 dark:group-hover:text-sky-300',
+                            large ? 'text-base' : 'text-[11px]',
+                        )}
+                    >
+                        {tooth}
+                    </span>
+                </div>
+            ) : null}
         </div>
     )
 }

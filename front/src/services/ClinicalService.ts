@@ -26,6 +26,22 @@ export async function apiCreatePeriodontogramEntry(data: {
     })
 }
 
+export async function apiUpdatePeriodontogramEntry(
+    id: number,
+    data: {
+        patientId: number
+        tooth: string
+        valuesJson?: string | null
+        notes?: string | null
+    },
+) {
+    return ApiService.fetchData<PeriodontogramEntry>({
+        url: `/periodontogram/${id}`,
+        method: 'put',
+        data,
+    })
+}
+
 export async function apiDeletePeriodontogramEntry(id: number) {
     return ApiService.fetchData<void>({
         url: `/periodontogram/${id}`,
