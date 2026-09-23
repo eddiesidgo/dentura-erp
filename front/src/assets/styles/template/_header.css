@@ -1,6 +1,6 @@
 @layer components {
   .header {
-    @apply bg-white flex z-30 sticky top-0 w-full dark:bg-gray-800 print:hidden;
+    @apply bg-white/95 backdrop-blur-sm flex z-30 sticky top-0 w-full border-b border-gray-100 dark:bg-gray-800/95 dark:border-gray-700 print:hidden;
   }
 
   .header-wrapper {
@@ -12,16 +12,16 @@
   }
 
   .header-action-item {
-    @apply cursor-pointer p-2 rounded-full mx-1;
+    @apply cursor-pointer p-2 rounded-lg mx-1;
   }
 
   .header-action-item-hoverable {
-    @apply hover:bg-black/5 
+    @apply hover:bg-gray-50 
       hover:text-gray-900 
       dark:hover:bg-black/40
       dark:hover:text-gray-100
       transition-colors 
-      duration-300 
+      duration-200 
       ease-in-out;
   }
 }

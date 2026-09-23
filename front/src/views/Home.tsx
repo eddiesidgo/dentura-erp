@@ -9,8 +9,10 @@ import {
     HiOutlineUserAdd,
     HiOutlineUserGroup,
 } from 'react-icons/hi'
-import AdaptableCard from '@/components/shared/AdaptableCard'
 import Chart from '@/components/shared/Chart'
+import GhostButton from '@/components/shared/GhostButton'
+import KpiStat from '@/components/shared/KpiStat'
+import SoftCard from '@/components/shared/SoftCard'
 import { Button, Spinner } from '@/components/ui'
 import { useConfig } from '@/components/ui/ConfigProvider'
 import { useAppSelector } from '@/store'
@@ -47,20 +49,19 @@ const KpiTile = ({
     label,
     value,
     hint,
-    tone,
+    accent,
 }: {
     label: string
     value: number
     hint?: string
-    tone: string
+    accent: 'sky' | 'amber' | 'emerald' | 'indigo' | 'slate'
 }) => (
-    <div className={`rounded-xl p-3 text-white shadow ${tone}`}>
-        <div className="text-sm opacity-95">{label}</div>
-        <div className="mt-1 text-2xl font-bold">{formatNumber(value)}</div>
-        {hint ? (
-            <div className="mt-1 text-[11px] opacity-90">{hint}</div>
-        ) : null}
-    </div>
+    <KpiStat
+        label={label}
+        value={formatNumber(value)}
+        sublabel={hint}
+        accent={accent}
+    />
 )
 
 const canAccess = (userAuthority: string[], authority: string[]) => {
@@ -304,18 +305,18 @@ const Home = () => {
 
     if (error) {
         return (
-            <AdaptableCard>
+            <SoftCard>
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
                     {error}
                 </div>
-            </AdaptableCard>
+            </SoftCard>
         )
     }
 
     return (
         <div className="space-y-6">
             {sinDatos ? (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
                     <p className="font-semibold">
                         Aún no hay actividad registrada en esta clínica.
                     </p>
@@ -328,8 +329,8 @@ const Home = () => {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                 <div className="space-y-6 lg:col-span-1">
-                    <AdaptableCard>
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    <SoftCard>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             {userName
                                 ? `Bienvenido, ${userName}`
                                 : 'Bienvenido'}
@@ -344,7 +345,7 @@ const Home = () => {
                                     <KpiTile
                                         label="Pacientes"
                                         value={patientKpis?.totalPatients ?? 0}
-                                        tone="bg-gradient-to-br from-indigo-500 to-indigo-600"
+                                        accent="indigo"
                                     />
                                     <KpiTile
                                         label="Nuevos mes"
@@ -352,7 +353,7 @@ const Home = () => {
                                             patientKpis?.newPatientsThisMonth ??
                                             0
                                         }
-                                        tone="bg-gradient-to-br from-sky-500 to-sky-600"
+                                        accent="sky"
                                     />
                                 </>
                             ) : null}
@@ -361,13 +362,13 @@ const Home = () => {
                                     <KpiTile
                                         label="Citas hoy"
                                         value={todayCount}
-                                        tone="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                                        accent="emerald"
                                     />
                                     <KpiTile
                                         label="Próx. 7 días"
                                         value={weekCount}
                                         hint="Incluye hoy"
-                                        tone="bg-gradient-to-br from-amber-500 to-amber-600"
+                                        accent="amber"
                                     />
                                 </>
                             ) : null}
@@ -380,7 +381,7 @@ const Home = () => {
                                             0
                                         }
                                         hint={`En ${patientKpis?.upcomingDays ?? 7} días`}
-                                        tone="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                                        accent="emerald"
                                     />
                                     <KpiTile
                                         label="Inactivos"
@@ -388,15 +389,15 @@ const Home = () => {
                                             patientKpis?.inactivePatients ?? 0
                                         }
                                         hint={`${patientKpis?.inactivityDays ?? 90} días`}
-                                        tone="bg-gradient-to-br from-slate-500 to-slate-600"
+                                        accent="slate"
                                     />
                                 </>
                             ) : null}
                         </div>
-                    </AdaptableCard>
+                    </SoftCard>
 
-                    <AdaptableCard>
-                        <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                    <SoftCard>
+                        <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                             Operación hoy
                         </h4>
                         <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
@@ -432,10 +433,10 @@ const Home = () => {
                                 </p>
                             ) : null}
                         </div>
-                    </AdaptableCard>
+                    </SoftCard>
 
-                    <AdaptableCard>
-                        <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                    <SoftCard>
+                        <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                             Acciones rápidas
                         </h4>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -461,45 +462,41 @@ const Home = () => {
                                 </Button>
                             ) : null}
                             {canReadPatients ? (
-                                <Button
+                                <GhostButton
                                     size="sm"
-                                    variant="solid"
-                                    color="sky-600"
                                     icon={<HiOutlineUserGroup />}
                                     onClick={() => navigate('/pacientes')}
                                 >
                                     Pacientes
-                                </Button>
+                                </GhostButton>
                             ) : null}
                             {canReadCatalog ? (
-                                <Button
+                                <GhostButton
                                     size="sm"
-                                    variant="default"
                                     icon={<HiOutlineClipboardList />}
                                     onClick={() => navigate('/tratamientos')}
                                 >
                                     Tratamientos
-                                </Button>
+                                </GhostButton>
                             ) : null}
                             {canReadAgenda && !canWriteAgenda ? (
-                                <Button
+                                <GhostButton
                                     size="sm"
-                                    variant="default"
                                     icon={<HiOutlinePlus />}
                                     onClick={() => navigate('/agenda')}
                                 >
                                     Ver agenda
-                                </Button>
+                                </GhostButton>
                             ) : null}
                         </div>
-                    </AdaptableCard>
+                    </SoftCard>
                 </div>
 
                 <div className="space-y-6 lg:col-span-3">
-                    <AdaptableCard>
+                    <SoftCard>
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                                     Actividad (últimos 12 meses)
                                 </h4>
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -531,11 +528,11 @@ const Home = () => {
                                 </p>
                             )}
                         </div>
-                    </AdaptableCard>
+                    </SoftCard>
 
-                    <AdaptableCard>
+                    <SoftCard>
                         <div>
-                            <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                            <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                                 Distribución por estado de cita
                             </h4>
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -593,7 +590,7 @@ const Home = () => {
                                 distribución por estado.
                             </p>
                         )}
-                    </AdaptableCard>
+                    </SoftCard>
                 </div>
             </div>
         </div>

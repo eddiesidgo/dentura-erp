@@ -1,6 +1,6 @@
 @layer components {
   .card {
-    @apply bg-white rounded-lg dark:bg-gray-800;
+    @apply bg-white rounded-xl dark:bg-gray-800;
   }
 
   .card-border {
@@ -8,11 +8,11 @@
   }
 
   .card-shadow {
-    @apply shadow border-b border-gray-200 dark:border-gray-600 dark:border-none;
+    @apply shadow-sm border border-gray-200 dark:border-gray-600 dark:shadow-none;
   }
 
   .card-header-border {
-    @apply border-b border-gray-200 dark:border-gray-600;
+    @apply border-b border-gray-100 dark:border-gray-700;
   }
 
   .card-header-extra {
@@ -20,20 +20,20 @@
   }
 
   .card-footer {
-    @apply rounded-bl-lg rounded-br-lg;
+    @apply rounded-bl-xl rounded-br-xl;
   }
 
   .card-footer-border {
-    @apply border-t border-gray-200 dark:border-gray-600;
+    @apply border-t border-gray-100 dark:border-gray-700;
   }
 
   .card-header,
   .card-footer {
-    @apply py-3 px-5;
+    @apply py-4 px-5;
   }
 
   .card-body {
-    @apply p-5;
+    @apply p-5 sm:p-6;
   }
 
   .card-gutterless {

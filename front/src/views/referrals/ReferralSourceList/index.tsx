@@ -265,7 +265,7 @@ const ReferralSourceList = () => {
                     ) : undefined
                 }
             />
-            <AdaptableCard className="h-full" bodyClass="h-full p-0">
+            <AdaptableCard className="h-full" bodyClass="h-full p-4 sm:p-5">
                 {!loading && sources.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <p className="font-semibold mb-1">Sin fuentes</p>

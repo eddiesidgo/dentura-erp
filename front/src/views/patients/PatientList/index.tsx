@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import GhostButton from '@/components/shared/GhostButton'
 import KpiStat from '@/components/shared/KpiStat'
 import PageHeader from '@/components/shared/PageHeader'
 import SectionTitle from '@/components/shared/SectionTitle'
@@ -160,9 +161,9 @@ const PatientList = () => {
 					title="Indicadores"
 					description="Captación, agenda próxima e inactividad"
 					extra={
-						<Button size="sm" variant="plain" onClick={fetchKpis}>
+						<GhostButton size="sm" onClick={fetchKpis}>
 							Actualizar
-						</Button>
+						</GhostButton>
 					}
 				/>
 				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -199,13 +200,13 @@ const PatientList = () => {
 				</div>
 			</div>
 
-			<AdaptableCard className="h-full" bodyClass="h-full p-0">
+			<AdaptableCard className="h-full" bodyClass="h-full p-4 sm:p-5">
 				<div className="lg:flex items-start justify-between gap-4 mb-6">
 					<div>
-						<h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
+						<h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
 							Listado operativo
 						</h3>
-						<p className="text-sm text-slate-500 dark:text-slate-400">
+						<p className="text-sm text-gray-500 dark:text-gray-400">
 							Busca por nombre, expediente o documento y abre la ficha en un clic.
 						</p>
 					</div>

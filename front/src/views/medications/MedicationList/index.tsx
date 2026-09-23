@@ -328,7 +328,7 @@ const MedicationList = () => {
                         : undefined
                 }
             />
-            <AdaptableCard className="h-full" bodyClass="h-full p-0">
+            <AdaptableCard className="h-full" bodyClass="h-full p-4 sm:p-5">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end gap-2 mb-5">
                         <Segment
                             size="sm"

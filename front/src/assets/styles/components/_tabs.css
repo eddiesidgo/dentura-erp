@@ -4,7 +4,7 @@
   }
 
   .tab-list-underline {
-    @apply border-b border-gray-200 dark:border-gray-600;
+    @apply border-b border-gray-100 dark:border-gray-600;
   }
 
   .tab-nav {
@@ -20,7 +20,7 @@
   }
 
   .tab-nav-pill {
-    @apply py-2 px-5 mr-1 rtl:ml-1 rounded-md;
+    @apply py-2 px-5 mr-1 rtl:ml-1 rounded-lg;
   }
 
   .tab-nav-icon {

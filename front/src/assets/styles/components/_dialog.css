@@ -29,7 +29,7 @@
   }
 
   .dialog-content {
-    @apply p-6 rounded-lg shadow-xl sm:my-16 relative h-full bg-white dark:bg-gray-800;
+    @apply p-6 rounded-xl shadow-lg border border-gray-100 sm:my-16 relative h-full bg-white dark:bg-gray-800 dark:border-gray-700;
   }
 
   .dialog-overlay {

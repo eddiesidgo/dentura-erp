@@ -39,8 +39,8 @@ const KpiStat = ({
 }: KpiStatProps) => (
     <div
         className={classNames(
-            'rounded-xl border border-slate-200 bg-white p-4 text-left transition dark:border-slate-700 dark:bg-slate-900/40',
-            'hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60',
+            'rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition dark:border-gray-600 dark:bg-gray-800',
+            'hover:border-gray-300 hover:shadow dark:hover:bg-gray-800',
             className,
         )}
     >

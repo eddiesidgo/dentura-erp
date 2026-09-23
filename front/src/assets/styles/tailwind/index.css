@@ -17,7 +17,7 @@
 	}
 
   body {
-    @apply text-gray-500 dark:text-gray-400 text-sm bg-gray-100 dark:bg-gray-900 leading-normal;
+    @apply text-gray-500 dark:text-gray-400 text-sm bg-[#F5F7F9] dark:bg-gray-900 leading-relaxed;
     -webkit-font-smoothing: antialiased;
   }
 

@@ -1,16 +1,16 @@
 @layer components {
   .menu-item {
-    @apply cursor-pointer font-semibold px-3 rounded-md flex items-center w-full whitespace-nowrap gap-x-2;
+    @apply cursor-pointer font-semibold px-3 py-2 rounded-lg flex items-center w-full whitespace-nowrap gap-x-2;
 
     &.menu-item-light {
-      @apply text-gray-600;
+      @apply text-gray-600 font-medium;
 
       &.menu-item-hoverable {
-        @apply hover:text-gray-900 hover:bg-gray-100;
+        @apply hover:text-gray-900 hover:bg-gray-50;
       }
 
       &.menu-item-active {
-        @apply text-gray-900 bg-gray-200 hover:bg-gray-200;
+        @apply text-gray-900 bg-gray-100 hover:bg-gray-100 font-semibold;
       }
     }
 
@@ -52,10 +52,10 @@
   }
 
   .menu-collapse-item {
-    @apply cursor-pointer select-none font-semibold px-3 h-10 rounded-md flex items-center justify-between;
+    @apply cursor-pointer select-none font-semibold px-3 h-10 rounded-lg flex items-center justify-between;
 
     &.menu-collapse-item-light {
-      @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100;
+      @apply text-gray-600 hover:text-gray-900 hover:bg-gray-50;
     }
 
     &.menu-collapse-item-dark {

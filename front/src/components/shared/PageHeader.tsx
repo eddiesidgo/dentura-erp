@@ -65,7 +65,7 @@ const PageHeader = ({
                             {chips.map((chip) => (
                                 <span
                                     key={chip}
-                                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-300"
+                                    className="rounded-full border border-gray-200 bg-white px-3 py-1 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300"
                                 >
                                     {chip}
                                 </span>
@@ -80,7 +80,7 @@ const PageHeader = ({
                     </div>
                 ) : null}
             </div>
-            {divider ? <hr className="my-6 border-slate-200 dark:border-slate-600" /> : null}
+            {divider ? <hr className="my-6 border-gray-100 dark:border-gray-700" /> : null}
         </div>
     )
 }

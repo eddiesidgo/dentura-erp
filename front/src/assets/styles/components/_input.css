@@ -1,12 +1,13 @@
 @layer components {
   .input {
     @apply border 
-      border-gray-300 
+      border-gray-200 
       dark:border-gray-600 
       dark:bg-transparent 
-      rounded-md 
+      rounded-lg 
       w-full 
       py-2 px-3 
+      bg-white
       focus:outline-none 
       focus:ring-1 
       focus-within:ring-1 
@@ -30,7 +31,7 @@
   }
 
   .input-addon {
-    @apply flex items-center px-4 rounded-md border border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700;
+    @apply flex items-center px-4 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700;
   }
 
   .input-textarea {
@@ -42,7 +43,7 @@
   }
 
   .input-disabled {
-    @apply bg-gray-100 dark:bg-gray-700  text-gray-400 cursor-not-allowed;
+    @apply bg-gray-50 dark:bg-gray-700 text-gray-400 cursor-not-allowed;
 
     &::placeholder {
       @apply opacity-70;

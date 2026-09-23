@@ -13,11 +13,11 @@
   }
   
   .side-nav-light {
-    @apply bg-white border-r border-gray-200;
+    @apply bg-white border-r border-gray-100;
   }
   
   .side-nav-dark {
-    @apply bg-gray-800 border-r border-gray-600;
+    @apply bg-gray-800 border-r border-gray-700;
   }
   
   .side-nav-transparent {

@@ -6,6 +6,7 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import AdaptableCard from '@/components/shared/AdaptableCard'
 import CalendarView from '@/components/shared/CalendarView'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import GhostButton from '@/components/shared/GhostButton'
 import PageHeader from '@/components/shared/PageHeader'
 import { Button, Notification, Select, Tag, toast } from '@/components/ui'
 import AuthorityCheck from '@/components/shared/AuthorityCheck'
@@ -331,21 +332,19 @@ const AgendaCalendar = () => {
                 subtitle="Clínica"
                 info="Selecciona un horario para crear o abre una cita para editarla. Arrastra para reprogramar."
                 extra={
-                    <div className="flex gap-2">
-                        <Button
+                    <div className="flex flex-wrap gap-2">
+                        <GhostButton
                             size="sm"
-                            variant="plain"
                             onClick={() => navigate('/recordatorios')}
                         >
                             Recordatorios
-                        </Button>
-                        <Button
+                        </GhostButton>
+                        <GhostButton
                             size="sm"
-                            variant="plain"
                             onClick={() => navigate('/pacientes')}
                         >
                             Pacientes
-                        </Button>
+                        </GhostButton>
                         <AuthorityCheck
                             authority={[AGENDA_WRITE]}
                             userAuthority={userAuthority}
@@ -362,7 +361,7 @@ const AgendaCalendar = () => {
                     </div>
                 }
             />
-            <AdaptableCard bodyClass="p-0">
+            <AdaptableCard bodyClass="p-4 sm:p-5">
                 {(showProviderFilter || showRoomFilter) && (
                     <div
                         className={`mb-4 grid grid-cols-1 gap-3 ${

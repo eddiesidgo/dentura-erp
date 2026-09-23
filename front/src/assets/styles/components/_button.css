@@ -1,9 +1,9 @@
 @layer components {
   .button {
-    @apply font-semibold focus:outline-none whitespace-nowrap;
+    @apply font-semibold focus:outline-none whitespace-nowrap transition-colors duration-150;
 
     &.radius-round {
-      @apply rounded-md;
+      @apply rounded-lg;
     }
 
     &.radius-circle {

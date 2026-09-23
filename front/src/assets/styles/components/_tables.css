@@ -1,9 +1,9 @@
 @layer components {
   .table-default {
-    @apply table-auto min-w-full divide-y divide-gray-200 dark:divide-gray-700;
+    @apply table-auto min-w-full divide-y divide-gray-100 dark:divide-gray-700;
 
     thead {
-      @apply bg-gray-50 dark:bg-gray-700;
+      @apply bg-gray-50/80 dark:bg-gray-700;
 
       > tr {
         > th {

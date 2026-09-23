@@ -271,7 +271,7 @@ const RoleList = () => {
                     </Button>
                 }
             />
-            <AdaptableCard className="mb-4" bodyClass="p-0">
+            <AdaptableCard className="mb-4" bodyClass="p-4 sm:p-5">
                 <div className="mb-4">
                     <h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
                         Roles de esta clínica
@@ -336,7 +336,7 @@ const RoleList = () => {
                 </div>
             </AdaptableCard>
 
-            <AdaptableCard bodyClass="p-0">
+            <AdaptableCard bodyClass="p-4 sm:p-5">
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
