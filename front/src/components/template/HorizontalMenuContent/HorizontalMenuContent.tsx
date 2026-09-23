@@ -9,6 +9,9 @@ import {
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
 import { useTranslation } from 'react-i18next'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
+import { filterNavigationByFeatures } from '@/utils/filterNavigationByFeatures'
+import { useMemo } from 'react'
 import type { NavMode } from '@/@types/theme'
 
 type HorizontalMenuContentProps = {
@@ -21,10 +24,15 @@ const HorizontalMenuContent = ({
     userAuthority = [],
 }: HorizontalMenuContentProps) => {
     const { t } = useTranslation()
+    const features = useClinicFeatures()
+    const navigationTree = useMemo(
+        () => filterNavigationByFeatures(navigationConfig, features),
+        [features],
+    )
 
     return (
         <span className="flex items-center">
-            {navigationConfig.map((nav) => {
+            {navigationTree.map((nav) => {
                 if (
                     nav.type === NAV_ITEM_TYPE_TITLE ||
                     nav.type === NAV_ITEM_TYPE_COLLAPSE

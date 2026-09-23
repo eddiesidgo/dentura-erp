@@ -10,5 +10,7 @@ public record CreateClinicRequest(
 		String code,
 		@NotBlank
 		@Size(max = 160)
-		String name) {
+		String name,
+		@Pattern(regexp = "BASIC|MULTI_DOCTOR|FULL", message = "preset debe ser BASIC, MULTI_DOCTOR o FULL")
+		String preset) {
 }

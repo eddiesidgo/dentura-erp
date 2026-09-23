@@ -14,7 +14,10 @@ import navigationConfig from '@/configs/navigation.config'
 import VerticalMenuContent from '@/components/template/VerticalMenuContent'
 import useResponsive from '@/utils/hooks/useResponsive'
 import useThemeClass from '@/utils/hooks/useThemeClass'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
+import { filterNavigationByFeatures } from '@/utils/filterNavigationByFeatures'
 import { useAppSelector } from '@/store'
+import { useMemo } from 'react'
 
 const sideNavStyle = {
     width: SIDE_NAV_WIDTH,
@@ -44,6 +47,11 @@ const SideNav = () => {
 
     const { larger } = useResponsive()
     const { navTitleTheme } = useThemeClass()
+    const features = useClinicFeatures()
+    const navigationTree = useMemo(
+        () => filterNavigationByFeatures(navigationConfig, features),
+        [features],
+    )
 
     const sideNavColor = () => {
         if (navMode === NAV_MODE_THEMED) {
@@ -68,7 +76,7 @@ const SideNav = () => {
         <VerticalMenuContent
             navMode={navMode}
             collapsed={sideNavCollapse}
-            navigationTree={navigationConfig}
+            navigationTree={navigationTree}
             routeKey={currentRouteKey}
             userAuthority={userAuthority as string[]}
             direction={direction}

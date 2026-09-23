@@ -5,6 +5,7 @@ import DirectionSwitcher from './DirectionSwitcher'
 import NavModeSwitcher from './NavModeSwitcher'
 import IdentityFields from './IdentityFields'
 import CreateClinicFields from './CreateClinicFields'
+import OperationalSettingsFields from './OperationalSettingsFields'
 import SaveIdentityButton from './SaveIdentityButton'
 import useThemeClass from '@/utils/hooks/useThemeClass'
 
@@ -19,6 +20,7 @@ const ThemeConfigurator = ({ callBackClose }: ThemeConfiguratorProps) => {
         <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col gap-y-10 mb-6">
                 <IdentityFields />
+                <OperationalSettingsFields />
                 <CreateClinicFields />
                 <div className="flex items-center justify-between">
                     <div>

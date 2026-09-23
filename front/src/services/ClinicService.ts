@@ -1,5 +1,9 @@
 import ApiService from './ApiService'
-import type { ClinicIdentity, UpdateClinicIdentityRequest } from '@/@types/clinic'
+import type {
+    ClinicDeliveryPreset,
+    ClinicIdentity,
+    UpdateClinicIdentityRequest,
+} from '@/@types/clinic'
 import type { SignInResponse } from '@/@types/auth'
 
 export async function apiGetPublicClinicIdentity() {
@@ -38,7 +42,11 @@ export async function apiSwitchClinic(id: number) {
     })
 }
 
-export async function apiCreateClinic(data: { code: string; name: string }) {
+export async function apiCreateClinic(data: {
+    code: string
+    name: string
+    preset?: ClinicDeliveryPreset
+}) {
     return ApiService.fetchData<ClinicIdentity>({
         url: '/clinics',
         method: 'post',

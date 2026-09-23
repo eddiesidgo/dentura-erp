@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.clinic.Clinic;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.clinic.ClinicFeatureGuard;
 import com.dentura.api.clinic.ClinicLogoStorage;
 import com.dentura.api.clinic.ClinicService;
 import com.dentura.api.patient.Patient;
@@ -58,6 +59,7 @@ public class ReportService {
 	private final ClinicService clinicService;
 	private final ClinicLogoStorage clinicLogoStorage;
 	private final PermissionService permissionService;
+	private final ClinicFeatureGuard clinicFeatureGuard;
 
 	public ReportService(
 			WorkRepository workRepository,
@@ -70,7 +72,8 @@ public class ReportService {
 			ClinicAccess clinicAccess,
 			ClinicService clinicService,
 			ClinicLogoStorage clinicLogoStorage,
-			PermissionService permissionService) {
+			PermissionService permissionService,
+			ClinicFeatureGuard clinicFeatureGuard) {
 		this.workRepository = workRepository;
 		this.patientRepository = patientRepository;
 		this.treatmentRepository = treatmentRepository;
@@ -82,6 +85,7 @@ public class ReportService {
 		this.clinicService = clinicService;
 		this.clinicLogoStorage = clinicLogoStorage;
 		this.permissionService = permissionService;
+		this.clinicFeatureGuard = clinicFeatureGuard;
 	}
 
 	@Transactional(readOnly = true)
@@ -242,6 +246,7 @@ public class ReportService {
 	@Transactional(readOnly = true)
 	public List<GenericReportRow> referralsBySource() {
 		permissionService.require(Permission.REPORTS_READ);
+		clinicFeatureGuard.requireReferralsInbound();
 		Long clinicId = clinicAccess.requireClinicId();
 		Map<Long, String> sourceNames = referralSourceRepository.findByClinicIdOrderByNameAsc(clinicId).stream()
 				.collect(Collectors.toMap(ReferralSource::getId, ReferralSource::getName, (a, b) -> a, LinkedHashMap::new));

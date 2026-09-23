@@ -36,7 +36,12 @@ class ClinicControllerTest {
 				.andExpect(jsonPath("$.code").value("default"))
 				.andExpect(jsonPath("$.name").isNotEmpty())
 				.andExpect(jsonPath("$.themeColor").value("indigo"))
-				.andExpect(jsonPath("$.themeMode").value("light"));
+				.andExpect(jsonPath("$.themeMode").value("light"))
+				.andExpect(jsonPath("$.features.providerMode").value("MULTI"))
+				.andExpect(jsonPath("$.features.roomMode").value("OPTIONAL"))
+				.andExpect(jsonPath("$.features.referralsInboundEnabled").value(true))
+				.andExpect(jsonPath("$.features.referralsOutboundEnabled").value(true))
+				.andExpect(jsonPath("$.reminderHoursBefore").value(24));
 	}
 
 	@Test
@@ -195,6 +200,58 @@ class ClinicControllerTest {
 
 		mockMvc.perform(post("/api/clinics/{id}/switch", clinicId)
 				.header("Authorization", staffToken))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void createClinicWithBasicPresetAppliesOperationalProfile() throws Exception {
+		String token = adminBearer();
+
+		mockMvc.perform(post("/api/clinics")
+				.header("Authorization", token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"code":"basica","name":"Clínica Básica","preset":"BASIC"}
+						"""))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.code").value("basica"))
+				.andExpect(jsonPath("$.features.providerMode").value("SINGLE"))
+				.andExpect(jsonPath("$.features.roomMode").value("OFF"))
+				.andExpect(jsonPath("$.features.referralsInboundEnabled").value(false))
+				.andExpect(jsonPath("$.features.referralsOutboundEnabled").value(false));
+	}
+
+	@Test
+	void updatingOperationalSettingsAndRemindersPersists() throws Exception {
+		String token = adminBearer();
+
+		mockMvc.perform(put("/api/clinics/current")
+				.header("Authorization", token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"name":"Dentura",
+							"themeColor":"indigo",
+							"themeMode":"light",
+							"primaryColorLevel":600,
+							"providerMode":"SINGLE",
+							"roomMode":"REQUIRED",
+							"referralsInboundEnabled":false,
+							"referralsOutboundEnabled":false,
+							"reminderHoursBefore":12,
+							"reminderDefaultCountryCode":"502",
+							"reminderMessageTemplate":"Recordatorio {patientName}"
+						}
+						"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.features.providerMode").value("SINGLE"))
+				.andExpect(jsonPath("$.features.roomMode").value("REQUIRED"))
+				.andExpect(jsonPath("$.features.referralsInboundEnabled").value(false))
+				.andExpect(jsonPath("$.features.referralsOutboundEnabled").value(false))
+				.andExpect(jsonPath("$.reminderHoursBefore").value(12))
+				.andExpect(jsonPath("$.reminderDefaultCountryCode").value("502"));
+
+		mockMvc.perform(get("/api/referral-sources").header("Authorization", token))
 				.andExpect(status().isForbidden());
 	}
 

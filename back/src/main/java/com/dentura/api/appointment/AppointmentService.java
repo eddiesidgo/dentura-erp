@@ -16,7 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.dentura.api.appointment.dto.AppointmentRequest;
 import com.dentura.api.appointment.dto.AppointmentResponse;
 import com.dentura.api.audit.AuditService;
+import com.dentura.api.clinic.Clinic;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.clinic.ClinicFeatureGuard;
 import com.dentura.api.patient.Patient;
 import com.dentura.api.patient.PatientRepository;
 import com.dentura.api.provider.Provider;
@@ -43,6 +45,7 @@ public class AppointmentService {
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
 	private final AuditService auditService;
+	private final ClinicFeatureGuard clinicFeatureGuard;
 
 	public AppointmentService(
 			AppointmentRepository appointmentRepository,
@@ -51,7 +54,8 @@ public class AppointmentService {
 			RoomRepository roomRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService,
-			AuditService auditService) {
+			AuditService auditService,
+			ClinicFeatureGuard clinicFeatureGuard) {
 		this.appointmentRepository = appointmentRepository;
 		this.patientRepository = patientRepository;
 		this.providerRepository = providerRepository;
@@ -59,6 +63,7 @@ public class AppointmentService {
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
 		this.auditService = auditService;
+		this.clinicFeatureGuard = clinicFeatureGuard;
 	}
 
 	@Transactional(readOnly = true)
@@ -180,10 +185,26 @@ public class AppointmentService {
 	}
 
 	private Provider resolveProvider(Long providerId) {
+		Clinic clinic = clinicFeatureGuard.requireClinic();
+		Long clinicId = clinic.getId();
+		if (Clinic.PROVIDER_MODE_SINGLE.equals(clinic.getProviderMode())) {
+			List<Provider> active = providerRepository.findByClinicIdAndActiveTrueOrderByNameAsc(clinicId);
+			if (active.isEmpty()) {
+				throw new ResponseStatusException(
+						HttpStatus.BAD_REQUEST,
+						"La clínica en modo un solo profesional no tiene profesionales activos");
+			}
+			if (active.size() == 1) {
+				return active.get(0);
+			}
+			if (providerId != null) {
+				return requireProvider(providerId);
+			}
+			return active.get(0);
+		}
 		if (providerId != null) {
 			return requireProvider(providerId);
 		}
-		Long clinicId = clinicAccess.requireClinicId();
 		return providerRepository.findFirstByClinicIdAndName(clinicId, "General")
 				.orElseGet(() -> {
 					Provider provider = new Provider();
@@ -196,6 +217,14 @@ public class AppointmentService {
 	}
 
 	private Room resolveRoom(Long roomId) {
+		Clinic clinic = clinicFeatureGuard.requireClinic();
+		String roomMode = clinic.getRoomMode();
+		if (Clinic.ROOM_MODE_OFF.equals(roomMode)) {
+			return null;
+		}
+		if (Clinic.ROOM_MODE_REQUIRED.equals(roomMode) && roomId == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe indicar la sala");
+		}
 		if (roomId == null) {
 			return null;
 		}

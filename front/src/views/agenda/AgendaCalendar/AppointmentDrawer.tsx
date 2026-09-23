@@ -21,6 +21,7 @@ import {
 import { statusOptions, statusTagClass } from '../constants'
 import type { AppointmentStatus, Provider, Room } from '@/@types/appointment'
 import type { Patient } from '@/@types/patient'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
 
 type PatientOption = { value: number; label: string }
 type IdOption = { value: number; label: string }
@@ -64,6 +65,10 @@ const AppointmentDrawer = ({
     onDelete,
 }: AppointmentDrawerProps) => {
     const navigate = useNavigate()
+    const features = useClinicFeatures()
+    const showProviderPicker = features.providerMode === 'MULTI'
+    const showRooms = features.roomMode !== 'OFF'
+    const roomRequired = features.roomMode === 'REQUIRED'
     const [patientOptions, setPatientOptions] = useState<PatientOption[]>([])
     const [providers, setProviders] = useState<Provider[]>([])
     const [rooms, setRooms] = useState<Room[]>([])
@@ -75,12 +80,22 @@ const AppointmentDrawer = ({
         try {
             const [providersRes, roomsRes] = await Promise.all([
                 apiGetProviders(true),
-                apiGetRooms(true),
+                showRooms ? apiGetRooms(true) : Promise.resolve({ data: [] as Room[] }),
             ])
             setProviders(providersRes.data)
-            setRooms(roomsRes.data)
-            if (!form.providerId && providersRes.data.length === 1) {
-                onChange({ ...form, providerId: providersRes.data[0].id })
+            setRooms(showRooms ? roomsRes.data : [])
+            const next: AppointmentForm = { ...form }
+            let changed = false
+            if (!form.providerId && providersRes.data.length >= 1) {
+                next.providerId = providersRes.data[0].id
+                changed = true
+            }
+            if (!showRooms && form.roomId != null) {
+                next.roomId = null
+                changed = true
+            }
+            if (changed) {
+                onChange(next)
             }
         } catch {
             setProviders([])
@@ -206,7 +221,8 @@ const AppointmentDrawer = ({
                 !form.patientId ||
                 !form.providerId ||
                 !form.start ||
-                !form.end
+                !form.end ||
+                (roomRequired && !form.roomId)
             }
             footerStart={
                 <div className="flex items-center gap-2">
@@ -259,81 +275,100 @@ const AppointmentDrawer = ({
                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                     <div className="mb-3 text-sm font-semibold">Recursos</div>
                     <div className="flex flex-col gap-3">
-                        <div>
-                            <div className="mb-1.5 text-sm font-semibold">
-                                Profesional <span className="text-red-500">*</span>
-                            </div>
-                            <Select
-                                placeholder="Seleccionar profesional"
-                                options={providerOptions}
-                                value={providerOptions.filter(
-                                    (option) => option.value === form.providerId,
-                                )}
-                                onChange={(option) =>
-                                    onChange({
-                                        ...form,
-                                        providerId: option?.value,
-                                    })
-                                }
-                            />
-                            {providers.length === 0 ? (
-                                <div className="mt-2 flex gap-2">
-                                    <Input
-                                        size="sm"
-                                        placeholder="Nombre del profesional"
-                                        value={newProviderName}
-                                        onChange={(e) =>
-                                            setNewProviderName(e.target.value)
-                                        }
-                                    />
-                                    <Button
-                                        size="sm"
-                                        loading={addingResource}
-                                        onClick={addProvider}
-                                    >
-                                        Añadir
-                                    </Button>
+                        {showProviderPicker ? (
+                            <div>
+                                <div className="mb-1.5 text-sm font-semibold">
+                                    Profesional{' '}
+                                    <span className="text-red-500">*</span>
                                 </div>
-                            ) : null}
-                        </div>
-                        <div>
-                            <div className="mb-1.5 text-sm font-semibold">
-                                Sala
+                                <Select
+                                    placeholder="Seleccionar profesional"
+                                    options={providerOptions}
+                                    value={providerOptions.filter(
+                                        (option) =>
+                                            option.value === form.providerId,
+                                    )}
+                                    onChange={(option) =>
+                                        onChange({
+                                            ...form,
+                                            providerId: option?.value,
+                                        })
+                                    }
+                                />
+                                {providers.length === 0 ? (
+                                    <div className="mt-2 flex gap-2">
+                                        <Input
+                                            size="sm"
+                                            placeholder="Nombre del profesional"
+                                            value={newProviderName}
+                                            onChange={(e) =>
+                                                setNewProviderName(e.target.value)
+                                            }
+                                        />
+                                        <Button
+                                            size="sm"
+                                            loading={addingResource}
+                                            onClick={addProvider}
+                                        >
+                                            Añadir
+                                        </Button>
+                                    </div>
+                                ) : null}
                             </div>
-                            <Select
-                                isClearable
-                                placeholder="Opcional"
-                                options={roomOptions}
-                                value={roomOptions.filter(
-                                    (option) => option.value === form.roomId,
-                                )}
-                                onChange={(option) =>
-                                    onChange({
-                                        ...form,
-                                        roomId: option?.value ?? null,
-                                    })
-                                }
-                            />
-                            {rooms.length === 0 ? (
-                                <div className="mt-2 flex gap-2">
-                                    <Input
-                                        size="sm"
-                                        placeholder="Nombre de la sala"
-                                        value={newRoomName}
-                                        onChange={(e) =>
-                                            setNewRoomName(e.target.value)
-                                        }
-                                    />
-                                    <Button
-                                        size="sm"
-                                        loading={addingResource}
-                                        onClick={addRoom}
-                                    >
-                                        Añadir
-                                    </Button>
+                        ) : (
+                            <div className="text-sm text-slate-500">
+                                Profesional:{' '}
+                                {providers[0]?.name || 'Asignación automática'}
+                            </div>
+                        )}
+                        {showRooms ? (
+                            <div>
+                                <div className="mb-1.5 text-sm font-semibold">
+                                    Sala
+                                    {roomRequired ? (
+                                        <span className="text-red-500"> *</span>
+                                    ) : null}
                                 </div>
-                            ) : null}
-                        </div>
+                                <Select
+                                    isClearable={!roomRequired}
+                                    placeholder={
+                                        roomRequired
+                                            ? 'Seleccionar sala'
+                                            : 'Opcional'
+                                    }
+                                    options={roomOptions}
+                                    value={roomOptions.filter(
+                                        (option) =>
+                                            option.value === form.roomId,
+                                    )}
+                                    onChange={(option) =>
+                                        onChange({
+                                            ...form,
+                                            roomId: option?.value ?? null,
+                                        })
+                                    }
+                                />
+                                {rooms.length === 0 ? (
+                                    <div className="mt-2 flex gap-2">
+                                        <Input
+                                            size="sm"
+                                            placeholder="Nombre de la sala"
+                                            value={newRoomName}
+                                            onChange={(e) =>
+                                                setNewRoomName(e.target.value)
+                                            }
+                                        />
+                                        <Button
+                                            size="sm"
+                                            loading={addingResource}
+                                            onClick={addRoom}
+                                        >
+                                            Añadir
+                                        </Button>
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : null}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

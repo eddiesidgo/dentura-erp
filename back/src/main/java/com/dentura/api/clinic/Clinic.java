@@ -18,6 +18,12 @@ import jakarta.persistence.UniqueConstraint;
 })
 public class Clinic {
 
+	public static final String PROVIDER_MODE_SINGLE = "SINGLE";
+	public static final String PROVIDER_MODE_MULTI = "MULTI";
+	public static final String ROOM_MODE_OFF = "OFF";
+	public static final String ROOM_MODE_OPTIONAL = "OPTIONAL";
+	public static final String ROOM_MODE_REQUIRED = "REQUIRED";
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -79,6 +85,18 @@ public class Clinic {
 
 	@Column(name = "reminder_default_country_code", nullable = false, length = 8)
 	private String reminderDefaultCountryCode = "503";
+
+	@Column(name = "provider_mode", nullable = false, length = 16)
+	private String providerMode = PROVIDER_MODE_MULTI;
+
+	@Column(name = "room_mode", nullable = false, length = 16)
+	private String roomMode = ROOM_MODE_OPTIONAL;
+
+	@Column(name = "referrals_inbound_enabled", nullable = false)
+	private boolean referralsInboundEnabled = true;
+
+	@Column(name = "referrals_outbound_enabled", nullable = false)
+	private boolean referralsOutboundEnabled = true;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -256,6 +274,38 @@ public class Clinic {
 
 	public void setReminderDefaultCountryCode(String reminderDefaultCountryCode) {
 		this.reminderDefaultCountryCode = reminderDefaultCountryCode;
+	}
+
+	public String getProviderMode() {
+		return providerMode;
+	}
+
+	public void setProviderMode(String providerMode) {
+		this.providerMode = providerMode;
+	}
+
+	public String getRoomMode() {
+		return roomMode;
+	}
+
+	public void setRoomMode(String roomMode) {
+		this.roomMode = roomMode;
+	}
+
+	public boolean isReferralsInboundEnabled() {
+		return referralsInboundEnabled;
+	}
+
+	public void setReferralsInboundEnabled(boolean referralsInboundEnabled) {
+		this.referralsInboundEnabled = referralsInboundEnabled;
+	}
+
+	public boolean isReferralsOutboundEnabled() {
+		return referralsOutboundEnabled;
+	}
+
+	public void setReferralsOutboundEnabled(boolean referralsOutboundEnabled) {
+		this.referralsOutboundEnabled = referralsOutboundEnabled;
 	}
 
 	public Instant getCreatedAt() {

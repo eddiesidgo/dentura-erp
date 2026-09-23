@@ -19,6 +19,7 @@ import {
 } from '@/components/ui'
 import { workStatusOptions } from '@/views/patients/works.constants'
 import type { ReportParams } from '@/services/ReportService'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
 
 type StatusOption = { value: string; label: string }
 
@@ -34,6 +35,7 @@ type PreviewState = {
 }
 
 const ReportList = () => {
+    const features = useClinicFeatures()
     const [listStatus, setListStatus] = useState('')
     const [listFrom, setListFrom] = useState<Date | null>(null)
     const [listTo, setListTo] = useState<Date | null>(null)
@@ -259,6 +261,7 @@ const ReportList = () => {
                     </Button>
                 </Card>
 
+                {features.referralsInboundEnabled ? (
                 <Card
                     bordered
                     className="border-slate-200/90 shadow-none dark:border-slate-700"
@@ -288,6 +291,7 @@ const ReportList = () => {
                         Ver reporte
                     </Button>
                 </Card>
+                ) : null}
 
                 <Card
                     bordered

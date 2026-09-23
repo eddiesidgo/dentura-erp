@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from 'react'
+import { useState, Suspense, lazy, useMemo } from 'react'
 import classNames from 'classnames'
 import Drawer from '@/components/ui/Drawer'
 import {
@@ -10,6 +10,8 @@ import withHeaderItem, { WithHeaderItemProps } from '@/utils/hoc/withHeaderItem'
 import NavToggle from '@/components/shared/NavToggle'
 import navigationConfig from '@/configs/navigation.config'
 import useResponsive from '@/utils/hooks/useResponsive'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
+import { filterNavigationByFeatures } from '@/utils/filterNavigationByFeatures'
 import { useAppSelector } from '@/store'
 
 const VerticalMenuContent = lazy(
@@ -49,6 +51,11 @@ const MobileNav = () => {
     const userAuthority = useAppSelector((state) => state.auth.user.authority)
 
     const { smaller } = useResponsive()
+    const features = useClinicFeatures()
+    const navigationTree = useMemo(
+        () => filterNavigationByFeatures(navigationConfig, features),
+        [features],
+    )
 
     const navColor = () => {
         if (navMode === NAV_MODE_THEMED) {
@@ -83,7 +90,7 @@ const MobileNav = () => {
                                 <VerticalMenuContent
                                     navMode={navMode}
                                     collapsed={false}
-                                    navigationTree={navigationConfig}
+                                    navigationTree={navigationTree}
                                     routeKey={currentRouteKey}
                                     userAuthority={userAuthority as string[]}
                                     direction={direction}

@@ -66,6 +66,7 @@ import {
 } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
 
 type FormModel = {
     recordNumber: string
@@ -174,6 +175,9 @@ const PatientForm = () => {
     const canReadPayments = useAuthority(userAuthority, [PAYMENTS_READ])
     const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
     const canReadConsents = useAuthority(userAuthority, [PATIENTS_READ])
+    const features = useClinicFeatures()
+    const canShowOutboundReferrals =
+        canReadReferrals && features.referralsOutboundEnabled
     const showChartTabs =
         isEdit &&
         (canReadWorks ||
@@ -182,7 +186,7 @@ const PatientForm = () => {
             canReadScans ||
             canReadPrescriptions ||
             canReadPayments ||
-            canReadReferrals ||
+            canShowOutboundReferrals ||
             canReadConsents)
     const [loading, setLoading] = useState(isEdit)
     const [initialValues, setInitialValues] = useState<FormModel>(emptyValues)
@@ -304,7 +308,7 @@ const PatientForm = () => {
                                         Pagos
                                     </Tabs.TabNav>
                                 )}
-                                {canReadReferrals && (
+                                {canShowOutboundReferrals && (
                                     <Tabs.TabNav
                                         value="referidos"
                                         icon={<HiOutlineShare />}
@@ -409,7 +413,7 @@ const PatientForm = () => {
                             <PatientLedger patientId={Number(patientId)} />
                         </Tabs.TabContent>
                     )}
-                    {canReadReferrals && (
+                    {canShowOutboundReferrals && (
                         <Tabs.TabContent value="referidos">
                             <PatientProfileHeader
                                 values={initialValues}
@@ -457,11 +461,14 @@ const PatientDataForm = ({
         useAppSelector((state) => state.auth.user.authority) || []
     const canReadReferrals = useAuthority(userAuthority, [REFERRALS_READ])
     const canWritePatient = useAuthority(userAuthority, [PATIENTS_WRITE])
+    const features = useClinicFeatures()
+    const canShowInboundReferrals =
+        canReadReferrals && features.referralsInboundEnabled
     const [referralSources, setReferralSources] = useState<ReferralSource[]>([])
     const [step, setStep] = useState(0)
 
     useEffect(() => {
-        if (!canReadReferrals) {
+        if (!canShowInboundReferrals) {
             return
         }
         let cancelled = false
@@ -481,7 +488,7 @@ const PatientDataForm = ({
         return () => {
             cancelled = true
         }
-    }, [canReadReferrals])
+    }, [canShowInboundReferrals])
 
     const referralSourceOptions = referralSources.map((source) => ({
         value: source.id,
@@ -501,7 +508,15 @@ const PatientDataForm = ({
                     return
                 }
                 try {
-                    const payload = toPayload(values)
+                    const payload = toPayload(
+                        canShowInboundReferrals
+                            ? values
+                            : {
+                                  ...values,
+                                  referredBy: '',
+                                  referralSourceId: null,
+                              },
+                    )
                     if (isEdit && patientId) {
                         await apiUpdatePatient(patientId, payload)
                         toast.push(
@@ -742,15 +757,17 @@ const PatientDataForm = ({
                                                 component={Input}
                                             />
                                         </FormItem>
-                                        <FormItem label="Referido por">
-                                            <Field
-                                                type="text"
-                                                name="referredBy"
-                                                placeholder="Quién lo refirió"
-                                                component={Input}
-                                            />
-                                        </FormItem>
-                                        {canReadReferrals && (
+                                        {canShowInboundReferrals && (
+                                            <FormItem label="Referido por">
+                                                <Field
+                                                    type="text"
+                                                    name="referredBy"
+                                                    placeholder="Quién lo refirió"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+                                        )}
+                                        {canShowInboundReferrals && (
                                             <FormItem
                                                 label="Fuente de referido"
                                                 className="md:col-span-2"

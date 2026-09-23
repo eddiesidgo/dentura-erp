@@ -25,6 +25,7 @@ import {
 } from '@/constants/roles.constant'
 import { useAppSelector } from '@/store'
 import useAuthority from '@/utils/hooks/useAuthority'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
 import AppointmentDrawer, {
     type AppointmentForm,
 } from './AppointmentDrawer'
@@ -64,6 +65,9 @@ const AgendaCalendar = () => {
     const canWrite = useAuthority(userAuthority, [AGENDA_WRITE])
     const canDelete = useAuthority(userAuthority, [AGENDA_DELETE])
     const clinicId = useAppSelector((state) => state.clinic.current?.id)
+    const features = useClinicFeatures()
+    const showProviderFilter = features.providerMode === 'MULTI'
+    const showRoomFilter = features.roomMode !== 'OFF'
 
     const [events, setEvents] = useState<
         {
@@ -234,7 +238,13 @@ const AgendaCalendar = () => {
     }
 
     const save = async () => {
-        if (!form.patientId || !form.providerId || !form.start || !form.end) {
+        if (
+            !form.patientId ||
+            !form.providerId ||
+            !form.start ||
+            !form.end ||
+            (features.roomMode === 'REQUIRED' && !form.roomId)
+        ) {
             return
         }
         setSaving(true)
@@ -242,7 +252,8 @@ const AgendaCalendar = () => {
             const payload = {
                 patientId: form.patientId,
                 providerId: form.providerId,
-                roomId: form.roomId ?? null,
+                roomId:
+                    features.roomMode === 'OFF' ? null : form.roomId ?? null,
                 startAt: toIso(form.start),
                 endAt: toIso(form.end),
                 status: form.status,
@@ -352,35 +363,48 @@ const AgendaCalendar = () => {
                 }
             />
             <AdaptableCard bodyClass="p-0">
-                <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <Select
-                        options={providerFilterOptions}
-                        value={providerFilterOptions.filter(
-                            (option) =>
-                                option.value === (filterProviderId || 0),
-                        )}
-                        onChange={(option) =>
-                            setFilterProviderId(
-                                option?.value && option.value > 0
-                                    ? option.value
-                                    : undefined,
-                            )
-                        }
-                    />
-                    <Select
-                        options={roomFilterOptions}
-                        value={roomFilterOptions.filter(
-                            (option) => option.value === (filterRoomId || 0),
-                        )}
-                        onChange={(option) =>
-                            setFilterRoomId(
-                                option?.value && option.value > 0
-                                    ? option.value
-                                    : undefined,
-                            )
-                        }
-                    />
-                </div>
+                {(showProviderFilter || showRoomFilter) && (
+                    <div
+                        className={`mb-4 grid grid-cols-1 gap-3 ${
+                            showProviderFilter && showRoomFilter
+                                ? 'md:grid-cols-2'
+                                : ''
+                        }`}
+                    >
+                        {showProviderFilter ? (
+                            <Select
+                                options={providerFilterOptions}
+                                value={providerFilterOptions.filter(
+                                    (option) =>
+                                        option.value === (filterProviderId || 0),
+                                )}
+                                onChange={(option) =>
+                                    setFilterProviderId(
+                                        option?.value && option.value > 0
+                                            ? option.value
+                                            : undefined,
+                                    )
+                                }
+                            />
+                        ) : null}
+                        {showRoomFilter ? (
+                            <Select
+                                options={roomFilterOptions}
+                                value={roomFilterOptions.filter(
+                                    (option) =>
+                                        option.value === (filterRoomId || 0),
+                                )}
+                                onChange={(option) =>
+                                    setFilterRoomId(
+                                        option?.value && option.value > 0
+                                            ? option.value
+                                            : undefined,
+                                    )
+                                }
+                            />
+                        ) : null}
+                    </div>
+                )}
                 <div className="mb-5 flex flex-wrap gap-2">
                     {statusOptions.map((option) => (
                         <Tag

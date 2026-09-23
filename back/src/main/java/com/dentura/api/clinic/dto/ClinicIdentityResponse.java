@@ -19,7 +19,11 @@ public record ClinicIdentityResponse(
 		String navMode,
 		String layoutType,
 		String direction,
-		boolean active) {
+		boolean active,
+		ClinicFeaturesResponse features,
+		int reminderHoursBefore,
+		String reminderMessageTemplate,
+		String reminderDefaultCountryCode) {
 
 	public static ClinicIdentityResponse from(Clinic clinic) {
 		return new ClinicIdentityResponse(
@@ -39,6 +43,10 @@ public record ClinicIdentityResponse(
 				clinic.getNavMode(),
 				clinic.getLayoutType(),
 				clinic.getDirection(),
-				clinic.isActive());
+				clinic.isActive(),
+				ClinicFeaturesResponse.from(clinic),
+				clinic.getReminderHoursBefore(),
+				clinic.getReminderMessageTemplate(),
+				clinic.getReminderDefaultCountryCode());
 	}
 }

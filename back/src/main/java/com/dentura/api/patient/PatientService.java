@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.dentura.api.audit.AuditService;
+import com.dentura.api.clinic.Clinic;
 import com.dentura.api.clinic.ClinicAccess;
+import com.dentura.api.clinic.ClinicFeatureGuard;
 import com.dentura.api.appointment.Appointment;
 import com.dentura.api.appointment.AppointmentRepository;
 import com.dentura.api.patient.dto.PatientKpisResponse;
@@ -40,6 +42,7 @@ public class PatientService {
 	private final ClinicAccess clinicAccess;
 	private final PermissionService permissionService;
 	private final AuditService auditService;
+	private final ClinicFeatureGuard clinicFeatureGuard;
 
 	public PatientService(
 			PatientRepository patientRepository,
@@ -47,13 +50,15 @@ public class PatientService {
 			ReferralSourceRepository referralSourceRepository,
 			ClinicAccess clinicAccess,
 			PermissionService permissionService,
-			AuditService auditService) {
+			AuditService auditService,
+			ClinicFeatureGuard clinicFeatureGuard) {
 		this.patientRepository = patientRepository;
 		this.appointmentRepository = appointmentRepository;
 		this.referralSourceRepository = referralSourceRepository;
 		this.clinicAccess = clinicAccess;
 		this.permissionService = permissionService;
 		this.auditService = auditService;
+		this.clinicFeatureGuard = clinicFeatureGuard;
 	}
 
 	@Transactional(readOnly = true)
@@ -182,8 +187,14 @@ public class PatientService {
 		patient.setDui(request.dui());
 		patient.setNit(request.nit());
 		patient.setOccupation(request.occupation());
-		patient.setReferredBy(request.referredBy());
-		patient.setReferralSourceId(resolveReferralSourceId(request.referralSourceId()));
+		Clinic clinic = clinicFeatureGuard.requireClinic();
+		if (!clinic.isReferralsInboundEnabled()) {
+			patient.setReferredBy(null);
+			patient.setReferralSourceId(null);
+		} else {
+			patient.setReferredBy(request.referredBy());
+			patient.setReferralSourceId(resolveReferralSourceId(request.referralSourceId()));
+		}
 		patient.setAllergies(request.allergies());
 		patient.setNotes(request.notes());
 		if (request.active() != null) {

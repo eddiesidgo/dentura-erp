@@ -38,12 +38,20 @@ const SaveIdentityButton = () => {
                 navMode: theme.navMode,
                 layoutType: theme.layout.type,
                 direction: theme.direction,
+                providerMode: clinic.features?.providerMode,
+                roomMode: clinic.features?.roomMode,
+                referralsInboundEnabled: clinic.features?.referralsInboundEnabled,
+                referralsOutboundEnabled:
+                    clinic.features?.referralsOutboundEnabled,
+                reminderHoursBefore: clinic.reminderHoursBefore,
+                reminderMessageTemplate: clinic.reminderMessageTemplate,
+                reminderDefaultCountryCode: clinic.reminderDefaultCountryCode,
             })
             dispatch(setCurrentClinic(response.data))
             applyClinicTheme(dispatch, response.data)
             toast.push(
-                <Notification title="Identidad guardada" type="success">
-                    El theme y la marca de esta clínica quedaron en la base de datos.
+                <Notification title="Configuración guardada" type="success">
+                    Identidad, operación y recordatorios quedaron guardados.
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -61,7 +69,7 @@ const SaveIdentityButton = () => {
 
     return (
         <Button block loading={saving} variant="solid" onClick={handleSave}>
-            Guardar identidad de clínica
+            Guardar configuración de clínica
         </Button>
     )
 }

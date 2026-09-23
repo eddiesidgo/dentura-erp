@@ -3,6 +3,7 @@ package com.dentura.api.clinic.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UpdateClinicRequest(
@@ -35,5 +36,18 @@ public record UpdateClinicRequest(
 		@Size(max = 32)
 		String layoutType,
 		@Size(max = 8)
-		String direction) {
+		String direction,
+		@Pattern(regexp = "SINGLE|MULTI", message = "providerMode debe ser SINGLE o MULTI")
+		String providerMode,
+		@Pattern(regexp = "OFF|OPTIONAL|REQUIRED", message = "roomMode debe ser OFF, OPTIONAL o REQUIRED")
+		String roomMode,
+		Boolean referralsInboundEnabled,
+		Boolean referralsOutboundEnabled,
+		@Min(1)
+		@Max(168)
+		Integer reminderHoursBefore,
+		@Size(max = 2000)
+		String reminderMessageTemplate,
+		@Size(max = 8)
+		String reminderDefaultCountryCode) {
 }

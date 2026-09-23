@@ -90,6 +90,7 @@ public class ClinicService {
 		Clinic clinic = new Clinic();
 		clinic.setCode(code);
 		clinic.setName(request.name().trim());
+		ClinicDeliveryPreset.from(request.preset()).applyTo(clinic);
 		Clinic saved = clinicRepository.save(clinic);
 		roleCatalog.ensureClinicRoles(saved.getId());
 		treatmentSeeder.ensureClinicCatalog(saved.getId());
@@ -139,6 +140,31 @@ public class ClinicService {
 		}
 		if (request.direction() != null) {
 			clinic.setDirection(request.direction());
+		}
+		if (request.providerMode() != null) {
+			clinic.setProviderMode(request.providerMode());
+		}
+		if (request.roomMode() != null) {
+			clinic.setRoomMode(request.roomMode());
+		}
+		if (request.referralsInboundEnabled() != null) {
+			clinic.setReferralsInboundEnabled(request.referralsInboundEnabled());
+		}
+		if (request.referralsOutboundEnabled() != null) {
+			clinic.setReferralsOutboundEnabled(request.referralsOutboundEnabled());
+		}
+		if (request.reminderHoursBefore() != null) {
+			clinic.setReminderHoursBefore(request.reminderHoursBefore());
+		}
+		if (request.reminderMessageTemplate() != null) {
+			String template = request.reminderMessageTemplate().trim();
+			clinic.setReminderMessageTemplate(template.isEmpty() ? null : template);
+		}
+		if (request.reminderDefaultCountryCode() != null) {
+			String country = request.reminderDefaultCountryCode().trim();
+			if (!country.isEmpty()) {
+				clinic.setReminderDefaultCountryCode(country);
+			}
 		}
 		return ClinicIdentityResponse.from(clinicRepository.save(clinic));
 	}

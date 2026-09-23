@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import Logo from '@/components/template/Logo'
 import Menu from '@/components/ui/Menu'
 import ScrollBar from '@/components/ui/ScrollBar'
@@ -14,6 +14,8 @@ import navigationConfig from '@/configs/navigation.config'
 import navigationIcon from '@/configs/navigation-icon.config'
 import useMenuActive from '@/utils/hooks/useMenuActive'
 import useThemeClass from '@/utils/hooks/useThemeClass'
+import useClinicFeatures from '@/utils/hooks/useClinicFeatures'
+import { filterNavigationByFeatures } from '@/utils/filterNavigationByFeatures'
 import isEmpty from 'lodash/isEmpty'
 import { Link } from 'react-router-dom'
 import type { NavigationTree } from '@/@types/navigation'
@@ -52,7 +54,12 @@ const StackedSideNavMini = (props: StackedSideNavMiniProps) => {
         ...rest
     } = props
 
-    const { includedRouteTree } = useMenuActive(navigationConfig, routeKey)
+    const features = useClinicFeatures()
+    const filteredNavigation = useMemo(
+        () => filterNavigationByFeatures(navigationConfig, features),
+        [features],
+    )
+    const { includedRouteTree } = useMenuActive(filteredNavigation, routeKey)
     const { navTitleTheme } = useThemeClass()
 
     const logoMode = () => {
@@ -111,7 +118,7 @@ const StackedSideNavMini = (props: StackedSideNavMiniProps) => {
                     variant={navMode}
                     defaultActiveKeys={activeKeys || [includedRouteTree.key]}
                 >
-                    {navigationConfig.map((nav) => (
+                    {filteredNavigation.map((nav) => (
                         <AuthorityCheck
                             key={nav.key}
                             authority={nav.authority}

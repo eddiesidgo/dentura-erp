@@ -1,3 +1,14 @@
+export type ClinicProviderMode = 'SINGLE' | 'MULTI'
+export type ClinicRoomMode = 'OFF' | 'OPTIONAL' | 'REQUIRED'
+export type ClinicDeliveryPreset = 'BASIC' | 'MULTI_DOCTOR' | 'FULL'
+
+export type ClinicFeatures = {
+    providerMode: ClinicProviderMode
+    roomMode: ClinicRoomMode
+    referralsInboundEnabled: boolean
+    referralsOutboundEnabled: boolean
+}
+
 export type ClinicIdentity = {
     id: number
     code: string
@@ -16,6 +27,10 @@ export type ClinicIdentity = {
     layoutType: string
     direction: 'ltr' | 'rtl'
     active: boolean
+    features: ClinicFeatures
+    reminderHoursBefore: number
+    reminderMessageTemplate: string | null
+    reminderDefaultCountryCode: string
 }
 
 export type UpdateClinicIdentityRequest = {
@@ -33,4 +48,18 @@ export type UpdateClinicIdentityRequest = {
     navMode: string
     layoutType: string
     direction: string
+    providerMode?: ClinicProviderMode
+    roomMode?: ClinicRoomMode
+    referralsInboundEnabled?: boolean
+    referralsOutboundEnabled?: boolean
+    reminderHoursBefore?: number
+    reminderMessageTemplate?: string | null
+    reminderDefaultCountryCode?: string
+}
+
+export const DEFAULT_CLINIC_FEATURES: ClinicFeatures = {
+    providerMode: 'MULTI',
+    roomMode: 'OPTIONAL',
+    referralsInboundEnabled: true,
+    referralsOutboundEnabled: true,
 }
